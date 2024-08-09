@@ -3,15 +3,36 @@ import { RoomService } from '../room.service';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { StayService } from '../stays.service';
 
+interface Stay {
+  stayDateFrom: string;
+  stayDateTo: string;
+  arrivalDays: string[];
+  departureDays: string[];
+  minStay: number;
+  maxStay: number;
+  roomId: number;
+}
+
+interface Room {
+  roomId: number;
+  locationId: number;
+  locationName: string;
+  pricePerDayPerPerson: number;
+  guestCapacity: number;
+  roomName: string;
+  stays: Stay[];
+  availability: string[];
+}
+
 @Component({
   selector: 'app-rooms-filter',
   templateUrl: './rooms-filter.component.html',
-  styleUrl: './rooms-filter.component.css'
+  styleUrls: ['./rooms-filter.component.css']
 })
 export class RoomsFilterComponent implements OnInit {
-  rooms: any[] = [];
-  stays: any[] = [];
-  filteredRooms: any[] = [];
+  rooms: Room[] = [];
+  stays: Stay[] = [];
+  filteredRooms: Room[] = [];
   filterForm: FormGroup;
   locations: string[] = [];
 
@@ -22,14 +43,10 @@ export class RoomsFilterComponent implements OnInit {
   ) {
     this.filterForm = this.fb.group({
       location: [''],
-      dateRange: this.fb.group({
-        from: [''],
-        to: ['']
-      }),
+      dateRangeFrom: [''],
+      numberOfDays: [0],
       numberOfPersons: [0],
-      maxPrice: [0],
-      minStay: [0],
-      maxStay: [0]
+      maxPrice: [0]
     });
   }
 
@@ -45,10 +62,27 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   mergeData(): void {
-    this.filteredRooms = this.rooms.map(room => {
-      const stay = this.stays.find(stay => stay.roomId === room.roomId);
-      return { ...room, ...stay };
+    const roomMap = new Map<number, Room>();
+
+    this.rooms.forEach(room => {
+      if (!roomMap.has(room.roomId)) {
+        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
+      }
     });
+
+    this.stays.forEach(stay => {
+      const room = roomMap.get(stay.roomId);
+      if (room) {
+        room.stays.push(stay);
+        const availabilityDetail = `From: ${stay.stayDateFrom}, To: ${stay.stayDateTo}`;
+        if (!room.availability.includes(availabilityDetail)) {
+          room.availability.push(availabilityDetail);
+        }
+      }
+    });
+
+    this.filteredRooms = Array.from(roomMap.values());
+    console.log('Merged Data:', this.filteredRooms); // Debugging line
   }
 
   initializeLocations(): void {
@@ -58,26 +92,41 @@ export class RoomsFilterComponent implements OnInit {
 
   applyFilter(): void {
     const filters = this.filterForm.value;
+    console.log('Filter Values:', filters); // Debugging line
+
+    const arrivalDate = filters.dateRangeFrom ? new Date(filters.dateRangeFrom) : null;
+    const numberOfDays = filters.numberOfDays;
+    let departureDate: Date | null = null;
+
+    if (arrivalDate && numberOfDays > 0) {
+      departureDate = new Date(arrivalDate);
+      departureDate.setDate(arrivalDate.getDate() + numberOfDays);
+    }
 
     this.filteredRooms = this.rooms.map(room => {
-      const stay = this.stays.find(stay => stay.roomId === room.roomId);
-      return { ...room, ...stay };
+      const stays = this.stays.filter(stay => stay.roomId === room.roomId);
+      return { ...room, stays, availability: stays.map(stay => `From: ${stay.stayDateFrom}, To: ${stay.stayDateTo}`) };
     });
 
     this.filteredRooms = this.filteredRooms.filter(room => {
       const isLocationMatch = !filters.location || room.locationName.toLowerCase().includes(filters.location.toLowerCase());
 
-      const isDateRangeMatch = (!filters.dateRange.from || new Date(room.stayDateFrom) >= new Date(filters.dateRange.from)) &&
-                               (!filters.dateRange.to || new Date(room.stayDateTo) <= new Date(filters.dateRange.to));
+      const isAvailabilityMatch = !arrivalDate || !departureDate || room.stays.some(stay => {
+        const stayFrom = new Date(stay.stayDateFrom);
+        const stayTo = new Date(stay.stayDateTo);
+
+        const isDateOverlap = (stayFrom <= departureDate && stayTo >= arrivalDate);
+        const isStayDurationMatch = (numberOfDays <= 0 || (numberOfDays >= stay.minStay && numberOfDays <= stay.maxStay));
+
+        return isDateOverlap && isStayDurationMatch;
+      });
 
       const isCapacityMatch = filters.numberOfPersons <= 0 || room.guestCapacity >= filters.numberOfPersons;
-
       const isPriceMatch = filters.maxPrice <= 0 || room.pricePerDayPerPerson <= filters.maxPrice;
 
-      const isStayDurationMatch = (filters.minStay <= 0 || room.minStay <= filters.minStay) &&
-                                  (filters.maxStay <= 0 || room.maxStay >= filters.maxStay);
-
-      return isLocationMatch && isDateRangeMatch && isCapacityMatch && isPriceMatch && isStayDurationMatch;
+      return isLocationMatch && isAvailabilityMatch && isCapacityMatch && isPriceMatch;
     });
+
+    console.log('Filtered Rooms:', this.filteredRooms); // Debugging line
   }
 }
