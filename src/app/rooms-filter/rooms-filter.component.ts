@@ -2,27 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { RoomService } from '../room.service';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { StayService } from '../stays.service';
+import { Stay } from '../Interfaces/stay';
+import { Room } from '../Interfaces/room';
 
-interface Stay {
-  stayDateFrom: string;
-  stayDateTo: string;
-  arrivalDays: string[];
-  departureDays: string[];
-  minStay: number;
-  maxStay: number;
-  roomId: number;
-}
 
-interface Room {
-  roomId: number;
-  locationId: number;
-  locationName: string;
-  pricePerDayPerPerson: number;
-  guestCapacity: number;
-  roomName: string;
-  stays: Stay[];
-  availability: string[];
-}
+
 
 @Component({
   selector: 'app-rooms-filter',
@@ -43,8 +27,8 @@ export class RoomsFilterComponent implements OnInit {
   ) {
     this.filterForm = this.fb.group({
       location: [''],
-      dateRangeFrom: [''],
-      numberOfDays: [0],
+      stayDateFrom: [''],
+      stayDateTo: [''],
       numberOfPersons: [0],
       maxPrice: [0]
     });
@@ -94,14 +78,8 @@ export class RoomsFilterComponent implements OnInit {
     const filters = this.filterForm.value;
     console.log('Filter Values:', filters); // Debugging line
 
-    const arrivalDate = filters.dateRangeFrom ? new Date(filters.dateRangeFrom) : null;
-    const numberOfDays = filters.numberOfDays;
-    let departureDate: Date | null = null;
-
-    if (arrivalDate && numberOfDays > 0) {
-      departureDate = new Date(arrivalDate);
-      departureDate.setDate(arrivalDate.getDate() + numberOfDays);
-    }
+    const arrivalDate = filters.stayDateFrom ? new Date(filters.stayDateFrom) : null;
+    const departureDate = filters.stayDateTo ? new Date(filters.stayDateTo) : null;
 
     this.filteredRooms = this.rooms.map(room => {
       const stays = this.stays.filter(stay => stay.roomId === room.roomId);
@@ -116,7 +94,9 @@ export class RoomsFilterComponent implements OnInit {
         const stayTo = new Date(stay.stayDateTo);
 
         const isDateOverlap = (stayFrom <= departureDate && stayTo >= arrivalDate);
-        const isStayDurationMatch = (numberOfDays <= 0 || (numberOfDays >= stay.minStay && numberOfDays <= stay.maxStay));
+        const stayDuration = (departureDate ? (departureDate.getTime() - arrivalDate.getTime()) / (1000 * 3600 * 24) : 0);
+
+        const isStayDurationMatch = (stayDuration <= 0 || (stayDuration >= stay.minStay && stayDuration <= stay.maxStay));
 
         return isDateOverlap && isStayDurationMatch;
       });

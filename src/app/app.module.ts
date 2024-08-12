@@ -12,9 +12,16 @@ import { MatInputModule } from '@angular/material/input';
 import { RoomsFilterComponent } from './rooms-filter/rooms-filter.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { RoomAvailabilityChartComponent } from './room-availability-chart/room-availability-chart.component';
+import { SteppersComponent } from './Tests/steppers/steppers.component';
+import {MatStepperModule} from '@angular/material/stepper';
 
+
+
+
+import {MatButtonModule} from '@angular/material/button';
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent],
+  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -22,7 +29,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatDatepickerModule,
-    MatInputModule,
+    MatInputModule, MatStepperModule,MatButtonModule
     
   ],
   providers: [

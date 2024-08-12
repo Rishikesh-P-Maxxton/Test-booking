@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class RoomService {
+  
   private roomsUrl = 'https://jadhavsudhit.github.io/Booking-module/rooms.json';
 
   constructor(private http: HttpClient) {}
