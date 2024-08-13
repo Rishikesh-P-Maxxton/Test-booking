@@ -1,7 +1,7 @@
 <div class="container mt-4">
   <div class="row">
     <!-- Left Column: Filters -->
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="filter-section p-3 border">
         <h4>Filter Rooms</h4>
         <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
@@ -43,37 +43,98 @@
       </div>
     </div>
 
-    <!-- Right Column: Results -->
-    <div class="col-md-8">
-      <div class="result-section p-3 border">
-        <h4>Available Rooms</h4>
-        <table class="table table-striped mt-4" *ngIf="filteredRooms.length > 0">
-          <thead>
-            <tr>
-              <th>Room ID</th>
-              <th>Location</th>
-              <th>Room Name</th>
-              <th>Price Per Day</th>
-              <th>Guest Capacity</th>
-              <th>Availability</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let room of filteredRooms">
-              <td>{{ room.roomId }}</td>
-              <td>{{ room.locationName }}</td>
-              <td>{{ room.roomName }}</td>
-              <td>{{ room.pricePerDayPerPerson | currency }}</td>
-              <td>{{ room.guestCapacity }}</td>
-              <td>
-                <ul>
-                  <li *ngFor="let availability of room.availability">{{ availability }}</li>
-                </ul>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p *ngIf="filteredRooms.length === 0" class="mt-4">No rooms match the selected filters.</p>
+<!-- Right Column: Results -->
+<div class="col-md-9">
+  <div class="result-section p-3 border">
+    <h4>Available Rooms</h4>
+    <table class="table table-striped mt-4" *ngIf="filteredRooms.length > 0">
+      <thead>
+        <tr>
+          <th>Room ID</th>
+          <th>Location</th>
+          <th>Room Name</th>
+          <th>Price Per Day</th>
+          <th>Guest Capacity</th>
+          <th>Availability</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let room of filteredRooms">
+          <td>{{ room.roomId }}</td>
+          <td>{{ room.locationName }}</td>
+          <td>{{ room.roomName }}</td>
+          <td>{{ room.pricePerDayPerPerson | currency }}</td>
+          <td>{{ room.guestCapacity }}</td>
+          <td>
+            <ul class="list-unstyled mb-0">
+              <li *ngFor="let availability of room.availability">{{ availability }}</li>
+            </ul>
+          </td>
+          <td>
+            <button class="btn btn-primary" (click)="openBookingModal(room)">Book</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p *ngIf="filteredRooms.length === 0" class="mt-4">No rooms match the selected filters.</p>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="bookingForm">
+          <div class="form-group mb-3">
+            <label for="reservationId">Reservation ID</label>
+            <input type="text" id="reservationId" formControlName="reservationId" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="roomNo">Room No.</label>
+            <input type="text" id="roomNo" formControlName="roomNo" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="stayDateFrom">Stay Date From</label>
+            <input type="date" id="stayDateFrom" formControlName="stayDateFrom" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="stayDateTo">Stay Date To</label>
+            <input type="date" id="stayDateTo" formControlName="stayDateTo" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="numberOfDays">Number of Days</label>
+            <input type="number" id="numberOfDays" formControlName="numberOfDays" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="totalNumberOfGuests">Total Number of Guests</label>
+            <input type="number" id="totalNumberOfGuests" formControlName="totalNumberOfGuests" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="pricePerDayPerPerson">Price Per Day Per Person</label>
+            <input type="number" id="pricePerDayPerPerson" formControlName="pricePerDayPerPerson" class="form-control" readonly>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="totalPrice">Total Price</label>
+            <input type="number" id="totalPrice" formControlName="totalPrice" class="form-control" readonly>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeBookingModal()">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="confirmBooking()">Confirm Booking</button>
       </div>
     </div>
   </div>

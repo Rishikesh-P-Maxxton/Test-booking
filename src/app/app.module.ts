@@ -20,8 +20,9 @@ import {MatStepperModule} from '@angular/material/stepper';
 
 
 import {MatButtonModule} from '@angular/material/button';
+import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent],
+  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
