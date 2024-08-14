@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../room.service';
 import { StayService } from '../stays.service';
-import { Stay } from '../Interfaces/stay';
 import { Room } from '../Interfaces/room';
+import { Stay } from '../Interfaces/stay';
+import { Reservation } from '../Interfaces/reservation';
+import { MatStepper } from '@angular/material/stepper';
 
 @Component({
   selector: 'app-rooms-filter',
@@ -16,11 +18,16 @@ export class RoomsFilterComponent implements OnInit {
   filteredRooms: Room[] = [];
   filterForm: FormGroup;
   bookingForm: FormGroup;
+  customerForm: FormGroup;
+  paymentForm: FormGroup;
   selectedRoom: Room | null = null;
   locations: string[] = [];
   availabilityDetails: string[] = [];
   numberOfGuestsOptions: number[] = [];
   isConfirmDisabled = true;
+  currentStep = 0;
+
+  @ViewChild('stepper') stepper!: MatStepper;
 
   constructor(
     private roomService: RoomService,
@@ -41,18 +48,37 @@ export class RoomsFilterComponent implements OnInit {
       stayDateFrom: [{ value: '', disabled: true }],
       stayDateTo: [{ value: '', disabled: true }],
       numberOfDays: [{ value: 0, disabled: true }],
-      totalNumberOfGuests: [0, Validators.required],
+      totalNumberOfGuests: [0, [Validators.required, Validators.min(1)]],
       pricePerDayPerPerson: [{ value: 0, disabled: true }],
       totalPrice: [{ value: 0, disabled: true }]
     });
 
-    // Update total price whenever relevant fields change
+    this.customerForm = this.fb.group({
+      customerId: [{ value: '', disabled: true }],
+      name: ['', Validators.required],
+      age: [null, [Validators.required, Validators.min(18)]],
+      initialAddress: ['', Validators.required],
+      mobileNumber: ['', Validators.required],
+      pincode: [null, Validators.required],
+      district: ['', Validators.required],
+      city: ['', Validators.required],
+      state: ['', Validators.required],
+      country: ['', Validators.required]
+    });
+
+    this.paymentForm = this.fb.group({
+      paymentId: [{ value: '', disabled: true }],
+      paymentMode: ['', Validators.required],
+      paidAmount: [0, Validators.required],
+      due: [0, Validators.required]
+    });
+
+    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
     this.bookingForm.get('totalNumberOfGuests')?.valueChanges.subscribe(() => this.updateTotalPrice());
     this.bookingForm.get('numberOfDays')?.valueChanges.subscribe(() => this.updateTotalPrice());
     this.bookingForm.get('pricePerDayPerPerson')?.valueChanges.subscribe(() => this.updateTotalPrice());
-
-    // Update the confirm button state based on form validity
-    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
+    this.customerForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
+    this.paymentForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
   }
 
   ngOnInit(): void {
@@ -72,12 +98,24 @@ export class RoomsFilterComponent implements OnInit {
     return `${prefix}${randomNumber}`;
   }
 
+  generateCustomerId(): string {
+    const prefix = 'cid';
+    const randomNumber = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNumber}`;
+  }
+
+  generatePaymentId(): string {
+    const prefix = 'Pid';
+    const randomNumber = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNumber}`;
+  }
+
   mergeData(): void {
     const roomMap = new Map<number, Room>();
 
     this.rooms.forEach(room => {
       if (!roomMap.has(room.roomId)) {
-        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });    
+        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
       }
     });
 
@@ -202,9 +240,19 @@ export class RoomsFilterComponent implements OnInit {
       pricePerDayPerPerson: pricePerDay
     });
 
-    // Manually update the confirm button state
+    this.customerForm.patchValue({
+      customerId: this.generateCustomerId()
+    });
+
+    this.paymentForm.patchValue({
+      paymentId: this.generatePaymentId()
+    });
+
+    this.updateTotalPrice();
     this.updateConfirmButtonState();
 
+    // Initialize forms for stepper
+    this.currentStep = 0;
     const bookingModal = new bootstrap.Modal(document.getElementById('bookingModal')!);
     bookingModal.show();
   }
@@ -215,14 +263,48 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   confirmBooking(): void {
-    if (this.bookingForm.valid && !this.isConfirmDisabled) {
-      console.log('Booking Confirmed:', this.bookingForm.value);
+    if (this.bookingForm.valid && this.customerForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
+      const reservation: Reservation = {
+        reservationId: String(this.bookingForm.get('reservationId')?.value),
+        locationId: this.selectedRoom?.locationId || 0,
+        roomId: Number(this.bookingForm.get('roomNo')?.value),
+        customerId: String(this.customerForm.get('customerId')?.value),
+        arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
+        departureDate: this.bookingForm.get('stayDateTo')?.value,
+        reservationDate: new Date().toISOString(),
+        totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
+        status: 'CONFIRM',
+        paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
+        numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
+      };
+
+      const customer = {
+        customerId: String(this.customerForm.get('customerId')?.value),
+        age: Number(this.customerForm.get('age')?.value),
+        firstName: this.customerForm.get('name')?.value.split(' ')[0],
+        middleName: '', 
+        lastName: this.customerForm.get('name')?.value.split(' ').slice(1).join(' '),
+        country: this.customerForm.get('country')?.value,
+        state: this.customerForm.get('state')?.value,
+        city: this.customerForm.get('city')?.value,
+        pinCode: Number(this.customerForm.get('pincode')?.value),
+        initialAddress: this.customerForm.get('initialAddress')?.value,
+        mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
+        mobileNumber2: 0,
+      };
+
+      console.log('Reservation Object:', reservation);
+      console.log('Customer Object:', customer);
+
+      // Optionally handle payment submission or other actions here
 
       this.closeBookingModal();
       this.bookingForm.reset();
+      this.customerForm.reset();
+      this.paymentForm.reset();
       this.selectedRoom = null;
     } else {
-      console.log('Form is invalid or button is disabled');
+      console.log('Please fill out all required fields.');
     }
   }
 
@@ -238,6 +320,21 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   private updateConfirmButtonState(): void {
-    this.isConfirmDisabled = !this.bookingForm.valid;
+    const filterFormValid = this.filterForm.get('stayDateFrom')?.value && this.filterForm.get('stayDateTo')?.value;
+    const formValid = this.bookingForm.valid && this.customerForm.valid && this.paymentForm.valid;
+    this.isConfirmDisabled = !(formValid && filterFormValid);
+  }
+
+  // Stepper Methods
+  nextStep(): void {
+    if (this.currentStep < 2) {
+      this.currentStep++;
+    }
+  }
+
+  prevStep(): void {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+    }
   }
 }

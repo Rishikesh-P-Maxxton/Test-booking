@@ -16,6 +16,9 @@ import { RoomAvailabilityChartComponent } from './room-availability-chart/room-a
 import { SteppersComponent } from './Tests/steppers/steppers.component';
 import {MatStepperModule} from '@angular/material/stepper';
 
+import {MatSelectModule} from '@angular/material/select';
+import { MatNativeDateModule } from '@angular/material/core';
+
 
 
 
@@ -30,7 +33,7 @@ import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatDatepickerModule,
-    MatInputModule, MatStepperModule,MatButtonModule
+    MatInputModule, MatStepperModule,MatButtonModule,MatNativeDateModule,MatSelectModule
     
   ],
   providers: [

@@ -81,7 +81,7 @@
   </div>
 </div>
 <!-- Booking Modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -134,6 +134,137 @@
           </div>
           <button type="submit" class="btn btn-primary" [disabled]="isConfirmDisabled">Confirm Booking</button>
         </form>
+      </div>
+    </div>
+  </div>
+</div> -->
+<!-- Modal HTML -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bookingModalLabel">Booking</h5>
+        <button type="button" class="btn-close" (click)="closeBookingModal()"></button>
+      </div>
+      <div class="modal-body">
+        <mat-vertical-stepper [linear]="true" #stepper>
+          <!-- Booking Form Step -->
+          <mat-step label="Booking Details" [stepControl]="bookingForm">
+            <form [formGroup]="bookingForm" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="reservationId" class="form-label">Reservation ID</label>
+                <input type="text" class="form-control" id="reservationId" formControlName="reservationId" readonly />
+              </div>
+              <div class="mb-3">
+                <label for="roomNo" class="form-label">Room Number</label>
+                <input type="text" class="form-control" id="roomNo" formControlName="roomNo" readonly />
+              </div>
+              <div class="mb-3">
+                <label for="stayDateFrom" class="form-label">Stay Date From</label>
+                <input type="date" class="form-control" id="stayDateFrom" formControlName="stayDateFrom" />
+              </div>
+              <div class="mb-3">
+                <label for="stayDateTo" class="form-label">Stay Date To</label>
+                <input type="date" class="form-control" id="stayDateTo" formControlName="stayDateTo" />
+              </div>
+              <div class="mb-3">
+                <label for="numberOfDays" class="form-label">Number of Days</label>
+                <input type="text" class="form-control" id="numberOfDays" formControlName="numberOfDays" readonly />
+              </div>
+              <div class="mb-3">
+                <label for="totalNumberOfGuests" class="form-label">Total Number of Guests</label>
+                <select id="totalNumberOfGuests" class="form-select" formControlName="totalNumberOfGuests">
+                  <option *ngFor="let option of numberOfGuestsOptions" [value]="option">{{ option }}</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="pricePerDayPerPerson" class="form-label">Price per Day per Person</label>
+                <input type="text" class="form-control" id="pricePerDayPerPerson" formControlName="pricePerDayPerPerson" readonly />
+              </div>
+              <div class="mb-3">
+                <label for="totalPrice" class="form-label">Total Price</label>
+                <input type="text" class="form-control" id="totalPrice" formControlName="totalPrice" readonly />
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Customer Details Step -->
+          <mat-step label="Customer Details" [stepControl]="customerForm">
+            <form [formGroup]="customerForm" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="customerId" class="form-label">Customer ID</label>
+                <input type="text" class="form-control" id="customerId" formControlName="customerId" readonly />
+              </div>
+              <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" formControlName="name" />
+              </div>
+              <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" class="form-control" id="age" formControlName="age" />
+              </div>
+              
+              <div class="mb-3">
+                <label for="initialAddress" class="form-label">Initial Address</label>
+                <input type="text" class="form-control" id="initialAddress" formControlName="initialAddress" />
+              </div>
+              <div class="mb-3">
+                <label for="mobileNumber" class="form-label">Mobile Number</label>
+                <input type="tel" class="form-control" id="mobileNumber" formControlName="mobileNumber" />
+              </div>
+              <div class="mb-3">
+                <label for="pincode" class="form-label">Pincode</label>
+                <input type="number" class="form-control" id="pincode" formControlName="pincode" />
+              </div>
+              <div class="mb-3">
+                <label for="district" class="form-label">District</label>
+                <input type="text" class="form-control" id="district" formControlName="district" />
+              </div>
+              <div class="mb-3">
+                <label for="city" class="form-label">City</label>
+                <input type="text" class="form-control" id="city" formControlName="city" />
+              </div>
+              <div class="mb-3">
+                <label for="state" class="form-label">State</label>
+                <input type="text" class="form-control" id="state" formControlName="state" />
+              </div>
+              <div class="mb-3">
+                <label for="country" class="form-label">Country</label>
+                <input type="text" class="form-control" id="country" formControlName="country" />
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Payment Details Step -->
+          <mat-step label="Payment Details" [stepControl]="paymentForm">
+            <form [formGroup]="paymentForm" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="paymentId" class="form-label">Payment ID</label>
+                <input type="text" class="form-control" id="paymentId" formControlName="paymentId" readonly />
+              </div>
+              <div class="mb-3">
+                <label for="paymentMode" class="form-label">Payment Mode</label>
+                <select id="paymentMode" class="form-select" formControlName="paymentMode">
+                  <option value="debitcard">Debit Card</option>
+                  <option value="upi">UPI</option>
+                  <option value="cash">Cash</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="paidAmount" class="form-label">Paid Amount</label>
+                <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" />
+              </div>
+              <div class="mb-3">
+                <label for="due" class="form-label">Due</label>
+                <input type="number" class="form-control" id="due" formControlName="due" />
+              </div>
+            </form>
+          </mat-step>
+        </mat-vertical-stepper>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeBookingModal()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="confirmBooking()" [disabled]="isConfirmDisabled">Confirm Booking</button>
       </div>
     </div>
   </div>
