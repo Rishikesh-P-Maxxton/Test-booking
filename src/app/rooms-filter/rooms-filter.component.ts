@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../room.service';
 import { StayService } from '../stays.service';
 import { Stay } from '../Interfaces/stay';
@@ -41,10 +41,18 @@ export class RoomsFilterComponent implements OnInit {
       stayDateFrom: [{ value: '', disabled: true }],
       stayDateTo: [{ value: '', disabled: true }],
       numberOfDays: [{ value: 0, disabled: true }],
-      totalNumberOfGuests: [''],
+      totalNumberOfGuests: [0, Validators.required],
       pricePerDayPerPerson: [{ value: 0, disabled: true }],
       totalPrice: [{ value: 0, disabled: true }]
     });
+
+    // Update total price whenever relevant fields change
+    this.bookingForm.get('totalNumberOfGuests')?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm.get('numberOfDays')?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm.get('pricePerDayPerPerson')?.valueChanges.subscribe(() => this.updateTotalPrice());
+
+    // Update the confirm button state based on form validity
+    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
   }
 
   ngOnInit(): void {
@@ -55,11 +63,6 @@ export class RoomsFilterComponent implements OnInit {
         this.mergeData();
         this.initializeLocations();
       });
-    });
-
-    // Recalculate total price on form value changes
-    this.bookingForm.valueChanges.subscribe(() => {
-      this.calculateTotalPrice();
     });
   }
 
@@ -199,7 +202,8 @@ export class RoomsFilterComponent implements OnInit {
       pricePerDayPerPerson: pricePerDay
     });
 
-    this.isConfirmDisabled = !stayDateFrom || !stayDateTo || !numberOfPersons;
+    // Manually update the confirm button state
+    this.updateConfirmButtonState();
 
     const bookingModal = new bootstrap.Modal(document.getElementById('bookingModal')!);
     bookingModal.show();
@@ -218,22 +222,22 @@ export class RoomsFilterComponent implements OnInit {
       this.bookingForm.reset();
       this.selectedRoom = null;
     } else {
-      console.log('Form is invalid or confirm button is disabled');
+      console.log('Form is invalid or button is disabled');
     }
   }
 
-  calculateTotalPrice(): void {
-    const numberOfDays = this.bookingForm.get('numberOfDays')?.value;
-    const numberOfGuests = this.bookingForm.get('totalNumberOfGuests')?.value;
-    const pricePerDayPerPerson = this.bookingForm.get('pricePerDayPerPerson')?.value;
+  private updateTotalPrice(): void {
+    const numberOfGuests = this.bookingForm.get('totalNumberOfGuests')?.value || 0;
+    const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
+    const pricePerDayPerPerson = this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
 
-    if (numberOfDays && numberOfGuests && pricePerDayPerPerson) {
-      const totalPrice = numberOfDays * numberOfGuests * pricePerDayPerPerson;
-      this.bookingForm.patchValue({ totalPrice });
-      this.isConfirmDisabled = !this.bookingForm.get('stayDateFrom')?.value || !this.bookingForm.get('stayDateTo')?.value || !numberOfGuests;
-    } else {
-      this.bookingForm.patchValue({ totalPrice: 0 });
-      this.isConfirmDisabled = true;
+    if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
+      const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
+      this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
     }
+  }
+
+  private updateConfirmButtonState(): void {
+    this.isConfirmDisabled = !this.bookingForm.valid;
   }
 }
