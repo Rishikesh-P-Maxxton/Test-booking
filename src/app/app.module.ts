@@ -19,13 +19,17 @@ import {MatStepperModule} from '@angular/material/stepper';
 import {MatSelectModule} from '@angular/material/select';
 import { MatNativeDateModule } from '@angular/material/core';
 
-
+import {MatCardModule} from '@angular/material/card';
+import {MatTableModule} from '@angular/material/table';
+import {MatListModule} from '@angular/material/list';
+import {MatDialogModule} from '@angular/material/dialog';
 
 
 import {MatButtonModule} from '@angular/material/button';
 import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
+import { GanttChartComponent } from './gantt-chart/gantt-chart.component';
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent],
+  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -33,7 +37,8 @@ import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatDatepickerModule,
-    MatInputModule, MatStepperModule,MatButtonModule,MatNativeDateModule,MatSelectModule
+    MatInputModule, MatStepperModule,MatButtonModule,MatNativeDateModule,MatSelectModule,
+    MatCardModule, MatTableModule, MatListModule, MatDialogModule, 
     
   ],
   providers: [

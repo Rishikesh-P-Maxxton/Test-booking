@@ -28,6 +28,7 @@ export class RoomsFilterComponent implements OnInit {
   currentStep = 0;
 
   @ViewChild('stepper') stepper!: MatStepper;
+displayedColumns: any;
 
   constructor(
     private roomService: RoomService,
@@ -99,13 +100,13 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   generateCustomerId(): string {
-    const prefix = 'cid';
+    const prefix = 'CID';
     const randomNumber = Math.floor(1000 + Math.random() * 9000);
     return `${prefix}${randomNumber}`;
   }
 
   generatePaymentId(): string {
-    const prefix = 'Pid';
+    const prefix = 'PID';
     const randomNumber = Math.floor(1000 + Math.random() * 9000);
     return `${prefix}${randomNumber}`;
   }
@@ -149,71 +150,78 @@ export class RoomsFilterComponent implements OnInit {
   applyFilter(): void {
     const filters = this.filterForm.value;
     console.log('Filter Values:', filters);
-
-    const availabilityMap = new Map<number, string[]>();
-
-    this.filteredRooms.forEach(room => {
-      availabilityMap.set(room.roomId, room.availability);
-    });
-
+  
+    const arrivalDate = filters.stayDateFrom ? new Date(filters.stayDateFrom) : null;
+    const departureDate = filters.stayDateTo ? new Date(filters.stayDateTo) : null;
+  
     this.filteredRooms = [...this.rooms];
-    
+  
     const hasLocationFilter = filters.location.trim() !== '';
-    const hasDateFilter = filters.stayDateFrom || filters.stayDateTo;
+    const hasDateFilter = arrivalDate && departureDate;
     const hasGuestFilter = filters.numberOfPersons > 0;
     const hasPriceFilter = filters.maxPrice > 0;
-    
+  
+    // Location filter
     if (hasLocationFilter) {
       this.filteredRooms = this.filteredRooms.filter(room =>
         room.locationName.toLowerCase().includes(filters.location.toLowerCase())
       );
     }
-    
+  
+    // Date filter
     if (hasDateFilter) {
-      const arrivalDate = filters.stayDateFrom ? new Date(filters.stayDateFrom) : null;
-      const departureDate = filters.stayDateTo ? new Date(filters.stayDateTo) : null;
+      this.filteredRooms = this.filteredRooms.filter(room => {
+        const stays = this.stays.filter(stay => stay.roomId === room.roomId);
+        
+        const isAvailable = stays.some(stay => {
+          const stayFrom = new Date(stay.stayDateFrom);
+          const stayTo = new Date(stay.stayDateTo);
   
-      if (arrivalDate && departureDate) {
-        this.filteredRooms = this.filteredRooms.filter(room => {
-          const stays = this.stays.filter(stay => stay.roomId === room.roomId);
-          const isAvailable = stays.some(stay => {
-            const stayFrom = new Date(stay.stayDateFrom);
-            const stayTo = new Date(stay.stayDateTo);
-            const isDateOverlap = stayFrom <= departureDate && stayTo >= arrivalDate;
-  
-            if (isDateOverlap) {
-              const stayDuration = (departureDate.getTime() - arrivalDate.getTime()) / (1000 * 3600 * 24) + 1;
-              const isStayDurationMatch = stayDuration >= stay.minStay && stayDuration <= stay.maxStay;
-              return isStayDurationMatch;
-            }
-  
-            return false;
-          });
-  
-          return isAvailable;
+          // Room is considered available if it covers the entire requested period
+          return stayFrom <= arrivalDate && stayTo >= departureDate;
         });
-      }
+  
+        return isAvailable;
+      });
     }
-    
+  
+    // Guest filter
     if (hasGuestFilter) {
       this.filteredRooms = this.filteredRooms.filter(room =>
         room.guestCapacity >= filters.numberOfPersons
       );
     }
-    
+  
+    // Price filter
     if (hasPriceFilter) {
       this.filteredRooms = this.filteredRooms.filter(room =>
         room.pricePerDayPerPerson <= filters.maxPrice
       );
     }
-    
+  
+    // Update availability details for filtered rooms
+    const availabilityMap = new Map<number, string[]>();
+  
+    this.filteredRooms.forEach(room => {
+      const availabilityDetails = this.stays
+        .filter(stay => stay.roomId === room.roomId)
+        .map(stay => {
+          const formattedDateFrom = new Date(stay.stayDateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const formattedDateTo = new Date(stay.stayDateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          return `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
+        });
+  
+      availabilityMap.set(room.roomId, availabilityDetails);
+    });
+  
     this.filteredRooms = this.filteredRooms.map(room => ({
       ...room,
       availability: availabilityMap.get(room.roomId) || []
     }));
-
+  
     console.log('Filtered Rooms:', this.filteredRooms);
   }
+  
 
   openBookingModal(room: Room): void {
     this.selectedRoom = room;
