@@ -4,13 +4,14 @@ import { RoomService } from '../room.service';
 import { StayService } from '../stays.service';
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
-import { Reservation } from '../Interfaces/reservation';
+import { Reservation, Customer} from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
+import { ReservationStorageService } from '../reservation-storage.service';
 
 @Component({
   selector: 'app-rooms-filter',
   templateUrl: './rooms-filter.component.html',
-  styleUrls: ['./rooms-filter.component.css']
+  styleUrls: ['./rooms-filter.component.scss']
 })
 export class RoomsFilterComponent implements OnInit {
   rooms: Room[] = [];
@@ -26,6 +27,7 @@ export class RoomsFilterComponent implements OnInit {
   numberOfGuestsOptions: number[] = [];
   isConfirmDisabled = true;
   currentStep = 0;
+  
 
   @ViewChild('stepper') stepper!: MatStepper;
 displayedColumns: any;
@@ -33,7 +35,8 @@ displayedColumns: any;
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private reservationStorageService: ReservationStorageService,
   ) {
     this.filterForm = this.fb.group({
       location: [''],
@@ -153,6 +156,9 @@ displayedColumns: any;
   
     const arrivalDate = filters.stayDateFrom ? new Date(filters.stayDateFrom) : null;
     const departureDate = filters.stayDateTo ? new Date(filters.stayDateTo) : null;
+    const numberOfDays = arrivalDate && departureDate 
+      ? Math.ceil((departureDate.getTime() - arrivalDate.getTime()) / (1000 * 3600 * 24)) + 1 
+      : 0;
   
     this.filteredRooms = [...this.rooms];
   
@@ -168,20 +174,24 @@ displayedColumns: any;
       );
     }
   
-    // Date filter
+    // Date filter with minStay and maxStay
     if (hasDateFilter) {
       this.filteredRooms = this.filteredRooms.filter(room => {
         const stays = this.stays.filter(stay => stay.roomId === room.roomId);
         
-        const isAvailable = stays.some(stay => {
+        return stays.some(stay => {
           const stayFrom = new Date(stay.stayDateFrom);
           const stayTo = new Date(stay.stayDateTo);
+          const stayDuration = (stayTo.getTime() - stayFrom.getTime()) / (1000 * 3600 * 24) + 1;
   
-          // Room is considered available if it covers the entire requested period
-          return stayFrom <= arrivalDate && stayTo >= departureDate;
+          // Check if the stay covers the requested dates
+          const isDateOverlap = stayFrom <= arrivalDate && stayTo >= departureDate;
+  
+          // Check if the stay duration is within the room's min and max stay requirements
+          const isDurationValid = numberOfDays >= stay.minStay && numberOfDays <= stay.maxStay;
+  
+          return isDateOverlap && isDurationValid;
         });
-  
-        return isAvailable;
       });
     }
   
@@ -222,7 +232,6 @@ displayedColumns: any;
     console.log('Filtered Rooms:', this.filteredRooms);
   }
   
-
   openBookingModal(room: Room): void {
     this.selectedRoom = room;
     this.availabilityDetails = room.availability;
@@ -272,6 +281,7 @@ displayedColumns: any;
 
   confirmBooking(): void {
     if (this.bookingForm.valid && this.customerForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
+      // Construct Reservation object
       const reservation: Reservation = {
         reservationId: String(this.bookingForm.get('reservationId')?.value),
         locationId: this.selectedRoom?.locationId || 0,
@@ -285,13 +295,30 @@ displayedColumns: any;
         paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
         numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
       };
-
-      const customer = {
+  
+      // Parse customer name
+      const nameParts = this.customerForm.get('name')?.value.split(' ') || [];
+      let firstName = '';
+      let middleName = '';
+      let lastName = '';
+  
+      if (nameParts.length >= 2) {
+        firstName = nameParts[0]; // First part is first name
+        lastName = nameParts[nameParts.length - 1]; // Last part is last name
+        if (nameParts.length === 3) {
+          middleName = nameParts[1]; // Middle part is middle name
+        }
+      } else if (nameParts.length === 1) {
+        firstName = nameParts[0]; // Only one name part, consider it as first name
+      }
+  
+      // Construct Customer object
+      const customer: Customer = {
         customerId: String(this.customerForm.get('customerId')?.value),
         age: Number(this.customerForm.get('age')?.value),
-        firstName: this.customerForm.get('name')?.value.split(' ')[0],
-        middleName: '', 
-        lastName: this.customerForm.get('name')?.value.split(' ').slice(1).join(' '),
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
         country: this.customerForm.get('country')?.value,
         state: this.customerForm.get('state')?.value,
         city: this.customerForm.get('city')?.value,
@@ -299,13 +326,19 @@ displayedColumns: any;
         initialAddress: this.customerForm.get('initialAddress')?.value,
         mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
         mobileNumber2: 0,
+        birthDate: ''
       };
-
-      console.log('Reservation Object:', reservation);
-      console.log('Customer Object:', customer);
-
-      // Optionally handle payment submission or other actions here
-
+  
+      // Combine both objects
+      const reservationData = {
+        reservation: reservation,
+        customer: customer
+      };
+  
+      // Save to local storage
+      this.reservationStorageService.saveReservation(reservationData);
+  
+      // Reset and close modal
       this.closeBookingModal();
       this.bookingForm.reset();
       this.customerForm.reset();
@@ -315,7 +348,6 @@ displayedColumns: any;
       console.log('Please fill out all required fields.');
     }
   }
-
   private updateTotalPrice(): void {
     const numberOfGuests = this.bookingForm.get('totalNumberOfGuests')?.value || 0;
     const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
@@ -345,4 +377,5 @@ displayedColumns: any;
       this.currentStep--;
     }
   }
+ 
 }

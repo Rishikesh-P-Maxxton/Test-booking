@@ -28,8 +28,9 @@ import {MatDialogModule} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
 import { GanttChartComponent } from './gantt-chart/gantt-chart.component';
+import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent],
+  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent, ReservationsListComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,

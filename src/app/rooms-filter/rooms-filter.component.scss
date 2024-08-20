@@ -1,0 +1,282 @@
+/* Global styles */
+body {
+    font-family: 'Arial', sans-serif;
+    color: #333;
+  }
+  
+  .container-fluid {
+    margin-top: 1rem;
+    padding: 2rem;
+  }
+  
+  /* Filter section */
+  .filter-section {
+    background-color: #ffffff; /* Light Olive */
+    padding: 1rem; /* Reduced padding for a more compact look */
+    border: 1px solid #ddd; /* Subtle border to define the section */
+    border-radius: 0; /* No rounded corners for the section */
+    max-width: 100%; /* Ensure it doesn't exceed its container */
+  }
+  
+  .filter-section .form-group {
+    margin-bottom: 1rem; /* Spacing between form groups */
+  }
+  
+  .filter-section .form-group label {
+    font-size: 0.875rem; /* Smaller font size for labels */
+    margin-bottom: 0.25rem; /* Reduced space below labels */
+    display: block; /* Ensure labels are on their own line */
+  }
+  
+  .filter-section .form-control {
+    border: none; /* Remove border */
+    border-radius: 0; /* No border radius */
+    background-color: #e3e3e3; /* Light gray background */
+    padding: 0.5rem; /* Compact padding inside input fields */
+    font-size: 0.875rem; /* Adjusted font size */
+    box-shadow: none; /* Remove any box shadow */
+  }
+  
+  .filter-section .form-control:focus {
+    outline: none; /* Remove default outline on focus */
+    box-shadow: none; /* Ensure no shadow is added on focus */
+    border-color: transparent; /* Ensure no border color on focus */
+  }
+  
+  .filter-section .btn-custom {
+    background-color: #1db260; /* Custom green background */
+    border: none;
+    border-radius: 0; /* No border radius for button */
+    color: #fff;
+    padding: 0.5rem 1rem; /* Compact padding for the button */
+    font-size: 0.875rem; /* Smaller font size */
+  }
+  
+  .filter-section .btn-custom:hover {
+    background-color: #73c672; /* Lighter green on hover */
+  }
+  
+  
+  
+  /* Result section */
+  // .result-section {
+  //   background-color: #e8f0f2; // Light Olive
+  // }
+  
+  // .table {
+  //   border-radius: 0.25rem; // Square corners for table
+  // }
+  
+  // .table thead th {
+  //   background-color: #f8f9fa;
+  //   font-size: 0.875rem; // Smaller font size for table headers
+  // }
+  
+  // .table tbody tr {
+  //   transition: background-color 0.3s ease; // Animation for row hover
+  // }
+  
+  // .table tbody tr:hover {
+  //   background-color: #f1f1f1;
+  // }
+  
+  // .table td {
+  //   font-size: 0.875rem; // Smaller font size for table data
+  // }
+  
+  // .table-animate {
+  //   animation: fadeIn .5s ease-in-out; // Animation for table updates
+  // }
+  
+  // @keyframes fadeIn {
+  //   from {
+  //     opacity: 0;
+  //   }
+  //   to {
+  //     opacity: 1;
+  //   }
+  // }
+  
+  /* Wrapper to ensure table responsiveness */
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  /* Main table styling */
+  .custom-table {
+    width: 100%; /* Ensure the table takes full width */
+    min-width: 600px; /* Adjusted minimum width for smaller screens */
+    background-color: #f9f9f9; /* Light gray background for the table */
+    border-radius: 0; /* Rounded corners */
+    overflow: hidden; /* Ensures rounded corners apply to the table */
+    border-collapse: separate; /* Ensure borders are not collapsed */
+    border-spacing: 0; /* Remove spacing between cells */
+  }
+  
+  /* Header styling */
+  .custom-table thead tr,
+  .custom-table thead th {
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd; /* Subtle border for header */
+    color: #333; /* Dark gray for better readability */
+    font-size: 13px; /* Slightly larger font for better readability */
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    background-color: #f4f4f4; /* Light background for header */
+  }
+  
+  /* Body cell styling */
+  .custom-table tbody th,
+  .custom-table tbody td {
+    color: #555; /* Darker gray for better readability */
+    padding: 12px; /* Adjusted padding for a balanced look */
+    border-bottom: 1px solid #ddd; /* Light border between rows */
+    font-weight: 400; /* Consistent font weight */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Faster transition for a snappy effect */
+  }
+  
+  /* Styling for small elements within table cells */
+  .custom-table tbody th small,
+  .custom-table tbody td small {
+    color: rgba(0, 0, 0, 0.5); /* Slightly transparent text for small elements */
+  }
+  
+  /* Styling for links within table cells */
+  .custom-table tbody th a,
+  .custom-table tbody td a {
+    color: #007bff; /* Blue links for better visibility */
+    transition: color 0.2s ease; /* Smooth transition for link color */
+  }
+  
+  /* Styling for elements with "more" class */
+  .custom-table tbody th .more,
+  .custom-table tbody td .more {
+    color: #007bff;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+  }
+  
+  /* Row transition for hover effect */
+  .custom-table tbody tr {
+    transition: background-color 0.2s ease; /* Faster transition for a snappy effect */
+  }
+  
+  /* Hover effect for table rows */
+  .custom-table tbody tr:hover,
+  .custom-table tbody tr:focus {
+    background-color: #f1f1f1; /* Light gray background on hover */
+  }
+  
+  /* Hover effect for table cells */
+  .custom-table tbody tr:hover td,
+  .custom-table tbody tr:focus td {
+    color: #000; /* Black text color on hover */
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .custom-table {
+      min-width: 100%; /* Ensure table fits within smaller containers */
+    }
+    .custom-table thead th,
+    .custom-table tbody th,
+    .custom-table tbody td {
+      font-size: 11px; /* Smaller font size for better fit */
+      padding: 8px; /* Adjusted padding for smaller screens */
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .custom-table thead th,
+    .custom-table tbody th,
+    .custom-table tbody td {
+      font-size: 10px; /* Even smaller font size for very small screens */
+      padding: 6px; /* Further reduced padding */
+    }
+  }
+  
+
+  
+  /* Modal styles */
+  .modal-content {
+    border-radius: 0.25rem; 
+  }
+  
+  .modal-header, .modal-footer {
+    border: none;
+  }
+  
+  .btn-secondary {
+    border-radius: 0.25rem; 
+  }
+  .btn-primary {
+    border-radius: 0.25rem; // Square corners for buttons
+  }
+  
+  /* Angular Material Stepper */
+  .mat-vertical-stepper {
+    .mat-step-header {
+      font-size: 0.875rem; // Smaller font size for step headers
+    }
+    .mat-step-content {
+      .form-group {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+  
+  .square-input {
+    border-radius: 0.25rem; // Square corners for all inputs
+  }
+  
+ /* Ensure that the stepper container has enough width to show all steps */
+.horizontal-stepper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Style the stepper header container to show all steps */
+.horizontal-stepper .mat-horizontal-stepper-header-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Style individual step headers */
+.horizontal-stepper .mat-horizontal-stepper-header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Style the step header icons */
+.horizontal-stepper .mat-horizontal-stepper-header .mat-step-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* Change color for active and completed steps */
+.horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-active .mat-step-icon {
+  background-color: #28a745;
+}
+
+.horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-completed .mat-step-icon {
+  background-color: #17a2b8;
+}
+
+/* Ensure content area is visible */
+.horizontal-stepper .mat-step-content {
+  padding: 15px;
+}
+
+
