@@ -1,32 +1,43 @@
-<!-- reservations-list.component.html -->
-<div *ngIf="reservations.length === 0">No reservations found.</div>
-<table *ngIf="reservations.length > 0" class="table">
-  <thead>
-    <tr>
-      <th>Reservation ID</th>
-      <th>Room ID</th>
-      <th>Stay From</th>
-      <th>Stay To</th>
-      <th>Total Guests</th>
-      <th>Price Per Day</th>
-      <th>Total Price</th>
-      <th>Customer Name</th>
-      <th>Status</th>
-      <th>Paid Amount</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let reservation of reservations">
-      <td>{{ reservation.reservation.reservationId }}</td>
-      <td>{{ reservation.reservation.roomId }}</td>
-      <td>{{ reservation.reservation.arrivalDate }}</td>
-      <td>{{ reservation.reservation.departureDate }}</td>
-      <td>{{ reservation.reservation.numberOfGuest }}</td>
-      <td>{{ reservation.reservation.totalPrice }}</td>
-      <td>{{ reservation.reservation.totalPrice }}</td>
-      <td>{{ reservation.customer.firstName }} {{ reservation.customer.middleName }} {{ reservation.customer.lastName }}</td>
-      <td>{{ reservation.reservation.status }}</td>
-      <td>{{ reservation.reservation.paidAmount }}</td>
-    </tr>
-  </tbody>
-</table>
+
+<div class="container">
+    <div *ngIf="reservations.length === 0">No reservations found.</div>
+    <table *ngIf="reservations.length > 0" class="table">
+      <thead>
+        <tr>
+          <th>Reservation ID</th>
+          <th>Room ID</th>
+          <th>Stay From</th>
+          <th>Stay To</th>
+          <th>Total Guests</th>
+          <th>Price Per Day</th>
+          <th>Total Price</th>
+          <th>Customer Name</th>
+          <th>Status</th>
+          <th>Paid Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let reservation of reservations">
+          <td>{{ reservation.reservation.reservationId }}</td>
+          <td>{{ reservation.reservation.roomId }}</td>
+          <td>{{ reservation.reservation.arrivalDate }}</td>
+          <td>{{ reservation.reservation.departureDate }}</td>
+          <td>{{ reservation.reservation.numberOfGuest }}</td>
+          <td>{{ reservation.reservation.totalPrice }}</td>
+          <td>{{ reservation.reservation.totalPrice }}</td>
+          <td>{{ reservation.customer.firstName }} {{ reservation.customer.middleName }} {{ reservation.customer.lastName }}</td>
+          <td>
+            <select [(ngModel)]="reservation.reservation.status" (change)="updateStatus(reservation)">
+              <option value="CONFIRM">Confirm</option>
+              <option value="CHECKED-IN">Checked-In</option>
+              <option value="CHECKED-OUT">Checked-Out</option>
+            </select>
+          </td>
+          <td>{{ reservation.reservation.paidAmount }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+<div class="container">
+    <button class="clear-button" (click)="clearReservations()">Clear Reservations</button>

@@ -6,7 +6,7 @@ import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
 import { Reservation, Customer} from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
-import { ReservationStorageService } from '../reservation-storage.service';
+import { ReservationStorageService } from '../services/reservation-storage.service';
 
 @Component({
   selector: 'app-rooms-filter',
@@ -337,6 +337,7 @@ displayedColumns: any;
   
       // Save to local storage
       this.reservationStorageService.saveReservation(reservationData);
+    
   
       // Reset and close modal
       this.closeBookingModal();

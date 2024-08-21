@@ -1,9 +1,10 @@
-<div class="container-fluid mt-4">
+
+   <div class="container mt-4">
   <div class="row">
   <!-- Left Column: Filters -->
 <div class="col-md-3 col-lg-3"> <!-- Adjusted column size -->
   <div class="filter-section p-3 border rounded-0">
-    <p class="display-6">Filter Rooms</p>
+    <p class="display-6 titles">Filter Rooms</p>
     <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
       <!-- Location Dropdown -->
       <div class="form-group mb-3">
@@ -47,7 +48,11 @@
     <!-- Right Column: Results -->
     <div class="col-md-9 col-lg-9">
       <div class="result-section p-3 border rounded-0">
-        <p class="display-6">Available Rooms</p>
+        <p class="display-6 titles">Available Rooms</p>
+        <div class="total-rooms-found mb-3">
+        {{ filteredRooms.length }} Rooms Are Available
+        </div>
+
         <!-- <table class="table table-striped mt-4 table-animate" *ngIf="filteredRooms.length > 0">
           <thead>
             <tr>
@@ -87,7 +92,7 @@
               <th>Price Per Day</th>
               <th>Guest Capacity</th>
               <th>Availability</th>
-              <th>Action</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
