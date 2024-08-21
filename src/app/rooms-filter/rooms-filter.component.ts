@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../room.service';
 import { StayService } from '../stays.service';
@@ -7,13 +7,41 @@ import { Stay } from '../Interfaces/stay';
 import { Reservation, Customer} from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
 import { ReservationStorageService } from '../services/reservation-storage.service';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+
 
 @Component({
   selector: 'app-rooms-filter',
   templateUrl: './rooms-filter.component.html',
-  styleUrls: ['./rooms-filter.component.scss']
+  styleUrls: ['./rooms-filter.component.scss'], 
+  animations: [
+    trigger('fadeInAnimation', [
+      transition('* => *', [
+        query('tr',
+          style({ opacity: 0 }), // Ensure opacity is 0 before animation starts
+          { optional: true }
+        ),
+        query('tr',
+          stagger('100ms', [
+            animate('500ms', style({ opacity: 1 })) // Animate opacity to 1
+          ]),
+          { optional: true }
+        )
+      ])
+    ])
+  ]
 })
 export class RoomsFilterComponent implements OnInit {
+// detectChanges() {
+//   this.triggerAnimation();
+// }
+// triggerAnimation(): void {
+//   this.animationKey++;
+//   // Ensure Angular detects the changes and re-applies the animation
+//   this.cdr.detectChanges();
+// }
+
+
   rooms: Room[] = [];
   stays: Stay[] = [];
   filteredRooms: Room[] = [];
@@ -28,15 +56,21 @@ export class RoomsFilterComponent implements OnInit {
   isConfirmDisabled = true;
   currentStep = 0;
   
+  animationKey = 0;
+
+  
 
   @ViewChild('stepper') stepper!: MatStepper;
 displayedColumns: any;
+  
 
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
+    private cdr: ChangeDetectorRef,
+    
   ) {
     this.filterForm = this.fb.group({
       location: [''],
@@ -96,6 +130,8 @@ displayedColumns: any;
     });
   }
 
+  
+
   generateReservationId(): string {
     const prefix = 'RID';
     const randomNumber = Math.floor(1000 + Math.random() * 9000);
@@ -150,7 +186,7 @@ displayedColumns: any;
     this.locations = uniqueLocations;
   }
 
-  applyFilter(): void {
+  applyFilter(): void{
     const filters = this.filterForm.value;
     console.log('Filter Values:', filters);
   
@@ -230,8 +266,19 @@ displayedColumns: any;
     }));
   
     console.log('Filtered Rooms:', this.filteredRooms);
+     
+      
   }
+ 
   
+
+  // // Method to trigger animation
+  // triggerAnimation(): void {
+  //   this.animationKey++; // Change this to force re-render and animation
+  //   this.cdr.detectChanges(); // Ensure change detection happens
+  // }
+
+
   openBookingModal(room: Room): void {
     this.selectedRoom = room;
     this.availabilityDetails = room.availability;
@@ -380,3 +427,5 @@ displayedColumns: any;
   }
  
 }
+
+

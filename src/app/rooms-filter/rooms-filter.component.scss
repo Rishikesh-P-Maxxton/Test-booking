@@ -58,44 +58,7 @@ body {
   
   
   
-  /* Result section */
-  // .result-section {
-  //   background-color: #e8f0f2; // Light Olive
-  // }
-  
-  // .table {
-  //   border-radius: 0.25rem; // Square corners for table
-  // }
-  
-  // .table thead th {
-  //   background-color: #f8f9fa;
-  //   font-size: 0.875rem; // Smaller font size for table headers
-  // }
-  
-  // .table tbody tr {
-  //   transition: background-color 0.3s ease; // Animation for row hover
-  // }
-  
-  // .table tbody tr:hover {
-  //   background-color: #f1f1f1;
-  // }
-  
-  // .table td {
-  //   font-size: 0.875rem; // Smaller font size for table data
-  // }
-  
-  // .table-animate {
-  //   animation: fadeIn .5s ease-in-out; // Animation for table updates
-  // }
-  
-  // @keyframes fadeIn {
-  //   from {
-  //     opacity: 0;
-  //   }
-  //   to {
-  //     opacity: 1;
-  //   }
-  // }
+ 
   
   /* Wrapper to ensure table responsiveness */
   .table-responsive {
@@ -112,7 +75,10 @@ body {
     border-collapse: separate; /* Ensure borders are not collapsed */
     border-spacing: 0; /* Remove spacing between cells */
   }
-  
+  .table-animate {
+    // Ensure this class has properties to handle smooth animations
+    transition: opacity 0.5s ease-in-out;
+  }
   /* Header styling */
   .custom-table thead tr,
   .custom-table thead th {
@@ -197,6 +163,24 @@ body {
     }
   }
   
+ /* Define the keyframes for the animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply the animation to table rows */
+.table-row {
+  opacity: 0; /* Initial state */
+  animation: fadeIn 0.5s ease-out forwards; /* Animation effect */
+  animation-delay: var(--animation-delay, 0s); /* Delay each row individually */
+}
 
   
   /* Modal styles */

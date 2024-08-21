@@ -16,6 +16,8 @@ import { RoomAvailabilityChartComponent } from './room-availability-chart/room-a
 import { SteppersComponent } from './Tests/steppers/steppers.component';
 import {MatStepperModule} from '@angular/material/stepper';
 
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 import {MatSelectModule} from '@angular/material/select';
 import { MatNativeDateModule } from '@angular/material/core';
 
@@ -34,6 +36,7 @@ import { FilterNavsComponent } from './filter-navs/filter-navs.component';
   declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent, ReservationsListComponent, FilterNavsComponent],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,  
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,
@@ -46,7 +49,7 @@ import { FilterNavsComponent } from './filter-navs/filter-navs.component';
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
-    provideNativeDateAdapter(),
+    provideNativeDateAdapter(), provideAnimationsAsync()
   ],
   bootstrap: [AppComponent],
 })
