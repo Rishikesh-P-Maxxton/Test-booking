@@ -83,7 +83,7 @@
             </tr>
           </tbody>
         </table> -->
-        <button class="btn btn-custom" (click)="testDateRangeOverlap()">Test DateOverlap from LS </button>
+        <!-- <button class="btn btn-custom" (click)="testDateRangeOverlap()">Test DateOverlap from LS </button> -->
         <div *ngIf="filteredRooms.length"  >
         <!-- <table class="table custom-table mt-4 table-animate"[@fadeInAnimation]="animationKey"  *ngIf="filteredRooms.length > 0"> -->
           <table class="table custom-table mt-4 table-animate" *ngIf="filteredRooms.length > 0">
@@ -128,123 +128,184 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="bookingModalLabel">Booking</h5>
-          <button type="button" class="btn-close" (click)="closeBookingModal()"></button>
+          <div class="modal-title display-6" id="bookingModalLabel">Book Room</div>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeBookingModal()"></button>
         </div>
         <div class="modal-body">
           <mat-vertical-stepper [linear]="true" #stepper>
             <!-- Booking Form Step -->
             <mat-step label="Booking Details" [stepControl]="bookingForm">
-              <form [formGroup]="bookingForm" class="needs-validation" novalidate>
-                <div class="mb-3">
-                  <label for="reservationId" class="form-label">Reservation ID</label>
-                  <input type="text" class="form-control" id="reservationId" formControlName="reservationId" readonly />
-                </div>
-                <div class="mb-3">
-                  <label for="roomNo" class="form-label">Room Number</label>
-                  <input type="text" class="form-control" id="roomNo" formControlName="roomNo" readonly />
-                </div>
-                <div class="mb-3">
-                  <label for="stayDateFrom" class="form-label">Stay Date From</label>
-                  <input type="date" class="form-control" id="stayDateFrom" formControlName="stayDateFrom" />
-                </div>
-                <div class="mb-3">
-                  <label for="stayDateTo" class="form-label">Stay Date To</label>
-                  <input type="date" class="form-control" id="stayDateTo" formControlName="stayDateTo" />
-                </div>
-                <div class="mb-3">
-                  <label for="numberOfDays" class="form-label">Number of Days</label>
-                  <input type="text" class="form-control" id="numberOfDays" formControlName="numberOfDays" readonly />
-                </div>
-                <div class="mb-3">
-                  <label for="totalNumberOfGuests" class="form-label">Total Number of Guests</label>
-                  <select id="totalNumberOfGuests" class="form-select" formControlName="totalNumberOfGuests">
-                    <option *ngFor="let option of numberOfGuestsOptions" [value]="option">{{ option }}</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="pricePerDayPerPerson" class="form-label">Price per Day per Person</label>
-                  <input type="text" class="form-control" id="pricePerDayPerPerson" formControlName="pricePerDayPerPerson" readonly />
-                </div>
-                <div class="mb-3">
-                  <label for="totalPrice" class="form-label">Total Price</label>
-                  <input type="text" class="form-control" id="totalPrice" formControlName="totalPrice" readonly />
+              <form [formGroup]="bookingForm" class="custom-form needs-validation" novalidate>
+                <div class="container-fluid">
+                  <div class="row">
+                    <!-- Reservation ID and Room Number -->
+                    <div class="col-md-6 mb-3">
+                      <label for="reservationId" class="form-label">Reservation ID</label>
+                      <input type="text" class="form-control" id="reservationId" formControlName="reservationId" readonly />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="roomNo" class="form-label">Room Number</label>
+                      <input type="text" class="form-control" id="roomNo" formControlName="roomNo" readonly />
+                    </div>
+                  </div>
+              
+                  <div class="row">
+                    <!-- Stay Date From and Stay Date To -->
+                    <div class="col-md-6 mb-3">
+                      <label for="stayDateFrom" class="form-label">Stay Date From</label>
+                      <input type="date" class="form-control" id="stayDateFrom" formControlName="stayDateFrom" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="stayDateTo" class="form-label">Stay Date To</label>
+                      <input type="date" class="form-control" id="stayDateTo" formControlName="stayDateTo" />
+                    </div>
+                  </div>
+              
+                  <div class="row">
+                    <!-- Number of Days and Total Number of Guests -->
+                    <div class="col-md-6 mb-3">
+                      <label for="numberOfDays" class="form-label">Number of Days</label>
+                      <input type="text" class="form-control" id="numberOfDays" formControlName="numberOfDays" readonly />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="totalNumberOfGuests" class="form-label">Total Number of Guests</label>
+                      <select id="totalNumberOfGuests" class="form-select" formControlName="totalNumberOfGuests">
+                        <option *ngFor="let option of numberOfGuestsOptions" [value]="option">{{ option }}</option>
+                      </select>
+                    </div>
+                  </div>
+              
+                  <div class="row">
+                    <!-- Price per Day per Person and Total Price -->
+                    <div class="col-md-8 mb-3">
+                      <label for="pricePerDayPerPerson" class="form-label">Price per Day per Person</label>
+                      <input type="text" class="form-control" id="pricePerDayPerPerson" formControlName="pricePerDayPerPerson" readonly />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label for="totalPrice" class="form-label">Total Price</label>
+                      <input type="text" class="form-control" id="totalPrice" formControlName="totalPrice" readonly />
+                    </div>
+                  </div>
                 </div>
               </form>
+              
             </mat-step>
   
             <!-- Customer Details Step -->
             <mat-step label="Customer Details" [stepControl]="customerForm">
-              <form [formGroup]="customerForm" class="needs-validation" novalidate>
-                <div class="mb-3">
-                  <label for="customerId" class="form-label">Customer ID</label>
-                  <input type="text" class="form-control" id="customerId" formControlName="customerId" readonly />
-                </div>
-                <div class="mb-3">
-                  <label for="name" class="form-label">Name</label>
-                  <input type="text" class="form-control" id="name" formControlName="name" />
-                </div>
-                <div class="mb-3">
-                  <label for="age" class="form-label">Age</label>
-                  <input type="number" class="form-control" id="age" formControlName="age" />
-                </div>
-                
-                <div class="mb-3">
-                  <label for="initialAddress" class="form-label">Initial Address</label>
-                  <input type="text" class="form-control" id="initialAddress" formControlName="initialAddress" />
-                </div>
-                <div class="mb-3">
-                  <label for="mobileNumber" class="form-label">Mobile Number</label>
-                  <input type="tel" class="form-control" id="mobileNumber" formControlName="mobileNumber" />
-                </div>
-                <div class="mb-3">
-                  <label for="pincode" class="form-label">Pincode</label>
-                  <input type="number" class="form-control" id="pincode" formControlName="pincode" />
-                </div>
-                <div class="mb-3">
-                  <label for="district" class="form-label">District</label>
-                  <input type="text" class="form-control" id="district" formControlName="district" />
-                </div>
-                <div class="mb-3">
-                  <label for="city" class="form-label">City</label>
-                  <input type="text" class="form-control" id="city" formControlName="city" />
-                </div>
-                <div class="mb-3">
-                  <label for="state" class="form-label">State</label>
-                  <input type="text" class="form-control" id="state" formControlName="state" />
-                </div>
-                <div class="mb-3">
-                  <label for="country" class="form-label">Country</label>
-                  <input type="text" class="form-control" id="country" formControlName="country" />
+              <form [formGroup]="customerForm" class="custom-form needs-validation" novalidate>
+                <div class="container-fluid">
+                  <div class="row">
+                    <!-- Customer ID -->
+                    <div class="col-md-5 mb-3">
+                      <label for="customerId" class="form-label">Customer ID</label>
+                      <input type="text" class="form-control" id="customerId" formControlName="customerId" readonly />
+                    </div>
+                    <div class="col-md-7 mb-3"></div>
+                  </div>
+                  
+                  <div class="row">
+                    <!-- Name and Age -->
+                    <div class="col-md-8 mb-3">
+                      <label for="name" class="form-label">Name</label>
+                      <input type="text" class="form-control" id="name" formControlName="name" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                      <label for="age" class="form-label">Age</label>
+                      <input type="number" class="form-control" id="age" formControlName="age" />
+                    </div>
+                  </div>
+                  
+                  <div class="row">
+                    <!-- Initial Address -->
+                    <div class="col-md-10 mb-3">
+                      <label for="initialAddress" class="form-label">Initial Address</label>
+                      <input type="text" class="form-control" id="initialAddress" formControlName="initialAddress" rows="3"/>
+                    </div>
+                    <div class="col-md-2 mb-3"></div>
+                  </div>
+                  
+                  <div class="row">
+                    <!-- Mobile Number and Pincode -->
+                    <div class="col-md-7 mb-3">
+                      <label for="mobileNumber" class="form-label">Mobile Number</label>
+                      <input type="tel" class="form-control" id="mobileNumber" formControlName="mobileNumber" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label for="pincode" class="form-label">Pincode</label>
+                      <input type="number" class="form-control" id="pincode" formControlName="pincode" />
+                    </div>
+                  </div>
+                  
+                  <div class="row">
+                    <!-- Country, State, and City -->
+                    <div class="col-md-4 mb-3">
+                      <label for="country" class="form-label">Country</label>
+                      <select id="country" class="form-control" formControlName="country" (change)="onCountryChange($event)">
+                        <option value="">Select a country</option>
+                        <option *ngFor="let country of countries" [value]="country.countryId">{{ country.countryName }}</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label for="state" class="form-label">State</label>
+                      <select id="state" class="form-control" formControlName="state" (change)="onStateChange($event)">
+                        <option value="">Select a state</option>
+                        <option *ngFor="let state of states" [value]="state.stateId">{{ state.stateName }}</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label for="city" class="form-label">City</label>
+                      <select id="city" class="form-control" formControlName="city" >
+                        <option value="">Select a city</option>
+                        <option *ngFor="let city of cities" [value]="city.cityId">{{ city.cityName }}</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </form>
+              
+              
+              
             </mat-step>
   
             <!-- Payment Details Step -->
             <mat-step label="Payment Details" [stepControl]="paymentForm">
-              <form [formGroup]="paymentForm" class="needs-validation" novalidate>
-                <div class="mb-3">
-                  <label for="paymentId" class="form-label">Payment ID</label>
-                  <input type="text" class="form-control" id="paymentId" formControlName="paymentId" readonly />
-                </div>
-                <div class="mb-3">
-                  <label for="paymentMode" class="form-label">Payment Mode</label>
-                  <select id="paymentMode" class="form-select" formControlName="paymentMode">
-                    <option value="debitcard">Debit Card</option>
-                    <option value="upi">UPI</option>
-                    <option value="cash">Cash</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="paidAmount" class="form-label">Paid Amount</label>
-                  <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" />
-                </div>
-                <div class="mb-3">
-                  <label for="due" class="form-label">Due</label>
-                  <input type="number" class="form-control" id="due" formControlName="due" />
+              <form [formGroup]="paymentForm" class="custom-form needs-validation" novalidate>
+                <div class="container-fluid">
+                  <div class="row">
+                    <!-- Payment ID -->
+                    <div class="col-md-3 mb-3">
+                      <label for="paymentId" class="form-label">Payment ID</label>
+                      <input type="text" class="form-control" id="paymentId" formControlName="paymentId" readonly />
+                    </div>
+                    <div class="col-md-9 mb-3"></div>
+                  </div>
+            
+                  <div class="row">
+                    <!-- Payment Mode -->
+                    <div class="col-md-6 mb-3">
+                      <label for="paymentMode" class="form-label">Payment Mode</label>
+                      <select id="paymentMode" class="form-select" formControlName="paymentMode">
+                        <option value="debitcard">Debit Card</option>
+                        <option value="upi">UPI</option>
+                        <option value="cash">Cash</option>
+                      </select>
+                    </div>
+                    <!-- Paid Amount -->
+                    <div class="col-md-3 mb-3">
+                      <label for="paidAmount" class="form-label">Paid Amount</label>
+                      <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" />
+                    </div>
+                    <!-- Due -->
+                    <div class="col-md-3 mb-3">
+                      <label for="due" class="form-label">Due</label>
+                      <input type="number" class="form-control" id="due" formControlName="due" />
+                    </div>
+                  </div>
                 </div>
               </form>
             </mat-step>
+            
           </mat-vertical-stepper>
         </div>
         <div class="modal-footer">
@@ -254,3 +315,4 @@
       </div>
     </div>
   </div>
+  

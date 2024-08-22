@@ -139,3 +139,5 @@
     animation: fadeIn 0.5s ease-out forwards; /* Animation effect */
     animation-delay: var(--animation-delay, 0s); /* Delay each row individually */
 }
+
+  

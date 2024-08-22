@@ -7,6 +7,7 @@ import { Stay } from '../Interfaces/stay';
 import { Reservation, Customer } from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
 import { ReservationStorageService } from '../services/reservation-storage.service';
+import { GeolocsService } from '../services/geolocs.service';
 // import {
 //   trigger,
 //   transition,
@@ -63,6 +64,13 @@ export class RoomsFilterComponent implements OnInit {
 
   animationKey = 0;
 
+  //Customer Form
+  countries: any[] = [];
+  states: any[] = [];
+  cities: any[] = [];
+  selectedCountryId: string | null = null;
+  selectedStateId: string | null = null;
+
   @ViewChild('stepper') stepper!: MatStepper;
   displayedColumns: any;
 
@@ -71,7 +79,8 @@ export class RoomsFilterComponent implements OnInit {
     private stayService: StayService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService
+
   ) {
     this.filterForm = this.fb.group({
       location: [''],
@@ -92,19 +101,19 @@ export class RoomsFilterComponent implements OnInit {
       totalPrice: [{ value: 0, disabled: true }],
     });
 
+    
     this.customerForm = this.fb.group({
-      customerId: [{ value: '', disabled: true }],
+      customerId: [{ value: '', disabled: true }, Validators.required],
       name: ['', Validators.required],
-      age: [null, [Validators.required, Validators.min(18)]],
+      age: ['', Validators.required],
       initialAddress: ['', Validators.required],
       mobileNumber: ['', Validators.required],
-      pincode: [null, Validators.required],
-      district: ['', Validators.required],
-      city: ['', Validators.required],
-      state: ['', Validators.required],
+      pincode: ['', Validators.required],
       country: ['', Validators.required],
+      state: [{ value: '', disabled: true }, Validators.required],
+      city: [{ value: '', disabled: true }, Validators.required]
     });
-
+    
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
@@ -133,6 +142,11 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    
+    this.geolocsService.getData().subscribe(response => {
+      this.countries = response.countries;
+    });
+
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
       this.stayService.getStays().subscribe((stayData) => {
@@ -142,6 +156,54 @@ export class RoomsFilterComponent implements OnInit {
       });
     });
   }
+
+
+
+  onCountryChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const countryId = target.value;
+    this.selectedCountryId = countryId;
+  
+    // Find selected country
+    const country = this.countries.find(c => c.countryId === countryId);
+  
+    // Update states and reset cities
+    this.states = country ? country.states : [];
+    this.cities = [];
+    this.selectedStateId = null;
+  
+    // Update form controls
+    this.customerForm.get('state')?.setValue('');
+    this.customerForm.get('city')?.setValue('');
+    
+    // Enable or disable controls
+    this.customerForm.get('state')?.enable();
+    this.customerForm.get('city')?.disable();
+  }
+  onStateChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const stateId = target.value;
+    this.selectedStateId = stateId;
+  
+    // Find selected country
+    const country = this.countries.find(c => c.countryId === this.selectedCountryId);
+    if (country) {
+      // Find selected state
+      const state = country.states.find((s: { stateId: string; }) => s.stateId === stateId);
+      this.cities = state ? state.cities : [];
+    }
+  
+    // Update form control and enable city dropdown if there are cities
+    this.customerForm.get('city')?.setValue('');
+    if (this.cities.length > 0) {
+      this.customerForm.get('city')?.enable();
+    } else {
+      this.customerForm.get('city')?.disable();
+    }
+  }
+  
+
+  
 
   generateReservationId(): string {
     const prefix = 'RID';
@@ -207,139 +269,162 @@ export class RoomsFilterComponent implements OnInit {
     this.locations = uniqueLocations;
   }
 
-  applyFilter(): void {
-    const filters = this.filterForm.value;
-    console.log('Filter Values:', filters);
+ applyFilter(): void {
+  const filters = this.filterForm.value;
+  console.log('Filter Values:', filters);
 
-    const arrivalDate = filters.stayDateFrom
-      ? new Date(filters.stayDateFrom)
-      : null;
-    const departureDate = filters.stayDateTo
-      ? new Date(filters.stayDateTo)
-      : null;
-    const numberOfDays =
-      arrivalDate && departureDate
-        ? Math.ceil(
-            (departureDate.getTime() - arrivalDate.getTime()) /
-              (1000 * 3600 * 24)
-          ) + 1
-        : 0;
+  const arrivalDate = filters.stayDateFrom ? new Date(filters.stayDateFrom) : null;
+  const departureDate = filters.stayDateTo ? new Date(filters.stayDateTo) : null;
+  const numberOfDays = arrivalDate && departureDate
+    ? Math.ceil((departureDate.getTime() - arrivalDate.getTime()) / (1000 * 3600 * 24)) + 1
+    : 0;
 
-    // Start with all rooms
-    this.filteredRooms = [...this.rooms];
+  console.log('Parsed Dates:', { arrivalDate, departureDate });
+  console.log('Number of Days:', numberOfDays);
 
-    const hasLocationFilter = filters.location.trim() !== '';
-    const hasDateFilter = arrivalDate && departureDate;
-    const hasGuestFilter = filters.numberOfPersons > 0;
-    const hasPriceFilter = filters.maxPrice > 0;
+  // Start with all rooms
+  this.filteredRooms = [...this.rooms];
+  console.log('Initial Filtered Rooms:', this.filteredRooms);
 
-    // Location filter
-    if (hasLocationFilter) {
-      this.filteredRooms = this.filteredRooms.filter((room) =>
-        room.locationName.toLowerCase().includes(filters.location.toLowerCase())
-      );
-    }
+  const hasLocationFilter = filters.location.trim() !== '';
+  const hasDateFilter = arrivalDate && departureDate;
+  const hasGuestFilter = filters.numberOfPersons > 0;
+  const hasPriceFilter = filters.maxPrice > 0;
 
-    // Fetch reservations from local storage
-    const storedReservations = this.reservationStorageService.getReservations();
+  console.log('Filters Applied:', { hasLocationFilter, hasDateFilter, hasGuestFilter, hasPriceFilter });
 
-    // Convert storedReservations into an array of objects
-    const reservations = storedReservations.map((reservationData) => ({
-      roomId: reservationData.reservation.roomId,
-      arrivalDate: new Date(reservationData.reservation.arrivalDate),
-      departureDate: new Date(reservationData.reservation.departureDate),
-    }));
+  // Location filter
+  if (hasLocationFilter) {
+    this.filteredRooms = this.filteredRooms.filter((room) =>
+      room.locationName.toLowerCase().includes(filters.location.toLowerCase())
+    );
+    console.log('After Location Filter:', this.filteredRooms);
+  }
 
-    // Date filter with minStay and maxStay and overlap check
-    if (hasDateFilter) {
-      this.filteredRooms = this.filteredRooms.filter((room) => {
-        const stays = this.stays.filter((stay) => stay.roomId === room.roomId);
+  // Fetch reservations from local storage
+  const storedReservations = this.reservationStorageService.getReservations();
+  console.log('Stored Reservations:', storedReservations);
 
-        return stays.some((stay) => {
-          const stayFrom = new Date(stay.stayDateFrom);
-          const stayTo = new Date(stay.stayDateTo);
-          const stayDuration =
-            (stayTo.getTime() - stayFrom.getTime()) / (1000 * 3600 * 24) + 1;
+  // Convert storedReservations into an array of objects
+  const reservations = storedReservations.map((reservationData) => ({
+    roomId: reservationData.reservation.roomId,
+    arrivalDate: new Date(reservationData.reservation.arrivalDate),
+    departureDate: new Date(reservationData.reservation.departureDate),
+  }));
+  console.log('Converted Reservations:', reservations);
 
-          // Check if the stay covers the requested dates
-          const isDateOverlap = this.isDateRangeOverlapping(
-            arrivalDate,
-            departureDate,
-            stayFrom,
-            stayTo
-          );
+  // Date filter with minStay and maxStay and availability check
+  if (hasDateFilter) {
+    this.filteredRooms = this.filteredRooms.filter((room) => {
+      const stays = this.stays.filter((stay) => stay.roomId === room.roomId);
+      console.log('Room Stays:', { roomId: room.roomId, stays });
 
-          // Check if the stay duration is within the room's min and max stay requirements
-          const isDurationValid =
-            numberOfDays >= stay.minStay && numberOfDays <= stay.maxStay;
+      return stays.some((stay) => {
+        const stayFrom = new Date(stay.stayDateFrom);
+        const stayTo = new Date(stay.stayDateTo);
+        const stayDuration = (stayTo.getTime() - stayFrom.getTime()) / (1000 * 3600 * 24) + 1;
 
-          return isDateOverlap && isDurationValid;
-        });
-      });
-    }
+        console.log('Stay Dates:', { stayFrom, stayTo });
+        console.log('Requested Dates:', { arrivalDate, departureDate });
+        console.log('Stay Duration:', stayDuration);
 
-    // Additional date overlap check using stored reservations
-    if (hasDateFilter) {
-      this.filteredRooms = this.filteredRooms.filter((room) => {
-        const roomReservations = reservations.filter(
-          (reservation) => reservation.roomId === room.roomId
+        // Use helper function to check if the requested stay period is completely within the room's available period
+        const isDateCompletelyWithin = this.isDateRangeCompletelyWithin(
+          arrivalDate, 
+          departureDate, 
+          stayFrom, 
+          stayTo
         );
+        console.log('Is Date Completely Within:', isDateCompletelyWithin);
 
-        return !roomReservations.some((reservation) =>
-          this.isDateRangeOverlapping(
-            arrivalDate,
-            departureDate,
-            reservation.arrivalDate,
-            reservation.departureDate
-          )
-        );
+        // Check if the stay duration is within the room's min and max stay requirements
+        const isDurationValid =
+          numberOfDays >= (stay.minStay || 0) && numberOfDays <= (stay.maxStay || Infinity);
+        console.log('Is Duration Valid:', isDurationValid);
+
+        return isDateCompletelyWithin && isDurationValid;
       });
-    }
-
-    // Guest filter
-    if (hasGuestFilter) {
-      this.filteredRooms = this.filteredRooms.filter(
-        (room) => room.guestCapacity >= filters.numberOfPersons
-      );
-    }
-
-    // Price filter
-    if (hasPriceFilter) {
-      this.filteredRooms = this.filteredRooms.filter(
-        (room) => room.pricePerDayPerPerson <= filters.maxPrice
-      );
-    }
-
-    // Update availability details for filtered rooms
-    const availabilityMap = new Map<number, string[]>();
-
-    this.filteredRooms.forEach((room) => {
-      const availabilityDetails = this.stays
-        .filter((stay) => stay.roomId === room.roomId)
-        .map((stay) => {
-          const formattedDateFrom = new Date(
-            stay.stayDateFrom
-          ).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          });
-          const formattedDateTo = new Date(stay.stayDateTo).toLocaleDateString(
-            'en-US',
-            { month: 'short', day: 'numeric', year: 'numeric' }
-          );
-          return `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
-        });
-
-      availabilityMap.set(room.roomId, availabilityDetails);
     });
+    console.log('After Date Filter:', this.filteredRooms);
+  }
 
-    this.filteredRooms = this.filteredRooms.map((room) => ({
-      ...room,
-      availability: availabilityMap.get(room.roomId) || [],
-    }));
+  // Additional date overlap check using stored reservations
+  if (hasDateFilter) {
+    this.filteredRooms = this.filteredRooms.filter((room) => {
+      const roomReservations = reservations.filter(
+        (reservation) => reservation.roomId === room.roomId
+      );
+      console.log('Room Reservations:', roomReservations);
 
-    console.log('Filtered Rooms:', this.filteredRooms);
+      return !roomReservations.some((reservation) =>
+        this.isDateRangeOverlapping(
+          arrivalDate,
+          departureDate,
+          reservation.arrivalDate,
+          reservation.departureDate
+        )
+      );
+    });
+    console.log('After Stored Reservations Filter:', this.filteredRooms);
+  }
+
+  // Guest filter
+  if (hasGuestFilter) {
+    this.filteredRooms = this.filteredRooms.filter(
+      (room) => room.guestCapacity >= filters.numberOfPersons
+    );
+    console.log('After Guest Filter:', this.filteredRooms);
+  }
+
+  // Price filter
+  if (hasPriceFilter) {
+    this.filteredRooms = this.filteredRooms.filter(
+      (room) => room.pricePerDayPerPerson <= filters.maxPrice
+    );
+    console.log('After Price Filter:', this.filteredRooms);
+  }
+
+  // Update availability details for filtered rooms
+  const availabilityMap = new Map<number, string[]>();
+
+  this.filteredRooms.forEach((room) => {
+    const availabilityDetails = this.stays
+      .filter((stay) => stay.roomId === room.roomId)
+      .map((stay) => {
+        const formattedDateFrom = new Date(stay.stayDateFrom).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const formattedDateTo = new Date(stay.stayDateTo).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        return `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
+      });
+
+    availabilityMap.set(room.roomId, availabilityDetails);
+  });
+
+  this.filteredRooms = this.filteredRooms.map((room) => ({
+    ...room,
+    availability: availabilityMap.get(room.roomId) || [],
+  }));
+
+  console.log('Filtered Rooms with Availability:', this.filteredRooms);
+}
+
+  
+
+  // Helper function to check if the requested date range is completely within the room's date range
+  isDateRangeCompletelyWithin(
+    filterStart: Date,
+    filterEnd: Date,
+    bookingStart: Date,
+    bookingEnd: Date
+  ): boolean {
+    return filterStart >= bookingStart && filterEnd <= bookingEnd;
   }
 
   // Helper function to check date range overlap
@@ -359,10 +444,10 @@ export class RoomsFilterComponent implements OnInit {
     });
     return overlap;
   }
-
+  
   testDateRangeOverlap(): void {
     console.log('Running Date Range Overlap Tests:');
-
+  
     const test1 = this.isDateRangeOverlapping(
       new Date('2024-10-15'),
       new Date('2024-10-18'),
@@ -370,7 +455,7 @@ export class RoomsFilterComponent implements OnInit {
       new Date('2024-10-20')
     );
     console.log('Test Case 1:', test1); // Expected: true
-
+  
     const test2 = this.isDateRangeOverlapping(
       new Date('2024-10-21'),
       new Date('2024-10-25'),
@@ -379,6 +464,7 @@ export class RoomsFilterComponent implements OnInit {
     );
     console.log('Test Case 2:', test2); // Expected: false
   }
+  
 
   // // Method to trigger animation
   // triggerAnimation(): void {
