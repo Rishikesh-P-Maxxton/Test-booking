@@ -13,6 +13,7 @@
                 <th>Customer Name</th>
                 <th>Status</th>
                 <th>Paid Amount</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -40,6 +41,7 @@
                     </select>
                 </td>
                 <td>{{ reservation.reservation.paidAmount }}</td>
+                <td> <button (click)="deleteReservation(reservation.reservation.reservationId)">Remove</button></td>
             </tr>
         </tbody>
     </table>

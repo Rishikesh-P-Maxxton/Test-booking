@@ -40,49 +40,22 @@
       </div>
 
       <button type="submit"  class="btn btn-custom mt-3 w-100">Filter Room</button>
+
     </form>
+    <!-- <button (click)="clearFilter()" class="btn btn-custom-sec mt-3 w-100">Clear Filters</button> -->
   </div>
 </div>
 
 
     <!-- Right Column: Results -->
     <div class="col-md-9 col-lg-9">
-      <div class="result-section p-3 border rounded-0">
+      <div class="result-section p-3 border rounded-0 ">
         <p class="display-6 titles">Available Rooms</p>
         <div class="total-rooms-found mb-3">
         {{ filteredRooms.length }} Rooms Are Available
         </div>
 
-        <!-- <table class="table table-striped mt-4 table-animate" *ngIf="filteredRooms.length > 0">
-          <thead>
-            <tr>
-              <th>Room ID</th>
-              <th>Location</th>
-              <th>Room Name</th>
-              <th>Price Per Day</th>
-              <th>Guest Capacity</th>
-              <th>Availability</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let room of filteredRooms">
-              <td>{{ room.roomId }}</td>
-              <td>{{ room.locationName }}</td>
-              <td>{{ room.roomName }}</td>
-              <td>{{ room.pricePerDayPerPerson | currency }}</td>
-              <td>{{ room.guestCapacity }}</td>
-              <td>
-                <ul class="list-unstyled mb-0">
-                  <li *ngFor="let availability of room.availability">{{ availability }}</li>
-                </ul>
-              </td>
-              <td>
-                <button class="btn btn-custom" (click)="openBookingModal(room)">Book</button>
-              </td>
-            </tr>
-          </tbody>
-        </table> -->
+      
         <!-- <button class="btn btn-custom" (click)="testDateRangeOverlap()">Test DateOverlap from LS </button> -->
         <div *ngIf="filteredRooms.length"  >
         <!-- <table class="table custom-table mt-4 table-animate"[@fadeInAnimation]="animationKey"  *ngIf="filteredRooms.length > 0"> -->
@@ -95,14 +68,14 @@
                 <th>Price Per Day</th>
                 <th>Guest Capacity</th>
                 <th>Availability</th>
-                <th></th>
+                <th *ngIf="isDateFilterApplied()"></th>
               </tr>
             </thead>
             <tbody>
               <tr 
                 class="table-row" 
-                *ngFor="let room of filteredRooms; let i = index"
-                [ngStyle]="{'--animation-delay': i * 0.2 + 's'}">
+                *ngFor="let room of filteredRooms | paginate: { itemsPerPage: itemsPerPage, currentPage: page }; let i = index"
+                [ngStyle]="{'--animation-delay': i * 0.1 + 's'}">
                 <td>{{ room.roomId }}</td>
                 <td>{{ room.locationName }}</td>
                 <td>{{ room.roomName }}</td>
@@ -114,14 +87,20 @@
                   </ul>
                 </td>
                 <td>
-                  <button class="btn btn-custom" (click)="openBookingModal(room)">Book</button>
+                  <button class="btn btn-custom" *ngIf="isDateFilterApplied()" (click)="openBookingModal(room)">Book</button>
                 </td>
               </tr>
             </tbody>
           </table>
+          <div class="d-flex justify-content-center mt-4">
+            <pagination-controls
+              previousLabel="Prev"
+              nextLabel="Next"
+              (pageChange)="page = $event">
+            </pagination-controls>
+          </div>
           
-          <p *ngIf="filteredRooms.length === 0" class="mt-4">No rooms match the selected filters.</p>
-          
+          <p *ngIf="filteredRooms.length === 0" class="mt-4">No rooms match the selected filters.</p>       
   </div>
 
   <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">

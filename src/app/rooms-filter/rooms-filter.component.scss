@@ -51,14 +51,26 @@ body {
     padding: 0.5rem 1rem; /* Compact padding for the button */
     font-size: 0.875rem; /* Smaller font size */
   }
+  .filter-section .btn-custom-sec {
+    
+    border: none;
+    border-radius: 0; /* No border radius for button */
+    color: #666666;
+    padding: 0.5rem 1rem; /* Compact padding for the button */
+    font-size: 0.875rem; /* Smaller font size */
+  }
   
   .filter-section .btn-custom:hover {
     background-color: #73c672; /* Lighter green on hover */
   }
+  .filter-section .btn-custom-sec:hover {
+    color: #000000; /* Lighter green on hover */
+  }
   
   
   
- 
+  
+
   
   /* Wrapper to ensure table responsiveness */
   .table-responsive {
@@ -212,7 +224,7 @@ body {
 .custom-form .form-select {
   border: none; /* Remove border */
   border-radius: 0; /* Remove border radius for square edges */
-  background-color: #110a0a; /* Light gray background */
+  background-color:#e3e3e3; /* Light gray background */
   padding: 0.5rem; /* Compact padding inside select fields */
   font-size: 0.875rem; /* Adjusted font size */
   box-shadow: none; /* Remove any box shadow */

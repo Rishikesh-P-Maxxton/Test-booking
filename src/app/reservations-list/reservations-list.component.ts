@@ -9,6 +9,7 @@ import { Reservation, Customer } from '../Interfaces/reservation';
   styleUrls: ['./reservations-list.component.css']
 })
 export class ReservationsListComponent implements OnInit {
+
   reservations: Array<{ reservation: Reservation, customer: Customer }> = [];
 
   constructor(private reservationStorageService: ReservationStorageService) { }
@@ -37,7 +38,10 @@ export class ReservationsListComponent implements OnInit {
     // Reload reservations to reflect the changes
     this.loadReservations();
   }
-
+  deleteReservation(reservationId: string): void {
+    this.reservationStorageService.deleteReservation(reservationId);
+    this.loadReservations(); // Refresh the list after deletion
+  }
   clearReservations(): void {
     this.reservationStorageService.clearReservations();
     this.loadReservations(); // Reload reservations to reflect the cleared data

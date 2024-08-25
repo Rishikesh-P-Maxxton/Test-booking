@@ -6,6 +6,9 @@ import { Customer, Reservation } from '../Interfaces/reservation';
   providedIn: 'root'
 })
 export class ReservationStorageService {
+  getRoomsAndStays() {
+    throw new Error('Method not implemented.');
+  }
 
   private storageKey = 'reservations';
 
@@ -40,6 +43,14 @@ export class ReservationStorageService {
     return reservations ? JSON.parse(reservations) : [];
   }
 
+  deleteReservation(reservationId: string): void {
+    const existingReservations = this.getReservations();
+    const updatedReservations = existingReservations.filter(
+      res => res.reservation.reservationId !== reservationId
+    );
+
+    localStorage.setItem(this.storageKey, JSON.stringify(updatedReservations));
+  }
   // Clear all reservations
   clearReservations(): void {
     localStorage.removeItem(this.storageKey);
