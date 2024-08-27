@@ -27,6 +27,10 @@ body {
     text-overflow: ellipsis;
   }
   
+  .arrival-day {
+    background-color: #6ff0a0; /* Light yellow for arrival days */
+  }
+  
   .day-header {
     display: flex;
     flex-direction: column;

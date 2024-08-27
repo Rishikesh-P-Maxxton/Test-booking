@@ -9,15 +9,17 @@ import { Reservation, Customer } from '../Interfaces/reservation';
 interface Availability {
   start: Date;
   end: Date;
-
+  arrivalDays?: Set<string>; // Arrival days for this specific availability
+  minStay?: number; // Optional minStay for this availability
+  maxStay?: number; // Optional maxStay for this availability
 }
+
 
 interface RoomData {
   roomId: number;
   availability: Availability[];
   reservations: Availability[];
-  minStay: number; 
-  maxStay: number; 
+  arrivalDays: Set<string>; // Set of unique arrival days for the room
 }
 
 @Component({
@@ -72,13 +74,11 @@ export class RoomAvailabilityGanttComponent implements OnInit {
   }
  // Updates room availability based on stays and reservations
  updateRoomAvailability(): void {
-  
   const availabilityMap: { [roomId: number]: Availability[] } = {};
   const reservationMap: { [roomId: number]: Availability[] } = {};
-  const minStayMap: { [roomId: number]: number } = {};
-  const maxStayMap: { [roomId: number]: number } = {};
+  const arrivalDaysMap: { [roomId: number]: Set<string> } = {};
 
-  // Process stays to update availabilityMap and minStayMap/maxStayMap
+  // Initialize maps and sets
   this.stays.forEach(stay => {
     const roomId = stay.roomId;
     const startDate = new Date(stay.stayDateFrom);
@@ -87,34 +87,26 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
+    // Initialize maps if not present
     if (!availabilityMap[roomId]) {
       availabilityMap[roomId] = [];
+      arrivalDaysMap[roomId] = new Set<string>(); // Initialize as Set
     }
 
+    // Add availability period for the room
     availabilityMap[roomId].push({
       start: startDate,
       end: endDate,
-      
-      
+      arrivalDays: new Set(stay.arrivalDays), // Store arrival days for this period
+      minStay: stay.minStay,
+      maxStay: stay.maxStay
     });
-    
 
-    // Update minStay and maxStay
-    if (minStayMap[roomId] === undefined || stay.minStay < minStayMap[roomId]) {
-      minStayMap[roomId] = stay.minStay;
-    }
-    if (maxStayMap[roomId] === undefined || stay.maxStay > maxStayMap[roomId]) {
-      maxStayMap[roomId] = stay.maxStay;
-    }
+    // Add arrival days to the map (using spread operator)
+    stay.arrivalDays.forEach(day => arrivalDaysMap[roomId].add(day));
   });
 
-  console.log('updateRoomAvailability: Availability and stay maps updated.', {
-    availabilityMap,
-    minStayMap,
-    maxStayMap
-  });
-
-  // Process reservations to update reservationMap
+  // Process reservations
   this.reservations.forEach(reservation => {
     const roomId = reservation.roomId;
     const startDate = new Date(reservation.arrivalDate);
@@ -127,25 +119,23 @@ export class RoomAvailabilityGanttComponent implements OnInit {
       reservationMap[roomId] = [];
     }
 
+    // Add reservation period for the room
     reservationMap[roomId].push({
       start: startDate,
-      end: endDate
+      end: endDate,
     });
   });
 
-  console.log('updateRoomAvailability: Reservation map updated.', reservationMap);
-
-  // Update availabilityTable with processed data
+  // Update the availability table
   this.availabilityTable = this.rooms.map(room => ({
     roomId: room.roomId,
     availability: availabilityMap[room.roomId] || [],
     reservations: reservationMap[room.roomId] || [],
-    minStay: minStayMap[room.roomId] || 0,
-    maxStay: maxStayMap[room.roomId] || 0
+    arrivalDays: arrivalDaysMap[room.roomId] || new Set<string>()
   }));
-
-  console.log('updateRoomAvailability: Availability table updated.', this.availabilityTable);
 }
+
+
 
   // Utility Functions
   isWeekend(day: number): boolean {
@@ -154,6 +144,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     return dayOfWeek === 0 || dayOfWeek === 6;
   }
 
+  
 
 
   getDayName(day: number): string {
@@ -212,32 +203,90 @@ onMouseOver(roomId: number, day: number, event: MouseEvent) {
   }
   
 
-  onCellClick(roomId: number, day: number): void {
-    console.log("on cell clicked");
+//   onCellClick(roomId: number, day: number): void {
+//     console.log("on cell clicked");
     
-    if (this.getCellClass(roomId, day) === 'available') {
+//     if (this.getCellClass(roomId, day) === 'available') {
       
-        // Fetch the minimum stay for the selected room
-        const roomData = this.availabilityTable.find(data => data.roomId === roomId);
-        if (roomData) {
-            const minStay = roomData.minStay;
-            // Select cells from the clicked cell to the right for the minimum stay duration
-            this.selectRangeForMinimumStay(day, minStay, roomId);
-        }
+//         // Fetch the minimum stay for the selected room
+//         const roomData = this.availabilityTable.find(data => data.roomId === roomId);
+//         if (roomData) {
+//             const minStay = roomData.minStay;
+//             // Select cells from the clicked cell to the right for the minimum stay duration
+//             this.selectRangeForMinimumStay(day, minStay, roomId);
+//         }
 
+//     }
+// }
+
+// selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): void {
+//   // Calculate endDay based on the minimum stay
+//   const endDay = Math.min(startDay + minStay - 1, this.days[this.days.length - 1]); // Ensure endDay is within the month
+
+//   // Add selection for the calculated range
+//   this.addSelection(startDay, endDay, roomId);
+
+//   // Optionally, if you want to automatically clear previous selections, uncomment the following line:
+//   // this.clearSelectionInRoom(roomId);
+// }
+
+selectRangeForMinimumStay(startDay: number, roomId: number): void {
+  const roomData = this.availabilityTable.find(data => data.roomId === roomId);
+  if (!roomData) return;
+
+  // Find the availability period that includes the startDay
+  const availabilityPeriod = roomData.availability.find(period => 
+    startDay >= period.start.getDate() && startDay <= period.end.getDate()
+  );
+
+  if (!availabilityPeriod) return;
+
+  const minStay = availabilityPeriod.minStay || 0;
+  const maxStay = availabilityPeriod.maxStay || 0;
+
+  // Calculate endDay based on minStay and maxStay
+  const endDayMin = startDay + minStay - 1;
+  const endDayMax = startDay + maxStay - 1;
+
+  // Ensure the end days are within the bounds of the availability period
+  const validEndDayMin = Math.min(endDayMin, availabilityPeriod.end.getDate());
+  const validEndDayMax = Math.min(endDayMax, availabilityPeriod.end.getDate());
+
+  // Clear previous selections
+  this.clearAllSelections();
+
+  // Select the range from startDay to validEndDayMax
+  for (let day = startDay; day <= validEndDayMax; day++) {
+    if (day <= validEndDayMin) {
+      this.addSelection(day, day, roomId);
     }
+  }
 }
 
-selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): void {
-  // Calculate endDay based on the minimum stay
-  const endDay = Math.min(startDay + minStay - 1, this.days[this.days.length - 1]); // Ensure endDay is within the month
 
-  // Add selection for the calculated range
-  this.addSelection(startDay, endDay, roomId);
+onCellClick(roomId: number, day: number): void {
+  console.log("on cell clicked");
 
-  // Optionally, if you want to automatically clear previous selections, uncomment the following line:
-  // this.clearSelectionInRoom(roomId);
+  if (this.isArrivalDay(roomId, day)) {
+    // Call the updated method with the roomId and startDay
+    this.selectRangeForMinimumStay(day, roomId);
+  } else {
+    console.log("Clicked cell is not an arrival day.");
+    this.clearAllSelections();
+  }
 }
+
+
+isArrivalDay(roomId: number, day: number): boolean {
+  const roomData = this.availabilityTable.find(data => data.roomId === roomId);
+  if (!roomData) return false;
+
+  const date = new Date(this.year, this.selectedMonth - 1, day);
+  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+
+  return roomData.arrivalDays.has(dayOfWeek);
+}
+
 
   // Utility Functions for Event Handlers
  clearSelectionInRoom(roomId: number | null) {
@@ -310,6 +359,7 @@ selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): vo
 
     const roomData = this.availabilityTable.find(data => data.roomId === roomId);
 
+    const isArrivalDay = this.isArrivalDay(roomId, day);
     if (!roomData) return '';
 
     const isAvailable = roomData.availability.some(
@@ -319,8 +369,11 @@ selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): vo
     const isReserved = roomData.reservations.some(
       reserv => date >= reserv.start && date <= reserv.end
     );
-
-    const isSelected = this.selectedCells.has(`${roomId}-${day}`);
+ const isSelected = this.selectedCells.has(`${roomId}-${day}`);
+    if (isArrivalDay && isAvailable && !isReserved) {
+      return isSelected ? 'selected arrival-day' : 'arrival-day'; // Highlight arrival days with a specific color
+    }
+   
     if (isReserved) return 'reserved'; // Red color for reservations
     if (isAvailable) return isSelected ? 'selected available' : 'available'; // Green color for availability
     if (isSelected) return 'selected'; // Blue color for selected cells
@@ -331,27 +384,42 @@ selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): vo
   validateSelection(roomId: number): void {
     const roomData = this.availabilityTable.find(data => data.roomId === roomId);
     if (!roomData) return;
-
-    const minStay = roomData.minStay;
-    const maxStay = roomData.maxStay;
-
+  
     const selectedDays = Array.from(this.selectedCells)
       .filter(cell => cell.startsWith(`${roomId}-`))
       .map(cell => parseInt(cell.split('-')[1], 10))
       .sort((a, b) => a - b);
-
+  
+    if (selectedDays.length === 0) return;
+  
+    const start = selectedDays[0];
+    const end = selectedDays[selectedDays.length - 1];
+  
+    // Find the availability period that includes the start day of the selection
+    const availabilityPeriod = roomData.availability.find(period => 
+      start >= period.start.getDate() && end <= period.end.getDate()
+    );
+  
+    if (!availabilityPeriod) {
+      this.clearAllSelections();
+      return;
+    }
+  
+    const minStay = availabilityPeriod.minStay || 0;
+    const maxStay = availabilityPeriod.maxStay || 0;
+  
+    // Validate if the selection meets the minStay and maxStay requirements
     if (selectedDays.length < minStay || selectedDays.length > maxStay) {
       this.clearAllSelections();
       return;
     }
-
-    const start = selectedDays[0];
-    const end = selectedDays[selectedDays.length - 1];
+  
+    // Check for overlap with existing reservations
     if (this.checkOverlap(start, end, roomData)) {
       this.clearAllSelections();
-      return;
     }
   }
+  
 
   checkOverlap(start: number, end: number, roomData: RoomData): boolean {
     return roomData.reservations.some(reservation => {
@@ -371,7 +439,7 @@ selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): vo
         console.log(cellKey, "added");
     }
 }
-
+ 
   clearAllSelections() {
     this.selectedCells.clear();
   }
