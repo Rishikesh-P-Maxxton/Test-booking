@@ -213,7 +213,10 @@ onMouseOver(roomId: number, day: number, event: MouseEvent) {
   
 
   onCellClick(roomId: number, day: number): void {
+    console.log("on cell clicked");
+    
     if (this.getCellClass(roomId, day) === 'available') {
+      
         // Fetch the minimum stay for the selected room
         const roomData = this.availabilityTable.find(data => data.roomId === roomId);
         if (roomData) {
@@ -221,6 +224,7 @@ onMouseOver(roomId: number, day: number, event: MouseEvent) {
             // Select cells from the clicked cell to the right for the minimum stay duration
             this.selectRangeForMinimumStay(day, minStay, roomId);
         }
+
     }
 }
 
