@@ -6,6 +6,7 @@ import { SteppersComponent } from './Tests/steppers/steppers.component';
 import { FilterNavsComponent } from './filter-navs/filter-navs.component';
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 import { RoomAvailabilityGanttComponent } from './room-availability-gantt/room-availability-gantt.component';
+import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
 
 const routes: Routes = [
   { path: 'filter', component: RoomsFilterComponent },
@@ -18,7 +19,7 @@ const routes: Routes = [
 
     ]
    },
-  { path: 'graph', component: RoomAvailabilityChartComponent },
+  { path: 'UserView', component: RoomShowcaseComponent },
   {path: 'test', component: SteppersComponent}
 
 ];

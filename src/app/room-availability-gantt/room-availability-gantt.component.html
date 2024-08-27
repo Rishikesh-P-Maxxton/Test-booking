@@ -17,14 +17,14 @@
         
         <div class="chart-container">
             <div class="chart" [style.grid-template-columns]="'repeat(' + (days.length + 1) + ', 1fr)'">
-            <div class="day-header">Room</div>
+            <div class="day-header">Rooms</div>
             <div *ngFor="let day of days" [ngClass]="{ 'day-header': true, 'weekend': isWeekend(day) }">
                 {{ day }}
                 <br>
             <span>{{ getDayName(day) }}</span>
             </div>
             <ng-container *ngFor="let room of rooms">
-              <div class="room-name">Room {{ room.roomId }}</div>
+              <div class="room-name"> {{ room.roomId }}</div>
               <div *ngFor="let day of days" 
               [ngClass]="getCellClass(room.roomId,day)"
               (mousedown)="onMouseDown(room.roomId, day, $event)"
