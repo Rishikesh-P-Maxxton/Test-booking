@@ -1,0 +1,60 @@
+/* Jumbotron styling */
+.jumbotron {
+    background-color: #f9f9f9; /* Light gray background */
+    border: 0; /* Subtle border */
+    border-radius: 0; /* Sharp corners */
+    padding: 0 2rem;
+    margin-bottom: 0rem;
+    max-width: 100%; /* Ensure it doesn't exceed container width */
+  }
+  
+ 
+  
+  .jumbotron p {
+    font-size: 1rem; /* Slightly larger font size for the lead paragraph */
+  }
+  
+ 
+  /* Navigation Tabs */
+  .nav-container {
+    margin-top: 0rem;
+    /* Ensure the tabs are left-aligned */
+  }
+  
+  .nav-tabs {
+    border-bottom: none; /* Remove default bottom border */
+    display: flex;
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    list-style: none; /* Remove bullet points */
+  }
+  
+  .nav-item {
+    margin: 0; /* Remove margin around items */
+  }
+  
+  .nav-link {
+    font-family: 'Arial', sans-serif; /* Arial font */
+    font-weight: 300; /* Light font weight */
+    color: #6c757d; /* Dark gray for inactive tabs */
+    background-color: #f8f9fa; /* Light background color */
+    border: 1px solid #ddd; /* Subtle border */
+    border-radius: 0; /* Sharp corners */
+    padding: 10px 20px; /* Padding around text */
+    text-align: center; /* Center align text */
+    transition: color 0.2s ease, background-color 0.2s ease; /* Smooth color and background color transition */
+    cursor: pointer; /* Pointer cursor for clickable tabs */
+    margin-right: -1px; /* Remove space between tabs by adjusting right margin */
+  }
+  
+  .nav-link.active {
+    color: #343a40; /* Darker text color for active tab */
+    background-color: #e9ecef; /* Slightly darker background for active tab */
+    border-bottom: 1px solid transparent; /* Maintain the bottom border for active state */
+  }
+  
+  .nav-link:hover {
+    color: #343a40; /* Darker text color on hover */
+    background-color: #e2e6ea; /* Light grey background on hover */
+  }
+  

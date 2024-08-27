@@ -1,0 +1,47 @@
+<div class="container  mt-4">
+    <!-- Jumbotron -->
+    <div class="row">
+      <div class="col-12">
+        <div class="jumbotron p-4">
+          <div class="display-6">Rooms and Reservations </div>
+          <p class="lead">All rooms and reservation data</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Navigation Tabs -->
+    <div class="row">
+      <div class="col-12">
+        <div class="nav-container mt-4">
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" 
+                 [routerLink]="[{ outlets: { filternav: ['allrooms'] } }]"
+                 routerLinkActive="active"
+                 [routerLinkActiveOptions]="{ exact: true }">
+                All Rooms
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" 
+                 [routerLink]="[{ outlets: { filternav: ['reslist'] } }]"
+                 routerLinkActive="active"
+                 [routerLinkActiveOptions]="{ exact: true }">
+                Reservations
+              </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" 
+                   [routerLink]="[{ outlets: { filternav: ['planner'] } }]"
+                   routerLinkActive="active"
+                   [routerLinkActiveOptions]="{ exact: true }">
+                  Planner
+                </a>
+              </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <router-outlet name="filternav"></router-outlet>
+  

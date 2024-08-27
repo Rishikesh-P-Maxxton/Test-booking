@@ -1,0 +1,48 @@
+<div class="spacer">
+
+</div>
+<div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="row">
+          <div class="form-group col-md-3">
+            <label for="monthSelect">Select Month</label>
+            <select class="form-control" id="monthSelect" (change)="onMonthChange($event)">
+              <option *ngFor="let month of months" [value]="month.value">
+                {{ month.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart" [style.grid-template-columns]="'repeat(' + (days.length + 1) + ', 1fr)'">
+            <div class="day-header">Room</div>
+            <div *ngFor="let day of days" [ngClass]="{ 'day-header': true, 'weekend': isWeekend(day) }">
+                {{ day }}
+                <br>
+            <span>{{ getDayName(day) }}</span>
+            </div>
+            <ng-container *ngFor="let room of rooms">
+              <div class="room-name">Room {{ room.roomId }}</div>
+              <div *ngFor="let day of days" 
+              [ngClass]="getCellClass(room.roomId,day)"
+              (mousedown)="onMouseDown(room.roomId, day, $event)"
+              (mouseover)="onMouseOver(room.roomId, day, $event)"
+              (mouseup)="onMouseUp($event)"
+              (click)="onCellClick(room.roomId, day)"
+              class="cell" 
+              [ngStyle]="{ 'pointer-events': isCellClickable(room.roomId, day) ? 'auto' : 'none' }"
+            >
+            </div>
+            </ng-container>
+  
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button (click)="logSelectedRange()">Log Selected Range</button>
+  
+  
+  

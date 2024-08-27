@@ -1,0 +1,86 @@
+
+      <div class="container-fluid">
+    <!-- Jumbotron and Search Bar Combined -->
+    <div class="jumbotron jumbotron-background text-left mb-0">
+        <h1 class="display-5 titles">Book Luxury Rooms</h1>
+        <p class="lead leads">Get rooms and accommodations according to your needs.</p>
+        <div class="search-bar-wrapper">
+          <div class="search-bar-background">
+            <form [formGroup]="searchForm" (ngSubmit)="applySearch()" class="search-form">
+              <div class="row no-gutters align-items-center flex-grow-1">
+                <div class="col-md-3 mb-2">
+                  <label for="location" class="sr-only">Location</label>
+                  <select id="location" class="form-control" formControlName="location">
+                    <option value="">Select Location</option>
+                    <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label for="stayDateFrom" class="sr-only">Check-in Date</label>
+                  <input type="date" id="stayDateFrom" class="form-control" formControlName="stayDateFrom" />
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label for="stayDateTo" class="sr-only">Check-out Date</label>
+                  <input type="date" id="stayDateTo" class="form-control" formControlName="stayDateTo" />
+                </div>
+                <div class="col-md-3 mb-2">
+                  <button type="submit" class="btn btn-primary btn-block">Search</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+   
+
+    <!-- Filters and Room Cards -->
+    <div class="row">
+      <div class="col-md-3 mb-4">
+        <!-- Filters Sidebar -->
+        <div class="filters-sidebar p-3">
+          <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+            <h4 class="mb-3">Filters</h4>
+            <div class="form-group mb-3">
+              <label for="numberOfPersons" class="sr-only">Number of Guests</label>
+              <select id="numberOfPersons" class="form-control" formControlName="numberOfPersons">
+                <option *ngFor="let option of [0, 1, 2, 3, 4, 5, 6, 7, 8]" [value]="option">{{ option }} Guest(s)</option>
+              </select>
+            </div>
+            <div class="form-group mb-3">
+              <label for="maxPrice" class="sr-only">Max Price</label>
+              <input type="number" id="maxPrice" class="form-control" formControlName="maxPrice" placeholder="Max Price" />
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Apply Filters</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-md-9">
+        <!-- Heading -->
+        <h2 class="display-6 mb-4">All Available Rooms</h2>
+
+        <!-- Room Cards -->
+        <div class="row">
+          <div class="col-md-4 mb-4" *ngFor="let room of filteredRooms">
+            <div class="property-card">
+              <div class="property-image">
+                <img src="https://picsum.photos/seed/picsum/400/300" class="img-fluid" alt="Room Image" />
+                <i class="fas fa-heart"></i>
+              </div>
+              <div class="property-info">
+                <h5>{{ room.roomName }}</h5>
+                <p class="location">{{ room.locationName }}</p>
+                <p><strong>Price:</strong> ${{ room.pricePerDayPerPerson }} / day</p>
+                <p><strong>Capacity:</strong> {{ room.guestCapacity }} people</p>
+                <p><strong>Availability:</strong></p>
+                <ul>
+                  <li *ngFor="let avail of room.availability">{{ avail }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,143 @@
+/* Ensure the table takes full width */
+.table {
+    width: 100%;
+    min-width: 600px; /* Adjusted minimum width for smaller screens */
+    background-color: #f9f9f9; /* Light gray background for the table */
+    border-radius: 0; /* No rounded corners */
+    overflow: hidden; /* Ensures rounded corners apply to the table */
+    border-collapse: separate; /* Ensure borders are not collapsed */
+    border-spacing: 0; /* Remove spacing between cells */
+}
+
+.container {
+    padding-top: 2rem;
+}
+
+/* Header styling */
+.table thead tr,
+.table thead th {
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd; /* Subtle border for header */
+    color: #333; /* Dark gray for better readability */
+    font-size: 13px; /* Slightly larger font for better readability */
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    background-color: #f4f4f4; /* Light background for header */
+}
+
+/* Body cell styling */
+.table tbody th,
+.table tbody td {
+    color: #555; /* Darker gray for better readability */
+    padding: 12px; /* Adjusted padding for a balanced look */
+    border-bottom: 1px solid #ddd; /* Light border between rows */
+    font-weight: 400; /* Consistent font weight */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Faster transition for a snappy effect */
+}
+
+/* Styling for small elements within table cells */
+.table tbody th small,
+.table tbody td small {
+    color: rgba(0, 0, 0, 0.5); /* Slightly transparent text for small elements */
+}
+
+/* Styling for links within table cells */
+.table tbody th a,
+.table tbody td a {
+    color: #007bff; /* Blue links for better visibility */
+    transition: color 0.2s ease; /* Smooth transition for link color */
+}
+
+/* Styling for elements with "more" class */
+.table tbody th .more,
+.table tbody td .more {
+    color: #007bff;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+}
+
+/* Row transition for hover effect */
+.table tbody tr {
+    transition: background-color 0.2s ease; /* Faster transition for a snappy effect */
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover,
+.table tbody tr:focus {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Hover effect for table cells */
+.table tbody tr:hover td,
+.table tbody tr:focus td {
+    color: #000; /* Black text color on hover */
+}
+
+/* Additional row color styles based on status */
+.table-row {
+    transition: background-color 0.2s ease; /* Smooth transition for background color */
+}
+
+/* Status color styles */
+.status-confirmed {
+    background-color: #d4edda !important; /* Light green background */
+}
+
+.status-checked-in {
+    background-color: #cce5ff !important; /* Light blue background */
+}
+
+.status-checked-out {
+    background-color: #f8d7da !important; /* Light red background */
+}
+
+/* Override hover effect to maintain background color */
+.table tbody tr:hover {
+    background-color: inherit; /* Maintain the status color on hover */
+}
+
+/* Ensure the clear button styles are applied correctly */
+.clear-button {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    background-color: #000;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    margin-bottom: 20px;
+    margin-left: 0;
+}
+
+.clear-button:hover {
+    background-color: #333;
+}
+
+.clear-button:focus {
+    outline: none;
+}
+
+/* Keyframes for row animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply the animation to table rows */
+.table-row {
+    opacity: 0; /* Initial state */
+    animation: fadeIn 0.5s ease-out forwards; /* Animation effect */
+    animation-delay: var(--animation-delay, 0s); /* Delay each row individually */
+}
+
+  

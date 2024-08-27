@@ -1,0 +1,101 @@
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  .chart-container {
+    overflow-x: auto;
+    margin: 20px 0;
+    width: 100%;
+  }
+  
+  .chart {
+    display: grid;
+    /* grid-template-columns: repeat(32, 1fr); */
+    background-color: #dee2e6;
+  }
+  
+  .room-name {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 0.1rem solid #ddd;
+    height: 30px;
+    padding: 0 5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  .day-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    height: 50px;
+  }
+  
+  .available {
+    background-color: #d4edda;
+  }
+  
+  .cell.available {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+   
+  }
+  
+  .not-available {
+    background-color: #ffffff;
+  }
+  
+  .weekend {
+    background-color: #fff3cd;
+  }
+  
+  .reserved {
+    background-color: red;
+   
+  }
+  
+  .available.weekend {
+    background-color: #d4edda;
+  }
+  
+  .cell.reserved {
+    border: none;
+  }
+  
+  .cell {
+    position: relative;
+    height: 30px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid white; /* Updated border for readability */
+  }
+  
+  .cell.selected {
+    background-color: #007bff;
+    border: 2px solid #007bff;
+  }
+  
+  .selected {
+    border: 2px solid #007bff; /* Blue border for selected cells */
+  }
+  
+  .cell.selected-start {
+    border-left: 2px solid #007bff;
+  }
+  
+  .cell.selected-end {
+    border-right: 2px solid #007bff;
+  }
+
+  .spacer{
+    padding-top: 3rem;
+  }
