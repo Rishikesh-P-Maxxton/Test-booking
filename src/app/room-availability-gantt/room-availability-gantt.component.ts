@@ -71,6 +71,12 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     this.generateChart(this.selectedMonth);
   }
 
+  getDayName(day: number): string {
+    const year = 2024;
+    const date = new Date(year, this.selectedMonth - 1, day);
+    return date.toLocaleDateString('en-US', { weekday: 'short' }); // e.g., "Sun", "Mon"
+  }
+
   updateRoomAvailability(): void {
     const availabilityMap: { [roomId: number]: Availability[] } = {};
     const reservationMap: { [roomId: number]: Availability[] } = {};
@@ -183,6 +189,9 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     return dayOfWeek === 0 || dayOfWeek === 6;
   }
 
+//--------------------------------------------------------------------------------------
+  //Mouse event function to complete the selection of rooms 
+  //Starts the selection process
   onMouseDown(roomId: number, day: number, event: MouseEvent) {
     event.preventDefault();
     this.isMouseDown = true;
@@ -197,6 +206,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     this.toggleSelection(roomId, day);
   }
 
+  //Continues the selection process as the mouse moves.
   onMouseOver(roomId: number, day: number, event: MouseEvent) {
     if (this.isMouseDown && roomId === this.selectedRoomId) {
       this.endDay = day; // Track the ending day
@@ -204,6 +214,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     }
   }
 
+  //Finalizes the selection.
   onMouseUp(event: MouseEvent) {
     this.isMouseDown = false;
     if (this.selectedRoomId !== null) {
@@ -211,6 +222,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     }
   }
 
+  //-------------------------------------------------------------------------------------
   onCellClick(roomId: number, day: number): void {
     // Prevent new single-cell selections if there's an existing selection
     if (this.selectedRoomId !== null) {

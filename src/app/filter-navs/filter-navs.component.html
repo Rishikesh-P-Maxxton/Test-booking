@@ -30,6 +30,14 @@
                 Reservations
               </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" 
+                   [routerLink]="[{ outlets: { filternav: ['planner'] } }]"
+                   routerLinkActive="active"
+                   [routerLinkActiveOptions]="{ exact: true }">
+                  Planner
+                </a>
+              </li>
           </ul>
         </div>
       </div>
