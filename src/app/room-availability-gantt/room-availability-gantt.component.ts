@@ -203,90 +203,62 @@ onMouseOver(roomId: number, day: number, event: MouseEvent) {
   }
   
 
-//   onCellClick(roomId: number, day: number): void {
-//     console.log("on cell clicked");
-    
-//     if (this.getCellClass(roomId, day) === 'available') {
-      
-//         // Fetch the minimum stay for the selected room
-//         const roomData = this.availabilityTable.find(data => data.roomId === roomId);
-//         if (roomData) {
-//             const minStay = roomData.minStay;
-//             // Select cells from the clicked cell to the right for the minimum stay duration
-//             this.selectRangeForMinimumStay(day, minStay, roomId);
-//         }
 
-//     }
-// }
 
-// selectRangeForMinimumStay(startDay: number, minStay: number, roomId: number): void {
-//   // Calculate endDay based on the minimum stay
-//   const endDay = Math.min(startDay + minStay - 1, this.days[this.days.length - 1]); // Ensure endDay is within the month
-
-//   // Add selection for the calculated range
-//   this.addSelection(startDay, endDay, roomId);
-
-//   // Optionally, if you want to automatically clear previous selections, uncomment the following line:
-//   // this.clearSelectionInRoom(roomId);
-// }
-
-selectRangeForMinimumStay(startDay: number, roomId: number): void {
-  const roomData = this.availabilityTable.find(data => data.roomId === roomId);
-  if (!roomData) return;
-
-  // Find the availability period that includes the startDay
-  const availabilityPeriod = roomData.availability.find(period => 
-    startDay >= period.start.getDate() && startDay <= period.end.getDate()
-  );
-
-  if (!availabilityPeriod) return;
-
-  const minStay = availabilityPeriod.minStay || 0;
-  const maxStay = availabilityPeriod.maxStay || 0;
-
-  // Calculate endDay based on minStay and maxStay
-  const endDayMin = startDay + minStay - 1;
-  const endDayMax = startDay + maxStay - 1;
-
-  // Ensure the end days are within the bounds of the availability period
-  const validEndDayMin = Math.min(endDayMin, availabilityPeriod.end.getDate());
-  const validEndDayMax = Math.min(endDayMax, availabilityPeriod.end.getDate());
-
-  // Clear previous selections
-  this.clearAllSelections();
-
-  // Select the range from startDay to validEndDayMax
-  for (let day = startDay; day <= validEndDayMax; day++) {
-    if (day <= validEndDayMin) {
-      this.addSelection(day, day, roomId);
+  selectRangeForMinimumStay(startDay: number, roomId: number): void {
+    const roomData = this.availabilityTable.find(data => data.roomId === roomId);
+    if (!roomData) return;
+  
+    const availabilityPeriod = roomData.availability.find(period => 
+      startDay >= period.start.getDate() && startDay <= period.end.getDate()
+    );
+  
+    if (!availabilityPeriod) return;
+  
+    const minStay = availabilityPeriod.minStay || 0;
+    const maxStay = availabilityPeriod.maxStay || 0;
+  
+    const endDayMin = startDay + minStay - 1;
+    const endDayMax = startDay + maxStay - 1;
+  
+    const validEndDayMin = Math.min(endDayMin, availabilityPeriod.end.getDate());
+    const validEndDayMax = Math.min(endDayMax, availabilityPeriod.end.getDate());
+  
+    this.clearAllSelections();
+  
+    for (let day = startDay; day <= validEndDayMax; day++) {
+      if (day <= validEndDayMin) {
+        this.addSelection(day, day, roomId);
+      }
     }
   }
-}
+  
+  
 
-
-onCellClick(roomId: number, day: number): void {
-  console.log("on cell clicked");
-
-  if (this.isArrivalDay(roomId, day)) {
-    // Call the updated method with the roomId and startDay
-    this.selectRangeForMinimumStay(day, roomId);
-  } else {
-    console.log("Clicked cell is not an arrival day.");
-    this.clearAllSelections();
+  onCellClick(roomId: number, day: number): void {
+    console.log("on cell clicked");
+  
+    if (this.isArrivalDay(roomId, day)) {
+      this.selectRangeForMinimumStay(day, roomId);
+    } else {
+      console.log("Clicked cell is not an arrival day.");
+      this.clearAllSelections();
+    }
   }
-}
+  
+  
 
 
-isArrivalDay(roomId: number, day: number): boolean {
-  const roomData = this.availabilityTable.find(data => data.roomId === roomId);
-  if (!roomData) return false;
-
-  const date = new Date(this.year, this.selectedMonth - 1, day);
-  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-
-  return roomData.arrivalDays.has(dayOfWeek);
-}
-
+  isArrivalDay(roomId: number, day: number): boolean {
+    const roomData = this.availabilityTable.find(data => data.roomId === roomId);
+    if (!roomData) return false;
+  
+    const date = new Date(this.year, this.selectedMonth - 1, day);
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  
+    return roomData.arrivalDays.has(dayOfWeek);
+  }
+  
 
   // Utility Functions for Event Handlers
  clearSelectionInRoom(roomId: number | null) {
@@ -395,7 +367,6 @@ isArrivalDay(roomId: number, day: number): boolean {
     const start = selectedDays[0];
     const end = selectedDays[selectedDays.length - 1];
   
-    // Find the availability period that includes the start day of the selection
     const availabilityPeriod = roomData.availability.find(period => 
       start >= period.start.getDate() && end <= period.end.getDate()
     );
@@ -408,17 +379,17 @@ isArrivalDay(roomId: number, day: number): boolean {
     const minStay = availabilityPeriod.minStay || 0;
     const maxStay = availabilityPeriod.maxStay || 0;
   
-    // Validate if the selection meets the minStay and maxStay requirements
     if (selectedDays.length < minStay || selectedDays.length > maxStay) {
       this.clearAllSelections();
       return;
     }
   
-    // Check for overlap with existing reservations
     if (this.checkOverlap(start, end, roomData)) {
       this.clearAllSelections();
     }
   }
+  
+  
   
 
   checkOverlap(start: number, end: number, roomData: RoomData): boolean {
@@ -428,6 +399,8 @@ isArrivalDay(roomId: number, day: number): boolean {
       return (start <= reservEnd && end >= reservStart);
     });
   }
+  
+  
 
   addSelection(start: number, end: number, roomId: number) {
     for (let day = start; day <= end; day++) {

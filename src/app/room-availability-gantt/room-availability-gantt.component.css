@@ -28,7 +28,7 @@ body {
   }
   
   .arrival-day {
-    background-color: #6ff0a0; /* Light yellow for arrival days */
+    background-color: #b2ffd0; /* Light yellow for arrival days */
   }
   
   .day-header {
@@ -63,7 +63,7 @@ body {
   }
   
   .reserved {
-    background-color: red;
+    background-color: rgb(94, 66, 255);
    
   }
   
@@ -80,24 +80,24 @@ body {
     height: 30px;
     text-align: center;
     vertical-align: middle;
-    border: 1px solid white; /* Updated border for readability */
+    border: 1px solid rgb(182, 182, 182); /* Updated border for readability */
   }
   
   .cell.selected {
-    background-color: #007bff;
-    border: 2px solid #007bff;
+    background-color: #5aafff;
+    border: 2px solid #5aafff;
   }
   
   .selected {
-    border: 2px solid #007bff; /* Blue border for selected cells */
+    border: 2px solid #5aafff; /* Blue border for selected cells */
   }
   
   .cell.selected-start {
-    border-left: 2px solid #007bff;
+    border-left: 2px solid #5aafff;
   }
   
   .cell.selected-end {
-    border-right: 2px solid #007bff;
+    border-right: 2px solid #5aafff;
   }
 
   .spacer{
