@@ -1,101 +1,206 @@
-body {
-    font-family: Arial, sans-serif;
-  }
+/* Month Header */
+.month-header {
+  display: flex;
+  justify-content: space-between; /* Space between month name and controls */
+  align-items: center; /* Center items vertically */
+  height: 60px;
+  font-weight: 400;
+  font-size: 1.2rem;
+  color: #495057;
+  padding: 0 20px; /* Padding inside the header */
   
-  .chart-container {
-    overflow-x: auto;
-    margin: 20px 0;
-    width: 100%;
-  }
-  
-  .chart {
-    display: grid;
-    /* grid-template-columns: repeat(32, 1fr); */
-    background-color: #dee2e6;
-  }
-  
-  .room-name {
-    grid-column: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f8f9fa;
-    border: 0.1rem solid #ddd;
-    height: 30px;
-    padding: 0 5px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  
-  .day-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: #f1f1f1;
-    border-bottom: 1px solid #dee2e6;
-    border-right: 1px solid #dee2e6;
-    height: 50px;
-  }
-  
-  .available {
-    background-color: #d4edda;
-  }
-  
-  .cell.available {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-   
-  }
-  
-  .not-available {
-    background-color: #ffffff;
-  }
-  
-  .weekend {
-    background-color: #fff3cd;
-  }
-  
-  .reserved {
-    background-color: red;
-   
-  }
-  
-  .available.weekend {
-    background-color: #d4edda;
-  }
-  
-  .cell.reserved {
-    border: none;
-  }
-  
-  .cell {
-    position: relative;
-    height: 30px;
-    text-align: center;
-    vertical-align: middle;
-    border: 1px solid white; /* Updated border for readability */
-  }
-  
-  .cell.selected {
-    background-color: #007bff;
-    border: 2px solid #007bff;
-  }
-  
-  .selected {
-    border: 2px solid #007bff; /* Blue border for selected cells */
-  }
-  
-  .cell.selected-start {
-    border-left: 2px solid #007bff;
-  }
-  
-  .cell.selected-end {
-    border-right: 2px solid #007bff;
-  }
+  margin-top: 20px; /* Space below the header */
+}
 
-  .spacer{
-    padding-top: 3rem;
-  }
+/* Month Name Styling */
+.month-name {
+  flex: 1; /* Take up remaining space */
+  text-align: left; /* Align text to the left */
+}
+
+/* Controls Styling */
+.month-controls {
+  display: flex;
+  gap: 10px; /* Space between buttons */
+  align-items: center; /* Center buttons vertically */
+}
+
+.month-controls .btn {
+  padding: 10px 15px; /* Larger button size */
+  font-size: 1rem; /* Adjust font size */
+  border-radius: 4px; /* Slightly rounded corners */
+  border: none; /* Remove default border */
+  color: #fff; /* White text color */
+  background-color: #007bff; /* Default background color */
+  transition: background-color 0.3s ease; /* Smooth color transition */
+}
+
+.month-controls .btn.left {
+  background-color: #0056b3; /* Darker color for left button */
+}
+
+.month-controls .btn.right {
+  background-color: #0056b3; /* Darker color for right button */
+}
+
+.month-controls .btn:hover {
+  background-color: #004080; /* Even darker on hover */
+}
+
+/* Chart Container */
+.chart-container {
+  overflow-x: auto;
+  margin: 0; /* Remove margin for seamless integration */
+  padding: 0 10px; /* Padding around the chart */
+}
+
+.chart {
+  display: grid;
+  background-color: #f9f9f9;
+  border-radius: 0;
+  overflow: hidden;
+  border-style: hidden;
+}
+
+.day-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #e9ecef;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  height: 60px;
+  font-weight: 400;
+  font-size: .8rem;
+  color: #495057;
+}
+
+.room-name {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Left-align content */
+  background-color: #ffffff;
+  border-right: 1px solid #ddd;
+  height: 50px; /* Increased height for aesthetic balance */
+  width: 90px; /* Increased width for room names */
+  padding: 0 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 400;
+  font-size: .8rem;
+}
+
+.cell {
+  position: relative;
+  height: 50px;
+  text-align: center;
+  vertical-align: middle;
+  background-color: #ffffff;
+  border-top: 1px solid #ddd; /* Border to create separation */
+}
+
+.cell.available {
+  border-radius: 0; /* No border-radius for standard cells */
+}
+
+.cell.arrival-day {
+  border-radius: 0; /* No border-radius for standard cells */
+  background-color: #e7ebff;
+}
+
+.cell.not-available {
+  background-color: #e0e0e0;
+}
+
+.cell.weekend {
+  background-color: #fff3cd;
+}
+
+.cell.reserved {
+  background: #6f42c1; /* Solid color for reserved cells */
+  color: #fff; /* White text for better contrast */
+}
+
+.cell.selected {
+  background-color: #007bff; /* Blue color for selected cells */
+  color: #fff; /* White text for selected cells */
+  border-radius: 0; /* No rounding for selected cells */
+  z-index: 1; /* Ensure selected cells appear above others */
+}
+
+.cell.selected-start {
+  background-color: #007bff; /* Blue color for selected cells */
+}
+
+.cell.selected-end {
+  background-color: #007bff; /* Blue color for selected cells */
+}
+
+.cell.selected,
+.cell.reserved, 
+.cell.selected-arrival-day {
+  border: none; /* No border for selected or reserved cells to ensure they appear as one bar */
+}
+
+.cell:not(.selected):not(.reserved):not(.cell.selected-arrival-day) {
+  border-right: 1px solid #ddd; /* Right border for separation */
+}
+
+.chart .cell:nth-last-child(-n+32) {
+  border-bottom: none;
+}
+
+.cell.selected-arrival-day {
+  background-color: #007bff; /* Blue color for selected cells */
+  color: #fff; /* White text for selected cells */
+  border-radius: 0; /* No rounding for selected cells */
+  z-index: 1; /* Ensure selected cells appear above others */
+}
+
+
+/* Base Button Styling */
+.month-controls .btn {
+  padding: 12px 20px; /* Wider button with more padding */
+  font-size: 1rem; /* Adjust font size for readability */
+  border-radius: 30px; /* Large border-radius for rounded corners */
+  border: 2px solid transparent; /* Default border style for hover effect */
+  color: #fff; /* White text color */
+  background-color: #007bff; /* Default background color */
+  transition: background-color 0.3s ease, border 0.3s ease; /* Smooth transitions */
+  display: flex; /* Flexbox to center icon */
+  align-items: center; /* Center content vertically */
+  justify-content: center; /* Center content horizontally */
+}
+
+/* Button Icons Styling */
+.month-controls .btn i {
+  font-size: 0.9rem; /* Smaller icon size */
+}
+
+/* Button Hover Effect */
+.month-controls .btn:hover {
+  background-color: #0056b3; /* Darker background on hover */
+  
+}
+
+/* Specific Button Colors */
+.month-controls .btn.left {
+  background-color: #4066ff; /* Green for left button */
+}
+
+.month-controls .btn.right {
+  background-color: #4066ff /* Red for right button */
+}
+
+/* Hover Effect for Specific Buttons */
+.month-controls .btn.left:hover {
+  background-color: #204cfd; /* Darker green for hover */
+ 
+}
+
+.month-controls .btn.right:hover {
+  background-color: #204cfd; /* Darker red for hover */
+  
+}
