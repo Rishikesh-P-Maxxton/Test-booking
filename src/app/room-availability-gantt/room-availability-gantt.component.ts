@@ -301,7 +301,6 @@ selectRangeForMinimumStay(startDay: number, roomId: number): void {
 
 
 
-
 private isBlockedByReservation(roomId: number, startDay: number, endDay: number): boolean {
   const roomData = this.availabilityTable.find(
     (data) => data.roomId === roomId
@@ -314,11 +313,16 @@ private isBlockedByReservation(roomId: number, startDay: number, endDay: number)
 
   // Check if any reservation overlaps with the selection
   return roomData.reservations.some((reservation) => {
-    const reservStart = reservation.start.getDate();
-    const reservEnd = reservation.end.getDate();
-    return (startDay <= reservEnd && endDay >= reservStart);
+    const reservStartDate = new Date(reservation.start);
+    const reservEndDate = new Date(reservation.end);
+
+    // Check for overlap: 
+    // 1. Reservation starts before selection ends
+    // 2. Reservation ends after selection starts
+    return reservStartDate <= endDate && reservEndDate >= startDate;
   });
 }
+
 
 
 
@@ -491,12 +495,12 @@ onCellClick(roomId: number, day: number): void {
       (period) => start >= period.start.getDate() && end <= period.end.getDate()
     );
   
-    // if (!availabilityPeriod) {
-    //   this.clearAllSelections();
-    //   console.log("cleared in !availablity");
+    if (!availabilityPeriod) {
+      this.clearAllSelections();
+      console.log("cleared in !availablity");
       
-    //   return;
-    // }
+      return;
+    }
   
     const arrivalDay = new Date(this.year, this.selectedMonth - 1, start)
       .toLocaleDateString('en-US', { weekday: 'short' })
@@ -510,21 +514,21 @@ onCellClick(roomId: number, day: number): void {
       return;
     }
   
-    if (this.checkOverlap(start, end, roomData)) {
-      this.clearAllSelections();
-      console.log("in this.checkOverlap(start, end, roomData ")
-    }
+    // if (this.checkOverlap(start, end, roomData)) {
+    //   this.clearAllSelections();
+    //   console.log("in this.checkOverlap(start, end, roomData ")
+    // }
   }
   
 
 
-  checkOverlap(start: number, end: number, roomData: RoomData): boolean {
-    return roomData.reservations.some((reservation) => {
-      const reservStart = reservation.start.getDate();
-      const reservEnd = reservation.end.getDate();
-      return start <= reservEnd && end >= reservStart;
-    });
-  }
+  // checkOverlap(start: number, end: number, roomData: RoomData): boolean {
+  //   return roomData.reservations.some((reservation) => {
+  //     const reservStart = reservation.start.getDate();
+  //     const reservEnd = reservation.end.getDate();
+  //     return start <= reservEnd && end >= reservStart;
+  //   });
+  // }
 
   addSelection(start: number, end: number, roomId: number) {
     for (let day = start; day <= end; day++) {
@@ -576,16 +580,17 @@ onCellClick(roomId: number, day: number): void {
     console.log('Selected Date Ranges:', selectedDates);
   }
 
-  openBookingModal(): void {
-    if (this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined) {
-      this.selectedRoom = this.rooms.find(room => room.roomId === this.selectedRoomId) || null;
-      this.startDate = new Date(this.year, this.selectedMonth - 1, this.startDay);
-      this.endDate = new Date(this.year, this.selectedMonth - 1, this.endDay);
-      this.showModal = true;
-    }
-  }
+  // openBookingModal(): void {
+  //   this.showModal = true;
+  //   if (this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined) {
+  //     this.selectedRoom = this.rooms.find(room => room.roomId === this.selectedRoomId) || null;
+  //     this.startDate = new Date(this.year, this.selectedMonth - 1, this.startDay);
+  //     this.endDate = new Date(this.year, this.selectedMonth - 1, this.endDay);
+  //     this.showModal = true;
+  //   }
+  // }
 
-  handleModalClose(): void {
-    this.showModal = false;
-  }
+  // handleModalClose(): void {
+  //   this.showModal = false;
+  // }
 }

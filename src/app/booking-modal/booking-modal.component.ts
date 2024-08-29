@@ -1,66 +1,74 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, EventEmitter } from '@angular/core';
+import { Input, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Room } from '../Interfaces/room';
-import { Reservation, Customer } from '../Interfaces/reservation';
+import { MatStepper } from '@angular/material/stepper';
+import { GeolocsService } from '../services/geolocs.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
+import { Observable } from 'rxjs';
+import { Customer, Reservation } from '../Interfaces/reservation';
 
 @Component({
   selector: 'app-booking-modal',
   templateUrl: './booking-modal.component.html',
   styleUrls: ['./booking-modal.component.scss']
 })
-export class BookingModalComponent {
-  @Input() selectedRoom: Room | null = null;
-  @Input() startDate: Date| null = null;
-  @Input() endDate: Date| null = null;
-  @Output() closeModal = new EventEmitter<void>();
+export class BookingModalComponent implements OnInit {
+  @ViewChild('stepper') stepper: MatStepper | undefined;
+  @ViewChild('modal') modal: ElementRef | undefined;
 
   bookingForm: FormGroup;
   customerForm: FormGroup;
   paymentForm: FormGroup;
+  countries: any[] = [];
+  states: any[] = [];
+  cities: any[] = [];
+  numberOfGuestsOptions: number[] = [1, 2, 3, 4, 5, 6];
   isConfirmDisabled = true;
+
+  @Input() selectedRoom: any; // Adjust based on your Room interface
+  @Input() startDate: Date | null = null;
+  @Input() endDate: Date | null = null;
+  @Output() closeModalEvent = new EventEmitter<void>();
 
   constructor(
     private fb: FormBuilder,
+    private geolocsService: GeolocsService,
     private reservationStorageService: ReservationStorageService
   ) {
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
       roomNo: [{ value: '', disabled: true }],
-      stayDateFrom: [{ value: '', disabled: true }],
-      stayDateTo: [{ value: '', disabled: true }],
-      numberOfDays: [{ value: 0, disabled: true }],
-      totalNumberOfGuests: [1, [Validators.required, Validators.min(1)]],
-      pricePerDayPerPerson: [{ value: 0, disabled: true }],
-      totalPrice: [{ value: 0, disabled: true }],
+      stayDateFrom: [''],
+      stayDateTo: [''],
+      numberOfDays: [{ value: '', disabled: true }],
+      totalNumberOfGuests: [''],
+      pricePerDayPerPerson: [{ value: '', disabled: true }],
+      totalPrice: [{ value: '', disabled: true }]
     });
 
     this.customerForm = this.fb.group({
-      customerId: ['', Validators.required],
-      name: ['', Validators.required],
-      age: ['', Validators.required],
-      initialAddress: ['', Validators.required],
-      mobileNumber: ['', Validators.required],
-      pincode: ['', Validators.required],
-      country: ['', Validators.required],
-      state: ['', Validators.required],
-      city: ['', Validators.required]
+      customerId: [{ value: '', disabled: true }],
+      name: [''],
+      age: [''],
+      initialAddress: [''],
+      mobileNumber: [''],
+      pincode: [''],
+      country: [''],
+      state: [''],
+      city: ['']
     });
 
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
-      paymentMode: ['', Validators.required],
-      paidAmount: [0, Validators.required],
-      due: [0, Validators.required],
+      paymentMode: [''],
+      paidAmount: [''],
+      due: [{ value: '', disabled: true }]
     });
-
-    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
-    this.customerForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
-    this.paymentForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
   }
 
   ngOnInit(): void {
     this.initializeForms();
+    this.loadGeolocations();
   }
 
   private initializeForms(): void {
@@ -74,6 +82,12 @@ export class BookingModalComponent {
       });
       this.updateTotalPrice();
     }
+  }
+
+  private loadGeolocations(): void {
+    this.geolocsService.getData().subscribe(data => {
+      this.countries = data.countries;
+    });
   }
 
   public updateTotalPrice(): void {
@@ -93,7 +107,7 @@ export class BookingModalComponent {
     return 'RES' + Math.floor(Math.random() * 1000000);
   }
 
-   updateConfirmButtonState(): void {
+  updateConfirmButtonState(): void {
     const formValid =
       this.bookingForm.valid &&
       this.customerForm.valid &&
@@ -101,26 +115,42 @@ export class BookingModalComponent {
     this.isConfirmDisabled = !formValid;
   }
 
+  onCountryChange(event: Event): void {
+    const countryId = (event.target as HTMLSelectElement).value;
+    const selectedCountry = this.countries.find(country => country.countryId === countryId);
+    this.states = selectedCountry ? selectedCountry.states : [];
+    this.cities = [];
+    this.customerForm.patchValue({ state: '', city: '' });
+    this.updateConfirmButtonState();
+  }
+
+  onStateChange(event: Event): void {
+    const stateId = (event.target as HTMLSelectElement).value;
+    const selectedState = this.states.find(state => state.stateId === stateId);
+    this.cities = selectedState ? selectedState.cities : [];
+    this.customerForm.patchValue({ city: '' });
+    this.updateConfirmButtonState();
+  }
   confirmBooking(): void {
     if (this.bookingForm.valid && this.customerForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
       const reservation: Reservation = {
-        reservationId: String(this.bookingForm.get('reservationId')?.value),
+        reservationId: this.bookingForm.get('reservationId')?.value,
         locationId: this.selectedRoom?.locationId || 0,
         roomId: Number(this.bookingForm.get('roomNo')?.value),
-        customerId: String(this.customerForm.get('customerId')?.value),
+        customerId: this.customerForm.get('customerId')?.value,
         arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
         departureDate: this.bookingForm.get('stayDateTo')?.value,
-        reservationDate: new Date().toISOString(),
+        reservationDate: new Date().toISOString().slice(0, 19).replace('T', ' '),
         totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
-        status: 'CONFIRM',
+        status: 'CONFIRM', // Ensure this matches one of the allowed values
         paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
         numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
       };
-
+  
       const customer: Customer = {
-        customerId: String(this.customerForm.get('customerId')?.value),
+        customerId: this.customerForm.get('customerId')?.value,
         age: Number(this.customerForm.get('age')?.value),
-        firstName: this.customerForm.get('name')?.value.split(' ')[0],
+        firstName: this.customerForm.get('name')?.value.split(' ')[0] || '',
         middleName: this.customerForm.get('name')?.value.split(' ')[1] || '',
         lastName: this.customerForm.get('name')?.value.split(' ')[2] || '',
         country: this.customerForm.get('country')?.value,
@@ -129,17 +159,29 @@ export class BookingModalComponent {
         pinCode: Number(this.customerForm.get('pincode')?.value),
         initialAddress: this.customerForm.get('initialAddress')?.value,
         mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
-        mobileNumber2: 0,
-        birthDate: '',
+        mobileNumber2: 0, // Assuming you don't use a second mobile number
+        birthDate: '', // Set to a default or appropriate value if available
       };
-
+  
       const reservationData = {
-        reservation: reservation,
-        customer: customer,
+        reservation,
+        customer,
       };
-
+  
       this.reservationStorageService.saveReservation(reservationData);
-      this.closeModal.emit();
+      this.closeModal();
     }
+  }
+  
+
+  closeModal(): void {
+    if (this.modal) {
+      const modalElement = this.modal.nativeElement as HTMLElement;
+      const modalInstance = bootstrap.Modal.getInstance(modalElement);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+    }
+    this.closeModalEvent.emit();
   }
 }
