@@ -1,0 +1,97 @@
+/* Additional Custom Styling for Modal */
+.modal-content {
+    border-radius: 8px; /* Rounded corners for modal */
+    border: none; /* Remove default border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  }
+  
+  .modal-header, .modal-footer {
+    border: none; /* Remove borders */
+    padding: 1rem; /* Increase padding */
+  }
+  
+  .modal-title {
+    font-size: 1.5rem; /* Larger font size for title */
+    font-weight: 600; /* Slightly bold for emphasis */
+    color: #333; /* Dark grey color for text */
+    margin-bottom: 0; /* Remove bottom margin for tighter layout */
+  }
+  
+  .btn-close {
+    padding: 0.5rem; /* Increase padding for better clickability */
+    border: none; /* Remove default border */
+    background: transparent; /* Transparent background */
+    font-size: 1.5rem; /* Larger icon for better visibility */
+    color: #000; /* Black color for better contrast */
+  }
+  
+  .btn-secondary, .btn-primary {
+    border-radius: 4px; /* Slightly rounded corners for buttons */
+    padding: 0.5rem 1rem; /* Increase padding for better touch area */
+    font-size: 0.875rem; /* Adjust font size for readability */
+  }
+  
+    /* Angular Material Stepper */
+    .mat-vertical-stepper {
+      .mat-step-header {
+        font-size: 0.875rem;
+      }
+      .mat-step-content {
+        .form-group {
+          margin-bottom: 1rem;
+        }
+      }
+    }
+    
+    .square-input {
+      border-radius: 0.25rem; 
+    }
+    
+   /* Ensure that the stepper container has enough width to show all steps */
+  .horizontal-stepper {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Style the stepper header container to show all steps */
+  .horizontal-stepper .mat-horizontal-stepper-header-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  /* Style individual step headers */
+  .horizontal-stepper .mat-horizontal-stepper-header {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  /* Style the step header icons */
+  .horizontal-stepper .mat-horizontal-stepper-header .mat-step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  
+  /* Change color for active and completed steps */
+  .horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-active .mat-step-icon {
+    background-color: #28a745;
+  }
+  
+  .horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-completed .mat-step-icon {
+    background-color: #17a2b8;
+  }
+  
+  /* Ensure content area is visible */
+  .horizontal-stepper .mat-step-content {
+    padding: 15px;
+  }
+  
