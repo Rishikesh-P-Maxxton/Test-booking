@@ -256,6 +256,13 @@ body {
 }
 
 /* Additional Custom Styling for Modal */
+.modal{
+  z-index: 2000;
+}
+
+.modal-backdrop {
+  z-index: 10;
+}
 .modal-content {
   border-radius: 8px; /* Rounded corners for modal */
   border: none; /* Remove default border */

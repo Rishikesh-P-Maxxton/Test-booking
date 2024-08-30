@@ -35,10 +35,11 @@ import { FilterNavsComponent } from './filter-navs/filter-navs.component';
 import { RoomAvailabilityGanttComponent } from './room-availability-gantt/room-availability-gantt.component';
 import { NgxPaginationModule } from 'ngx-pagination';
 import {MatDialogModule} from '@angular/material/dialog';
-import { BookingModalComponent } from './booking-modal/booking-modal.component';
+
+import { ModalComponent } from './modal/modal.component';
 
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent, ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent, BookingModalComponent, ],
+  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent, ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  
