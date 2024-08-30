@@ -1,0 +1,56 @@
+
+.modal{
+  z-index: 2000;
+}
+
+.modal-backdrop {
+  z-index: 10;
+}
+.modal-content {
+  border-radius: 8px; /* Rounded corners for modal */
+  border: none; /* Remove default border */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.modal-header, .modal-footer {
+  border: none; /* Remove borders */
+  padding: 1rem; /* Increase padding */
+}
+
+.modal-title {
+  font-size: 1.5rem; /* Larger font size for title */
+  font-weight: 600; /* Slightly bold for emphasis */
+  color: #333; /* Dark grey color for text */
+  margin-bottom: 0; /* Remove bottom margin for tighter layout */
+}
+
+.btn-close {
+  padding: 0.5rem; /* Increase padding for better clickability */
+  border: none; /* Remove default border */
+  background: transparent; /* Transparent background */
+  font-size: 1.5rem; /* Larger icon for better visibility */
+  color: #000; /* Black color for better contrast */
+}
+
+.btn-secondary, .btn-primary {
+  border-radius: 4px; /* Slightly rounded corners for buttons */
+  padding: 0.5rem 1rem; /* Increase padding for better touch area */
+  font-size: 0.875rem; /* Adjust font size for readability */
+}
+
+  /* Angular Material Stepper */
+  .mat-vertical-stepper {
+    .mat-step-header {
+      font-size: 0.875rem; 
+    }
+    .mat-step-content {
+      .form-group {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+  
+  .square-input {
+    border-radius: 0.25rem; 
+  }
+  

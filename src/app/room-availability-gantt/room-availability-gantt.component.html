@@ -37,23 +37,13 @@
         </ng-container>
       </div>
     </div>
-   
-    <button (click)="sendSelectionToService()" [disabled]="!isSelectionValid()">Send Selection</button>
-    <!-- <div class="container">
-      <h1>Booking Application</h1>
-      
-    
-      <button type="button" class="btn btn-primary" (click)="openBookingModal()">Open Booking Modal</button> -->
-      
-      <!-- Include the booking modal component and pass inputs -->
-      <!-- <app-booking-modal 
-        [reservationId]="reservationId"
-        [roomId]="selectedRoomId"
-        [stayDateFrom]="stayDateFrom"
-        [stayDateTo]="stayDateTo">
-      </app-booking-modal>
-    </div> -->
+  <!-- Add a reference to the modal component -->
+<app-modal #modal></app-modal>
 
-  
+    
+    
+
+   
+
       
 

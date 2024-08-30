@@ -1,35 +1,48 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../room.service';
-import { StayService } from '../stays.service';
+import { ModalDataService } from '../services/modal-data.service';
+
 import { Room } from '../Interfaces/room';
-import { Stay } from '../Interfaces/stay';
+
 import { Reservation, Customer } from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { GeolocsService } from '../services/geolocs.service';
-import { ModalService } from '../services/modal-data.service';
+import { BookingDetails } from '../Interfaces/booking-details';
 
 @Component({
-  selector: 'app-booking-modal',
-  templateUrl: './booking-modal.component.html',
-  styleUrls: ['./booking-modal.component.css']
+  selector: 'app-modal',
+  templateUrl: './modal.component.html',
+  styleUrl: './modal.component.css'
 })
-export class BookingModalComponent implements OnInit {
-  rooms: Room[] = [];
-  stays: Stay[] = [];
-  filteredRooms: Room[] = [];
+
+export class ModalComponent implements OnInit {
+  @Input() bookingDetails: BookingDetails | null = null; // Add this line
+  // bookingDetails: BookingDetails | null;
   bookingForm: FormGroup;
   customerForm: FormGroup;
   paymentForm: FormGroup;
+  currentStep: number = 1;
+  guests: number[] = [];
+  rooms: Room[] = [];
+ 
+  
+ 
+ 
   selectedRoom: Room | null = null;
   locations: string[] = [];
   availabilityDetails: string[] = [];
   numberOfGuestsOptions: number[] = [];
   isConfirmDisabled = true;
-  currentStep = 0;
+  
 
-  // Customer Form
+  animationKey = 0;
+  dateFilterApplied = false; 
+  page: number = 1; // Current page number
+  itemsPerPage: number = 9; // Number of items per page
+
+  //Customer Form
   countries: any[] = [];
   states: any[] = [];
   cities: any[] = [];
@@ -37,30 +50,22 @@ export class BookingModalComponent implements OnInit {
   selectedStateId: string | null = null;
 
   @ViewChild('stepper') stepper!: MatStepper;
-  @ViewChild('bookingModal') bookingModal!: ElementRef;
-
-  @Input() startDate: Date | null = null;
-  @Input() endDate: Date | null = null;
-  @Input() roomId: number | null = null;
-
-  @Input() reservationId: string | undefined;
- 
-  @Input() stayDateFrom: Date | undefined;
-  @Input() stayDateTo: Date | undefined;
-  @Input() showModal: boolean = false;
-  @Output() close = new EventEmitter<void>();
+  displayedColumns: any;
 
   constructor(
     private roomService: RoomService,
-    private stayService: StayService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
+    private cdr: ChangeDetectorRef,
     private geolocsService: GeolocsService,
-    private modalDataService: ModalService 
+    private modalDataService: ModalDataService
   ) {
+    this.bookingDetails = this.modalDataService.getData() || null; // Ensure default value
+    console.log("bookingDetails received", this.bookingDetails);
+    
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
-      roomId: [{ value: '', disabled: true }],
+      roomNo: [{ value: '', disabled: true }],
       stayDateFrom: [{ value: '', disabled: true }],
       stayDateTo: [{ value: '', disabled: true }],
       numberOfDays: [{ value: 0, disabled: true }],
@@ -68,7 +73,7 @@ export class BookingModalComponent implements OnInit {
       pricePerDayPerPerson: [{ value: 0, disabled: true }],
       totalPrice: [{ value: 0, disabled: true }],
     });
-
+  
     this.customerForm = this.fb.group({
       customerId: [{ value: '', disabled: true }, Validators.required],
       name: ['', Validators.required],
@@ -80,14 +85,14 @@ export class BookingModalComponent implements OnInit {
       state: [{ value: '', disabled: true }, Validators.required],
       city: [{ value: '', disabled: true }, Validators.required]
     });
-
+    
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
       paidAmount: [0, Validators.required],
       due: [0, Validators.required],
     });
-
+  
     this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
     this.bookingForm.get('totalNumberOfGuests')?.valueChanges.subscribe(() => this.updateTotalPrice());
     this.bookingForm.get('numberOfDays')?.valueChanges.subscribe(() => this.updateTotalPrice());
@@ -95,25 +100,111 @@ export class BookingModalComponent implements OnInit {
     this.customerForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
     this.paymentForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
   }
-
+  
   ngOnInit(): void {
+    console.log('hello');
+    if (this.bookingDetails) {
+      console.log('Booking data fetched');
+      this.initializeForms(this.bookingDetails);
+    }
+  
+    // Fetch countries for customer form
     this.geolocsService.getData().subscribe(response => {
       this.countries = response.countries;
     });
-
+  
+    // Initialize rooms and stays
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
-      this.stayService.getStays().subscribe((stayData) => {
-        this.stays = stayData;
-        this.mergeData();
-        this.initializeLocations();
-        if (this.startDate && this.endDate && this.roomId) {
-          this.populateFormWithMergedData();
-        }
-      });
     });
   }
+  
 
+  // Method to initialize forms with booking details
+  // initializeForms(bookingDetails: BookingDetails): void {
+  //   const room = this.rooms.find(r => r.roomId === bookingDetails.roomId) || null;
+
+  //   console.log(bookingDetails, 'object from parent');
+    
+  //   if (room) {
+  //     this.selectedRoom = room;
+  //     this.availabilityDetails = room.availability;
+
+  //     const stayDateFrom = bookingDetails.arrivalDate;
+  //     const stayDateTo = bookingDetails.departureDate;
+  //     const numberOfPersons = 0;
+  //     const pricePerDay = room.pricePerDayPerPerson;
+
+  //     const startDate = new Date(stayDateFrom);
+  //     const endDate = new Date(stayDateTo);
+  //     const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+
+  //     this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
+
+  //     this.bookingForm.patchValue({
+  //       reservationId: this.generateReservationId(),
+  //       roomNo: room.roomId,
+  //       stayDateFrom,
+  //       stayDateTo,
+  //       numberOfDays,
+  //       totalNumberOfGuests: numberOfPersons,
+  //       pricePerDayPerPerson: pricePerDay,
+  //     });
+
+  //     this.customerForm.patchValue({
+  //       customerId: this.generateCustomerId(),
+  //     });
+
+  //     this.paymentForm.patchValue({
+  //       paymentId: this.generatePaymentId(),
+  //     });
+
+  //     this.updateTotalPrice();
+  //     this.updateConfirmButtonState();
+  //   }
+  // }
+
+  initializeForms(bookingDetails: BookingDetails): void {
+    const room = this.rooms.find(r => r.roomId === bookingDetails.roomId) || null;
+
+    console.log(bookingDetails, 'object from parent');
+    
+    if (room) {
+      this.selectedRoom = room;
+      this.availabilityDetails = room.availability;
+
+      const stayDateFrom = bookingDetails.arrivalDate;
+      const stayDateTo = bookingDetails.departureDate;
+      const numberOfPersons = 0;
+      const pricePerDay = room.pricePerDayPerPerson;
+
+      const startDate = stayDateFrom;
+      const endDate = stayDateTo;
+      const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+
+      this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
+
+      this.bookingForm.patchValue({
+        reservationId: this.generateReservationId(),
+        roomNo: room.roomId,
+        stayDateFrom: stayDateFrom.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        stayDateTo: stayDateTo.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        totalNumberOfGuests: numberOfPersons,
+        pricePerDayPerPerson: pricePerDay,
+      });
+
+      this.customerForm.patchValue({
+        customerId: this.generateCustomerId(),
+      });
+
+      this.paymentForm.patchValue({
+        paymentId: this.generatePaymentId(),
+      });
+
+      this.updateTotalPrice();
+      this.updateConfirmButtonState();
+    }
+  }
   onCountryChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     const countryId = target.value;
@@ -135,7 +226,6 @@ export class BookingModalComponent implements OnInit {
     this.customerForm.get('state')?.enable();
     this.customerForm.get('city')?.disable();
   }
-
   onStateChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     const stateId = target.value;
@@ -157,104 +247,6 @@ export class BookingModalComponent implements OnInit {
       this.customerForm.get('city')?.disable();
     }
   }
-
-  mergeData(): void {
-    const roomMap = new Map<number, Room>();
-
-    this.rooms.forEach((room) => {
-      if (!roomMap.has(room.roomId)) {
-        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
-      }
-    });
-
-    this.stays.forEach((stay) => {
-      const room = roomMap.get(stay.roomId);
-      if (room) {
-        room.stays.push(stay);
-
-        const dateFrom = new Date(stay.stayDateFrom);
-        const dateTo = new Date(stay.stayDateTo);
-
-        const formattedDateFrom = dateFrom.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        const formattedDateTo = dateTo.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-
-        const availabilityDetail = `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
-        if (!room.availability.includes(availabilityDetail)) {
-          room.availability.push(availabilityDetail);
-        }
-      }
-    });
-
-    this.filteredRooms = Array.from(roomMap.values());
-    console.log('Merged Data:', this.filteredRooms);
-  }
-
-  initializeLocations(): void {
-    const uniqueLocations = Array.from(
-      new Set(this.rooms.map((room) => room.locationName))
-    );
-    this.locations = uniqueLocations;
-  }
-
-  populateFormWithMergedData(): void {
-    const room = this.filteredRooms.find(r => r.roomId === this.roomId);
-
-    if (room) {
-      this.selectedRoom = room;
-      this.availabilityDetails = room.availability;
-
-      const stayDateFrom = this.startDate!;
-      const stayDateTo = this.endDate!;
-      const numberOfDays = Math.ceil(
-        (stayDateTo.getTime() - stayDateFrom.getTime()) / (1000 * 3600 * 24)
-      ) + 1;
-
-      this.numberOfGuestsOptions = Array.from(
-        { length: room.guestCapacity },
-        (_, i) => i + 1
-      );
-
-      this.bookingForm.patchValue({
-        reservationId: this.generateReservationId(),
-        roomNo: room.roomId,
-        stayDateFrom,
-        stayDateTo,
-        numberOfDays,
-        totalNumberOfGuests: 0, // Set default or calculate based on requirement
-        pricePerDayPerPerson: room.pricePerDayPerPerson,
-      });
-
-      this.customerForm.patchValue({
-        customerId: this.generateCustomerId(),
-      });
-
-      this.paymentForm.patchValue({
-        paymentId: this.generatePaymentId(),
-        paidAmount: 0, // Default or based on calculation
-        due: 0 // Default or based on calculation
-      });
-
-      this.updateTotalPrice();
-      this.updateConfirmButtonState();
-
-      // Initialize forms for stepper and show modal
-      this.currentStep = 0;
-      const modalElement = this.bookingModal.nativeElement as HTMLElement;
-      const bookingModal = new bootstrap.Modal(modalElement);
-      bookingModal.show();
-    } else {
-      console.error('No room found with the given ID.');
-    }
-  }
-
   generateReservationId(): string {
     const prefix = 'RID';
     const randomNumber = Math.floor(1000 + Math.random() * 9000);
@@ -274,63 +266,54 @@ export class BookingModalComponent implements OnInit {
   }
 
   openBookingModal(room: Room): void {
-    this.selectedRoom = room;
-    this.availabilityDetails = room.availability;
-
-    const stayDateFrom = this.startDate;
-    const stayDateTo = this.endDate;
-    const numberOfPersons = 0;
-    const pricePerDay = room.pricePerDayPerPerson;
-
-    // const startDate = new Date(stayDateFrom);
-    // const endDate = new Date(stayDateTo);
-    const numberOfDays =
-      Math.ceil(
-        (stayDateFrom!.getTime() - stayDateTo!.getTime()) / (1000 * 3600 * 24)
-      ) + 1;
-
-    this.numberOfGuestsOptions = Array.from(
-      { length: room.guestCapacity },
-      (_, i) => i + 1
-    );
-
-    this.bookingForm.patchValue({
-      reservationId: this.generateReservationId(),
-      roomNo: room.roomId,
-      stayDateFrom,
-      stayDateTo,
-      numberOfDays,
-      totalNumberOfGuests: numberOfPersons,
-      pricePerDayPerPerson: pricePerDay,
-    });
-
-    this.customerForm.patchValue({
-      customerId: this.generateCustomerId(),
-    });
-
-    this.paymentForm.patchValue({
-      paymentId: this.generatePaymentId(),
-    });
-
-    this.updateTotalPrice();
-    this.updateConfirmButtonState();
-
-    this.populateFormWithMergedData();
-    // Initialize forms for stepper and show modal
-    this.currentStep = 0;
-  const bookingModalElement = document.getElementById('bookingModal');
+     this.selectedRoom = room;
+     this.availabilityDetails = room.availability;
   
-  if (bookingModalElement) {
-    const bookingModal = new bootstrap.Modal(bookingModalElement, {
-      backdrop: false  // Disable backdrop
-    });
-    bookingModal.show();
+    if (this.bookingDetails) {
+      const stayDateFrom = this.bookingDetails.arrivalDate;
+      const stayDateTo = this.bookingDetails.departureDate;
+      const numberOfPersons = this.bookingDetails.guestCapacity; // Corrected from undefined property
+      const pricePerDay = room.pricePerDayPerPerson;
+  
+      const startDate = new Date(stayDateFrom);
+      const endDate = new Date(stayDateTo);
+      const numberOfDays =
+        Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+  
+      this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
+  
+      this.bookingForm.patchValue({
+        reservationId: this.generateReservationId(),
+        roomNo: room.roomId,
+        stayDateFrom,
+        stayDateTo,
+        numberOfDays,
+        totalNumberOfGuests: numberOfPersons,
+        pricePerDayPerPerson: pricePerDay,
+      });
+  
+      this.customerForm.patchValue({
+        customerId: this.generateCustomerId(),
+      });
+  
+      this.paymentForm.patchValue({
+        paymentId: this.generatePaymentId(),
+      });
+  
+      this.updateTotalPrice();
+      this.updateConfirmButtonState();
+  
+      // Initialize forms for stepper
+      this.currentStep = 0;
+      const bookingModal = new bootstrap.Modal(document.getElementById('bookingsModal')!);
+      bookingModal.show();
+    }
   }
-  }
+  
 
   closeBookingModal(): void {
     const bookingModal = bootstrap.Modal.getInstance(
-      document.getElementById('bookingModal')!
+      document.getElementById('bookingsModal')!
     );
     bookingModal.hide();
   }
@@ -411,7 +394,6 @@ export class BookingModalComponent implements OnInit {
       console.log('Please fill out all required fields.');
     }
   }
-
   private updateTotalPrice(): void {
     const numberOfGuests =
       this.bookingForm.get('totalNumberOfGuests')?.value || 0;
@@ -427,14 +409,15 @@ export class BookingModalComponent implements OnInit {
   }
 
   private updateConfirmButtonState(): void {
-    const filterFormValid =
-      this.bookingForm.get('stayDateFrom')?.value &&
-      this.bookingForm.get('stayDateTo')?.value;
+    if(this.bookingDetails){
+      
     const formValid =
       this.bookingForm.valid &&
       this.customerForm.valid &&
       this.paymentForm.valid;
-    this.isConfirmDisabled = !(formValid && filterFormValid);
+    this.isConfirmDisabled = !(formValid);
+    }
+    
   }
 
   // Stepper Methods
@@ -450,7 +433,4 @@ export class BookingModalComponent implements OnInit {
     }
   }
 
-  onClose() {
-    this.close.emit();
-  }
 }

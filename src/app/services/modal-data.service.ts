@@ -1,18 +1,23 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BookingDetails } from '../Interfaces/booking-details';
+// Adjust path as necessary
 
 @Injectable({
   providedIn: 'root'
 })
-export class ModalService {
-  private modalDataSubject = new BehaviorSubject<any>(null);
-  modalData$ = this.modalDataSubject.asObservable();
+export class ModalDataService {
+  private data: BookingDetails | null = null;
 
-  setModalData(data: any) {
-    this.modalDataSubject.next(data);
+  setData(data: BookingDetails): boolean {
+    this.data = data;
+    return data != null;
   }
 
-  clearModalData() {
-    this.modalDataSubject.next(null);
+  getData(): BookingDetails | null {
+    return this.data;
+  }
+
+  clearData(): void {
+    this.data = null;
   }
 }

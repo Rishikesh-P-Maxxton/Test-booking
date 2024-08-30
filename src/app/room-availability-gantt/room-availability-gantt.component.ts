@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { RoomService } from '../room.service';
 import { StayService } from '../stays.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
 import { Reservation, Customer } from '../Interfaces/reservation';
-import { ModalService } from '../services/modal-data.service';
+import { ModalDataService } from '../services/modal-data.service';
+import { ModalComponent } from '../modal/modal.component';
+import { BookingDetails } from '../Interfaces/booking-details';
 
 interface Availability {
   start: Date;
@@ -27,9 +29,8 @@ interface RoomData {
   styleUrls: ['./room-availability-gantt.component.css'],
 })
 export class RoomAvailabilityGanttComponent implements OnInit {
-openBookingModal() {
-throw new Error('Method not implemented.');
-}
+
+  @ViewChild('modal') modalComponent!: ModalComponent;
   months = [
     { name: 'January', value: 1 },
     { name: 'February', value: 2 },
@@ -65,19 +66,12 @@ throw new Error('Method not implemented.');
   selectedMonthName: number= new Date().getMonth() + 1;
   showModal: boolean = false;
 
-//   selectedRoom: Room | null = null;
-//   startDate: Date | null = null;
-//   endDate: Date | null = null;
-// reservationId: string |undefined;
-// roomNo: string|undefined;
-// stayDateFrom: Date|undefined;
-// stayDateTo: Date|undefined;
 
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
     private reservationStorageService: ReservationStorageService,
-    private modalDataService: ModalService
+    private modalDataService: ModalDataService
   ) {}
 
   // Initialization and Data Handling
@@ -260,9 +254,70 @@ throw new Error('Method not implemented.');
     console.log(`onMouseUp - Selected Room ID: ${this.selectedRoomId}`);
     this.isMouseDown = false;
     if (this.selectedRoomId !== null) {
-        this.validateSelection(this.selectedRoomId);
+      // Validate the selection
+      this.validateSelection(this.selectedRoomId);
+  
+      // Only call takeSelections if the selection is valid
+      if (this.isSelectionValid()) {
+        this.takeSelections();
+      } else {
+        console.log('Selection is not valid. No action taken.');
+      }
     }
 }
+
+public takeSelections(): void {
+  if (this.selectedRoomId !== null) {
+    this.validateSelection(this.selectedRoomId);
+    
+    if (this.selectedCells.size > 0) {
+      const selectedDays = Array.from(this.selectedCells)
+        .filter(cell => cell.startsWith(`${this.selectedRoomId}-`))
+        .map(cell => parseInt(cell.split('-')[1], 10))
+        .sort((a, b) => a - b);
+
+      if (selectedDays.length > 0) {
+        const startDay = selectedDays[0];
+        const endDay = selectedDays[selectedDays.length - 1];
+
+        const arrivalDate = new Date(this.year, this.selectedMonth, startDay);
+        const departureDate = new Date(this.year, this.selectedMonth, endDay);
+        const roomDetails = this.rooms.find(room => room.roomId === this.selectedRoomId);
+
+        if (roomDetails) {
+          const bookingDetails: BookingDetails = {
+            roomId: roomDetails.roomId,
+            locationId: roomDetails.locationId,
+            roomName: roomDetails.roomName,
+            pricePerDayPerPerson: roomDetails.pricePerDayPerPerson,
+            arrivalDate: arrivalDate,
+            departureDate: departureDate,
+            locationName: roomDetails.locationName,
+            guestCapacity: roomDetails.guestCapacity
+          };
+
+          console.log('Booking Details:', bookingDetails);
+
+          // Pass data to the modal component
+          if (this.modalComponent) {
+            this.modalComponent.bookingDetails = bookingDetails;
+            this.modalComponent.ngOnInit(); // Call ngOnInit to initialize form with new data
+          }
+
+          const modalElement = document.getElementById('bookingsModal');
+          if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            
+          } else {
+            console.error('Modal element not found');
+          }
+        }
+      }
+    }
+  }
+}
+
 
 
 selectRangeForMinimumStay(startDay: number, roomId: number): void {
@@ -527,21 +582,8 @@ onCellClick(roomId: number, day: number): void {
       return;
     }
   
-    // if (this.checkOverlap(start, end, roomData)) {
-    //   this.clearAllSelections();
-    //   console.log("in this.checkOverlap(start, end, roomData ")
-    // }
   }
   
-
-
-  // checkOverlap(start: number, end: number, roomData: RoomData): boolean {
-  //   return roomData.reservations.some((reservation) => {
-  //     const reservStart = reservation.start.getDate();
-  //     const reservEnd = reservation.end.getDate();
-  //     return start <= reservEnd && end >= reservStart;
-  //   });
-  // }
 
   addSelection(start: number, end: number, roomId: number) {
     for (let day = start; day <= end; day++) {
@@ -593,45 +635,6 @@ onCellClick(roomId: number, day: number): void {
     console.log('Selected Date Ranges:', selectedDates);
   }
 
-  // openBookingModal(): void {
-  //   this.showModal = true;
-  //   if (this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined) {
-  //     this.selectedRoom = this.rooms.find(room => room.roomId === this.selectedRoomId) || null;
-  //     this.startDate = new Date(this.year, this.selectedMonth - 1, this.startDay);
-  //     this.endDate = new Date(this.year, this.selectedMonth - 1, this.endDay);
-  //     this.showModal = true;
-  //   }
-  // }
-
-  // handleModalClose(): void {
-  //   this.showModal = false;
-  // }
-
-
-  //codes for modal
-
-  sendSelectionToService(): void {
-    if (this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined) {
-      const selectedRoom = this.rooms.find(room => room.roomId === this.selectedRoomId);
-  
-      if (selectedRoom) {
-        const modalData = {
-          roomId: this.selectedRoomId,
-          startDate: new Date(this.year, this.selectedMonth - 1, this.startDay),
-          endDate: new Date(this.year, this.selectedMonth - 1, this.endDay)
-        };
-  
-        this.modalDataService.setModalData(modalData);
-  
-        // Optional: If you want to trigger opening the modal here
-        // this.openModal(); // Implement this method if needed to open the modal
-      } else {
-        console.log('Selected room not found.');
-      }
-    } else {
-      console.log('No valid selection to send.');
-    }
-  }
   
   isSelectionValid(): boolean {
     // Return true if a selection is valid and ready to send
@@ -639,7 +642,7 @@ onCellClick(roomId: number, day: number): void {
   }
   
 
-
+  
  
   
 }
