@@ -1,187 +1,456 @@
-import { Component, OnInit, ViewChild, ElementRef, EventEmitter } from '@angular/core';
-import { Input, Output } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RoomService } from '../room.service';
+import { StayService } from '../stays.service';
+import { Room } from '../Interfaces/room';
+import { Stay } from '../Interfaces/stay';
+import { Reservation, Customer } from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
-import { GeolocsService } from '../services/geolocs.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
-import { Observable } from 'rxjs';
-import { Customer, Reservation } from '../Interfaces/reservation';
+import { GeolocsService } from '../services/geolocs.service';
+import { ModalService } from '../services/modal-data.service';
 
 @Component({
   selector: 'app-booking-modal',
   templateUrl: './booking-modal.component.html',
-  styleUrls: ['./booking-modal.component.scss']
+  styleUrls: ['./booking-modal.component.css']
 })
 export class BookingModalComponent implements OnInit {
-  @ViewChild('stepper') stepper: MatStepper | undefined;
-  @ViewChild('modal') modal: ElementRef | undefined;
-
+  rooms: Room[] = [];
+  stays: Stay[] = [];
+  filteredRooms: Room[] = [];
   bookingForm: FormGroup;
   customerForm: FormGroup;
   paymentForm: FormGroup;
+  selectedRoom: Room | null = null;
+  locations: string[] = [];
+  availabilityDetails: string[] = [];
+  numberOfGuestsOptions: number[] = [];
+  isConfirmDisabled = true;
+  currentStep = 0;
+
+  // Customer Form
   countries: any[] = [];
   states: any[] = [];
   cities: any[] = [];
-  numberOfGuestsOptions: number[] = [1, 2, 3, 4, 5, 6];
-  isConfirmDisabled = true;
+  selectedCountryId: string | null = null;
+  selectedStateId: string | null = null;
 
-  @Input() selectedRoom: any; // Adjust based on your Room interface
+  @ViewChild('stepper') stepper!: MatStepper;
+  @ViewChild('bookingModal') bookingModal!: ElementRef;
+
   @Input() startDate: Date | null = null;
   @Input() endDate: Date | null = null;
-  @Output() closeModalEvent = new EventEmitter<void>();
+  @Input() roomId: number | null = null;
+
+  @Input() reservationId: string | undefined;
+ 
+  @Input() stayDateFrom: Date | undefined;
+  @Input() stayDateTo: Date | undefined;
+  @Input() showModal: boolean = false;
+  @Output() close = new EventEmitter<void>();
 
   constructor(
+    private roomService: RoomService,
+    private stayService: StayService,
     private fb: FormBuilder,
+    private reservationStorageService: ReservationStorageService,
     private geolocsService: GeolocsService,
-    private reservationStorageService: ReservationStorageService
+    private modalDataService: ModalService 
   ) {
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
-      roomNo: [{ value: '', disabled: true }],
-      stayDateFrom: [''],
-      stayDateTo: [''],
-      numberOfDays: [{ value: '', disabled: true }],
-      totalNumberOfGuests: [''],
-      pricePerDayPerPerson: [{ value: '', disabled: true }],
-      totalPrice: [{ value: '', disabled: true }]
+      roomId: [{ value: '', disabled: true }],
+      stayDateFrom: [{ value: '', disabled: true }],
+      stayDateTo: [{ value: '', disabled: true }],
+      numberOfDays: [{ value: 0, disabled: true }],
+      totalNumberOfGuests: [0, [Validators.required, Validators.min(1)]],
+      pricePerDayPerPerson: [{ value: 0, disabled: true }],
+      totalPrice: [{ value: 0, disabled: true }],
     });
 
     this.customerForm = this.fb.group({
-      customerId: [{ value: '', disabled: true }],
-      name: [''],
-      age: [''],
-      initialAddress: [''],
-      mobileNumber: [''],
-      pincode: [''],
-      country: [''],
-      state: [''],
-      city: ['']
+      customerId: [{ value: '', disabled: true }, Validators.required],
+      name: ['', Validators.required],
+      age: ['', Validators.required],
+      initialAddress: ['', Validators.required],
+      mobileNumber: ['', Validators.required],
+      pincode: ['', Validators.required],
+      country: ['', Validators.required],
+      state: [{ value: '', disabled: true }, Validators.required],
+      city: [{ value: '', disabled: true }, Validators.required]
     });
 
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
-      paymentMode: [''],
-      paidAmount: [''],
-      due: [{ value: '', disabled: true }]
+      paymentMode: ['', Validators.required],
+      paidAmount: [0, Validators.required],
+      due: [0, Validators.required],
     });
+
+    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
+    this.bookingForm.get('totalNumberOfGuests')?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm.get('numberOfDays')?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm.get('pricePerDayPerPerson')?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.customerForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
+    this.paymentForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
   }
 
   ngOnInit(): void {
-    this.initializeForms();
-    this.loadGeolocations();
-  }
+    this.geolocsService.getData().subscribe(response => {
+      this.countries = response.countries;
+    });
 
-  private initializeForms(): void {
-    if (this.selectedRoom) {
-      this.bookingForm.patchValue({
-        reservationId: this.generateReservationId(),
-        roomNo: this.selectedRoom.roomId,
-        stayDateFrom: this.startDate,
-        stayDateTo: this.endDate,
-        pricePerDayPerPerson: this.selectedRoom.pricePerDayPerPerson,
+    this.roomService.getRooms().subscribe((roomData) => {
+      this.rooms = roomData;
+      this.stayService.getStays().subscribe((stayData) => {
+        this.stays = stayData;
+        this.mergeData();
+        this.initializeLocations();
+        if (this.startDate && this.endDate && this.roomId) {
+          this.populateFormWithMergedData();
+        }
       });
-      this.updateTotalPrice();
-    }
-  }
-
-  private loadGeolocations(): void {
-    this.geolocsService.getData().subscribe(data => {
-      this.countries = data.countries;
     });
   }
 
-  public updateTotalPrice(): void {
-    const numberOfDays = this.getNumberOfDays();
-    const pricePerDayPerPerson = this.bookingForm.get('pricePerDayPerPerson')?.value;
-    const totalPrice = numberOfDays * pricePerDayPerPerson;
-    this.bookingForm.get('totalPrice')?.setValue(totalPrice, { emitEvent: false });
-  }
-
-  private getNumberOfDays(): number {
-    const start = new Date(this.bookingForm.get('stayDateFrom')?.value);
-    const end = new Date(this.bookingForm.get('stayDateTo')?.value);
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
-  }
-
-  private generateReservationId(): string {
-    return 'RES' + Math.floor(Math.random() * 1000000);
-  }
-
-  updateConfirmButtonState(): void {
-    const formValid =
-      this.bookingForm.valid &&
-      this.customerForm.valid &&
-      this.paymentForm.valid;
-    this.isConfirmDisabled = !formValid;
-  }
-
   onCountryChange(event: Event): void {
-    const countryId = (event.target as HTMLSelectElement).value;
-    const selectedCountry = this.countries.find(country => country.countryId === countryId);
-    this.states = selectedCountry ? selectedCountry.states : [];
+    const target = event.target as HTMLSelectElement;
+    const countryId = target.value;
+    this.selectedCountryId = countryId;
+  
+    // Find selected country
+    const country = this.countries.find(c => c.countryId === countryId);
+  
+    // Update states and reset cities
+    this.states = country ? country.states : [];
     this.cities = [];
-    this.customerForm.patchValue({ state: '', city: '' });
-    this.updateConfirmButtonState();
+    this.selectedStateId = null;
+  
+    // Update form controls
+    this.customerForm.get('state')?.setValue('');
+    this.customerForm.get('city')?.setValue('');
+    
+    // Enable or disable controls
+    this.customerForm.get('state')?.enable();
+    this.customerForm.get('city')?.disable();
   }
 
   onStateChange(event: Event): void {
-    const stateId = (event.target as HTMLSelectElement).value;
-    const selectedState = this.states.find(state => state.stateId === stateId);
-    this.cities = selectedState ? selectedState.cities : [];
-    this.customerForm.patchValue({ city: '' });
-    this.updateConfirmButtonState();
+    const target = event.target as HTMLSelectElement;
+    const stateId = target.value;
+    this.selectedStateId = stateId;
+  
+    // Find selected country
+    const country = this.countries.find(c => c.countryId === this.selectedCountryId);
+    if (country) {
+      // Find selected state
+      const state = country.states.find((s: { stateId: string; }) => s.stateId === stateId);
+      this.cities = state ? state.cities : [];
+    }
+  
+    // Update form control and enable city dropdown if there are cities
+    this.customerForm.get('city')?.setValue('');
+    if (this.cities.length > 0) {
+      this.customerForm.get('city')?.enable();
+    } else {
+      this.customerForm.get('city')?.disable();
+    }
   }
+
+  mergeData(): void {
+    const roomMap = new Map<number, Room>();
+
+    this.rooms.forEach((room) => {
+      if (!roomMap.has(room.roomId)) {
+        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
+      }
+    });
+
+    this.stays.forEach((stay) => {
+      const room = roomMap.get(stay.roomId);
+      if (room) {
+        room.stays.push(stay);
+
+        const dateFrom = new Date(stay.stayDateFrom);
+        const dateTo = new Date(stay.stayDateTo);
+
+        const formattedDateFrom = dateFrom.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const formattedDateTo = dateTo.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+
+        const availabilityDetail = `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
+        if (!room.availability.includes(availabilityDetail)) {
+          room.availability.push(availabilityDetail);
+        }
+      }
+    });
+
+    this.filteredRooms = Array.from(roomMap.values());
+    console.log('Merged Data:', this.filteredRooms);
+  }
+
+  initializeLocations(): void {
+    const uniqueLocations = Array.from(
+      new Set(this.rooms.map((room) => room.locationName))
+    );
+    this.locations = uniqueLocations;
+  }
+
+  populateFormWithMergedData(): void {
+    const room = this.filteredRooms.find(r => r.roomId === this.roomId);
+
+    if (room) {
+      this.selectedRoom = room;
+      this.availabilityDetails = room.availability;
+
+      const stayDateFrom = this.startDate!;
+      const stayDateTo = this.endDate!;
+      const numberOfDays = Math.ceil(
+        (stayDateTo.getTime() - stayDateFrom.getTime()) / (1000 * 3600 * 24)
+      ) + 1;
+
+      this.numberOfGuestsOptions = Array.from(
+        { length: room.guestCapacity },
+        (_, i) => i + 1
+      );
+
+      this.bookingForm.patchValue({
+        reservationId: this.generateReservationId(),
+        roomNo: room.roomId,
+        stayDateFrom,
+        stayDateTo,
+        numberOfDays,
+        totalNumberOfGuests: 0, // Set default or calculate based on requirement
+        pricePerDayPerPerson: room.pricePerDayPerPerson,
+      });
+
+      this.customerForm.patchValue({
+        customerId: this.generateCustomerId(),
+      });
+
+      this.paymentForm.patchValue({
+        paymentId: this.generatePaymentId(),
+        paidAmount: 0, // Default or based on calculation
+        due: 0 // Default or based on calculation
+      });
+
+      this.updateTotalPrice();
+      this.updateConfirmButtonState();
+
+      // Initialize forms for stepper and show modal
+      this.currentStep = 0;
+      const modalElement = this.bookingModal.nativeElement as HTMLElement;
+      const bookingModal = new bootstrap.Modal(modalElement);
+      bookingModal.show();
+    } else {
+      console.error('No room found with the given ID.');
+    }
+  }
+
+  generateReservationId(): string {
+    const prefix = 'RID';
+    const randomNumber = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNumber}`;
+  }
+
+  generateCustomerId(): string {
+    const prefix = 'CID';
+    const randomNumber = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNumber}`;
+  }
+
+  generatePaymentId(): string {
+    const prefix = 'PID';
+    const randomNumber = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNumber}`;
+  }
+
+  openBookingModal(room: Room): void {
+    this.selectedRoom = room;
+    this.availabilityDetails = room.availability;
+
+    const stayDateFrom = this.startDate;
+    const stayDateTo = this.endDate;
+    const numberOfPersons = 0;
+    const pricePerDay = room.pricePerDayPerPerson;
+
+    // const startDate = new Date(stayDateFrom);
+    // const endDate = new Date(stayDateTo);
+    const numberOfDays =
+      Math.ceil(
+        (stayDateFrom!.getTime() - stayDateTo!.getTime()) / (1000 * 3600 * 24)
+      ) + 1;
+
+    this.numberOfGuestsOptions = Array.from(
+      { length: room.guestCapacity },
+      (_, i) => i + 1
+    );
+
+    this.bookingForm.patchValue({
+      reservationId: this.generateReservationId(),
+      roomNo: room.roomId,
+      stayDateFrom,
+      stayDateTo,
+      numberOfDays,
+      totalNumberOfGuests: numberOfPersons,
+      pricePerDayPerPerson: pricePerDay,
+    });
+
+    this.customerForm.patchValue({
+      customerId: this.generateCustomerId(),
+    });
+
+    this.paymentForm.patchValue({
+      paymentId: this.generatePaymentId(),
+    });
+
+    this.updateTotalPrice();
+    this.updateConfirmButtonState();
+
+    this.populateFormWithMergedData();
+    // Initialize forms for stepper and show modal
+    this.currentStep = 0;
+  const bookingModalElement = document.getElementById('bookingModal');
+  
+  if (bookingModalElement) {
+    const bookingModal = new bootstrap.Modal(bookingModalElement, {
+      backdrop: false  // Disable backdrop
+    });
+    bookingModal.show();
+  }
+  }
+
+  closeBookingModal(): void {
+    const bookingModal = bootstrap.Modal.getInstance(
+      document.getElementById('bookingModal')!
+    );
+    bookingModal.hide();
+  }
+
   confirmBooking(): void {
-    if (this.bookingForm.valid && this.customerForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
+    if (
+      this.bookingForm.valid &&
+      this.customerForm.valid &&
+      this.paymentForm.valid &&
+      !this.isConfirmDisabled
+    ) {
+      // Construct Reservation object
       const reservation: Reservation = {
-        reservationId: this.bookingForm.get('reservationId')?.value,
+        reservationId: String(this.bookingForm.get('reservationId')?.value),
         locationId: this.selectedRoom?.locationId || 0,
         roomId: Number(this.bookingForm.get('roomNo')?.value),
-        customerId: this.customerForm.get('customerId')?.value,
+        customerId: String(this.customerForm.get('customerId')?.value),
         arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
         departureDate: this.bookingForm.get('stayDateTo')?.value,
-        reservationDate: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        reservationDate: new Date().toISOString(),
         totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
-        status: 'CONFIRM', // Ensure this matches one of the allowed values
+        status: 'CONFIRM',
         paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
-        numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
+        numberOfGuest: Number(
+          this.bookingForm.get('totalNumberOfGuests')?.value
+        ),
       };
-  
+
+      // Parse customer name
+      const nameParts = this.customerForm.get('name')?.value.split(' ') || [];
+      let firstName = '';
+      let middleName = '';
+      let lastName = '';
+
+      if (nameParts.length >= 2) {
+        firstName = nameParts[0]; // First part is first name
+        lastName = nameParts[nameParts.length - 1]; // Last part is last name
+        if (nameParts.length === 3) {
+          middleName = nameParts[1]; // Middle part is middle name
+        }
+      } else if (nameParts.length === 1) {
+        firstName = nameParts[0]; // Only one name part, consider it as first name
+      }
+
+      // Construct Customer object
       const customer: Customer = {
-        customerId: this.customerForm.get('customerId')?.value,
+        customerId: String(this.customerForm.get('customerId')?.value),
         age: Number(this.customerForm.get('age')?.value),
-        firstName: this.customerForm.get('name')?.value.split(' ')[0] || '',
-        middleName: this.customerForm.get('name')?.value.split(' ')[1] || '',
-        lastName: this.customerForm.get('name')?.value.split(' ')[2] || '',
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
         country: this.customerForm.get('country')?.value,
         state: this.customerForm.get('state')?.value,
         city: this.customerForm.get('city')?.value,
         pinCode: Number(this.customerForm.get('pincode')?.value),
         initialAddress: this.customerForm.get('initialAddress')?.value,
         mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
-        mobileNumber2: 0, // Assuming you don't use a second mobile number
-        birthDate: '', // Set to a default or appropriate value if available
+        mobileNumber2: 0,
+        birthDate: '',
       };
-  
+
+      // Combine both objects
       const reservationData = {
-        reservation,
-        customer,
+        reservation: reservation,
+        customer: customer,
       };
-  
+
+      // Save to local storage
       this.reservationStorageService.saveReservation(reservationData);
-      this.closeModal();
+
+      // Reset and close modal
+      this.closeBookingModal();
+      this.bookingForm.reset();
+      this.customerForm.reset();
+      this.paymentForm.reset();
+      this.selectedRoom = null;
+    } else {
+      console.log('Please fill out all required fields.');
     }
   }
-  
 
-  closeModal(): void {
-    if (this.modal) {
-      const modalElement = this.modal.nativeElement as HTMLElement;
-      const modalInstance = bootstrap.Modal.getInstance(modalElement);
-      if (modalInstance) {
-        modalInstance.hide();
-      }
+  private updateTotalPrice(): void {
+    const numberOfGuests =
+      this.bookingForm.get('totalNumberOfGuests')?.value || 0;
+    const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
+    const pricePerDayPerPerson =
+      this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
+
+    if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
+      const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
+      this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
+      this.paymentForm.patchValue({ paidAmount: totalPrice }, { emitEvent: false });
     }
-    this.closeModalEvent.emit();
+  }
+
+  private updateConfirmButtonState(): void {
+    const filterFormValid =
+      this.bookingForm.get('stayDateFrom')?.value &&
+      this.bookingForm.get('stayDateTo')?.value;
+    const formValid =
+      this.bookingForm.valid &&
+      this.customerForm.valid &&
+      this.paymentForm.valid;
+    this.isConfirmDisabled = !(formValid && filterFormValid);
+  }
+
+  // Stepper Methods
+  nextStep(): void {
+    if (this.currentStep < 2) {
+      this.currentStep++;
+    }
+  }
+
+  prevStep(): void {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+    }
+  }
+
+  onClose() {
+    this.close.emit();
   }
 }

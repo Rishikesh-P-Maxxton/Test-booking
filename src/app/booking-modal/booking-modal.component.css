@@ -1,5 +1,70 @@
-/* Additional Custom Styling for Modal */
-.modal-content {
+/* Custom Form Styles */
+.custom-form {
+  
+    padding: 0; /* Padding around the form */
+   margin:0%;
+    border-radius: 8px; /* Slightly rounded corners */
+    max-width: 100%; /* Ensure it fits its container */
+  }
+  
+  .custom-form .form-label {
+    font-size: 0.875rem; /* Smaller font size for labels */
+    margin-bottom: 0.25rem; /* Space below labels */
+    color: #333; /* Dark grey color for text */
+  }
+  
+  .custom-form .form-control {
+    border: none; /* Remove border */
+    border-radius: 2px; /* Slightly rounded corners for inputs */
+    background-color: #e3e3e3; /* Light gray background */
+    padding: 0.5rem; /* Compact padding inside input fields */
+    font-size: 0.875rem; /* Adjusted font size */
+    box-shadow: none; /* Remove any box shadow */
+  }
+  .container-fluid{
+    margin:0;
+  }
+  .custom-form .form-select {
+    border: none; /* Remove border */
+    border-radius: 0; /* Remove border radius for square edges */
+    background-color:#e3e3e3; /* Light gray background */
+    padding: 0.5rem; /* Compact padding inside select fields */
+    font-size: 0.875rem; /* Adjusted font size */
+    box-shadow: none; /* Remove any box shadow */
+  }
+  
+  .custom-form .form-select:focus {
+    outline: none; /* Remove default outline on focus */
+    box-shadow: none; /* Ensure no shadow is added on focus */
+    border-color: transparent; /* Ensure no border color on focus */
+  }
+  
+  .custom-form .form-control:focus {
+    outline: none; /* Remove default outline on focus */
+    box-shadow: none; /* Ensure no shadow is added on focus */
+    border-color: transparent; /* Ensure no border color on focus */
+  }
+  
+  .custom-form .btn-custom {
+    background-color: #1db260; /* Custom green background */
+    border: none;
+    border-radius: 4px; /* Rounded corners for button */
+    color: #fff;
+    padding: 0.5rem 1rem; /* Compact padding for the button */
+    font-size: 0.875rem; /* Smaller font size */
+  }
+  
+  .custom-form .btn-custom:hover {
+    background-color: #73c672; /* Lighter green on hover */
+  }
+  
+  /* Additional Custom Styling for Modal */
+  .modal-dialog {
+    z-index: 2000; /* Ensure modal is on top */
+  }
+  
+ 
+  .modal-content {
     border-radius: 8px; /* Rounded corners for modal */
     border: none; /* Remove default border */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
@@ -34,7 +99,7 @@
     /* Angular Material Stepper */
     .mat-vertical-stepper {
       .mat-step-header {
-        font-size: 0.875rem;
+        font-size: 0.875rem; 
       }
       .mat-step-content {
         .form-group {
@@ -47,53 +112,3 @@
       border-radius: 0.25rem; 
     }
     
-   /* Ensure that the stepper container has enough width to show all steps */
-  .horizontal-stepper {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* Style the stepper header container to show all steps */
-  .horizontal-stepper .mat-horizontal-stepper-header-container {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  /* Style individual step headers */
-  .horizontal-stepper .mat-horizontal-stepper-header {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
-  
-  /* Style the step header icons */
-  .horizontal-stepper .mat-horizontal-stepper-header .mat-step-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-  }
-  
-  /* Change color for active and completed steps */
-  .horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-active .mat-step-icon {
-    background-color: #28a745;
-  }
-  
-  .horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-completed .mat-step-icon {
-    background-color: #17a2b8;
-  }
-  
-  /* Ensure content area is visible */
-  .horizontal-stepper .mat-step-content {
-    padding: 15px;
-  }
-  
-
-

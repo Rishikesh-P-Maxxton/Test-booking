@@ -35,7 +35,7 @@ export class RoomsFilterComponent implements OnInit {
   animationKey = 0;
   dateFilterApplied = false; 
   page: number = 1; // Current page number
-  itemsPerPage: number = 6; // Number of items per page
+  itemsPerPage: number = 9; // Number of items per page
 
   //Customer Form
   countries: any[] = [];
@@ -315,7 +315,7 @@ export class RoomsFilterComponent implements OnInit {
          console.log('Requested Dates:', { arrivalDate, departureDate });
          console.log('Stay Duration:', stayDuration);
 
-         // Use helper function to check if the requested stay period is completely within the room's available period
+         // Using helper function to check if the requested stay period is completely within the room's available period
          const isDateCompletelyWithin = this.isDateRangeCompletelyWithin(
            arrivalDate,
            departureDate,

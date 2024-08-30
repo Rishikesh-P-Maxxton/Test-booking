@@ -5,6 +5,7 @@ import { ReservationStorageService } from '../services/reservation-storage.servi
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
 import { Reservation, Customer } from '../Interfaces/reservation';
+import { ModalService } from '../services/modal-data.service';
 
 interface Availability {
   start: Date;
@@ -26,6 +27,9 @@ interface RoomData {
   styleUrls: ['./room-availability-gantt.component.css'],
 })
 export class RoomAvailabilityGanttComponent implements OnInit {
+openBookingModal() {
+throw new Error('Method not implemented.');
+}
   months = [
     { name: 'January', value: 1 },
     { name: 'February', value: 2 },
@@ -54,17 +58,26 @@ export class RoomAvailabilityGanttComponent implements OnInit {
   isMouseDown = false;
   selectedCells: Set<string> = new Set();
   
-  selectedMonthName: number= new Date().getMonth() + 1;
-  showModal!: boolean;
 
-  selectedRoom: Room | null = null;
-  startDate: Date | null = null;
-  endDate: Date | null = null;
+
+
+
+  selectedMonthName: number= new Date().getMonth() + 1;
+  showModal: boolean = false;
+
+//   selectedRoom: Room | null = null;
+//   startDate: Date | null = null;
+//   endDate: Date | null = null;
+// reservationId: string |undefined;
+// roomNo: string|undefined;
+// stayDateFrom: Date|undefined;
+// stayDateTo: Date|undefined;
 
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
-    private reservationStorageService: ReservationStorageService
+    private reservationStorageService: ReservationStorageService,
+    private modalDataService: ModalService
   ) {}
 
   // Initialization and Data Handling
@@ -593,4 +606,40 @@ onCellClick(roomId: number, day: number): void {
   // handleModalClose(): void {
   //   this.showModal = false;
   // }
+
+
+  //codes for modal
+
+  sendSelectionToService(): void {
+    if (this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined) {
+      const selectedRoom = this.rooms.find(room => room.roomId === this.selectedRoomId);
+  
+      if (selectedRoom) {
+        const modalData = {
+          roomId: this.selectedRoomId,
+          startDate: new Date(this.year, this.selectedMonth - 1, this.startDay),
+          endDate: new Date(this.year, this.selectedMonth - 1, this.endDay)
+        };
+  
+        this.modalDataService.setModalData(modalData);
+  
+        // Optional: If you want to trigger opening the modal here
+        // this.openModal(); // Implement this method if needed to open the modal
+      } else {
+        console.log('Selected room not found.');
+      }
+    } else {
+      console.log('No valid selection to send.');
+    }
+  }
+  
+  isSelectionValid(): boolean {
+    // Return true if a selection is valid and ready to send
+    return this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined;
+  }
+  
+
+
+ 
+  
 }
