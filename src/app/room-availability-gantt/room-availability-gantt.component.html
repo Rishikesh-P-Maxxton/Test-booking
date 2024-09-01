@@ -1,5 +1,5 @@
 <div class="spacer"></div>
-<div class="container-fluid">
+<div class="container ">
     <div class="month-header">
       <div class="month-name">
         {{ getCurrentMonthName() }} {{ year }}
@@ -23,13 +23,12 @@
           <span>{{ getDayName(day) }}</span>
         </div>
         <ng-container *ngFor="let room of rooms">
-          <div class="room-name"> {{ room.roomId }}</div>
+          <div class="room-name "> {{ room.roomId }}</div>
           <div *ngFor="let day of days" 
             [ngClass]="getCellClass(room.roomId,day)"
             (mousedown)="onMouseDown(room.roomId, day, $event)"
             (mouseover)="onMouseOver(room.roomId, day, $event)"
             (mouseup)="onMouseUp($event)"
-            (click)="onCellClick(room.roomId, day)"
             class="cell" 
             [class.arrival-day]="isArrivalDay(room.roomId, day)"
             [ngStyle]="{ 'pointer-events': isCellClickable(room.roomId, day) ? 'auto' : 'none' }">
@@ -37,10 +36,53 @@
         </ng-container>
       </div>
     </div>
+
+    <!-- Legend Container -->
+<div class="container">
+  <div class="row legend">
+    <!-- Legend Item: Arrival Day -->
+    <div class="col-md-6 col-lg-4">
+      <div class="legend-item">
+        <div class="legend-color arrival-day"></div>
+        <span class="legend-text">Arrival Day</span>
+      </div>
+    </div>
+    <!-- Legend Item: Checked In -->
+    <div class="col-md-6 col-lg-4">
+      <div class="legend-item">
+        <div class="legend-color checkedin"></div>
+        <span class="legend-text">Checked In</span>
+      </div>
+    </div>
+    <!-- Legend Item: Checked Out -->
+    <div class="col-md-6 col-lg-4">
+      <div class="legend-item">
+        <div class="legend-color checkedout"></div>
+        <span class="legend-text">Checked Out</span>
+      </div>
+    </div>
+    <!-- Legend Item: Reserved -->
+    <div class="col-md-6 col-lg-4">
+      <div class="legend-item">
+        <div class="legend-color reserved"></div>
+        <span class="legend-text">Confirm Reserved</span>
+      </div>
+    </div>
+    
+    <!-- Legend Item: Selected -->
+    <div class="col-md-6 col-lg-4">
+      <div class="legend-item">
+        <div class="legend-color selected"></div>
+        <span class="legend-text">Available</span>
+      </div>
+    </div>
+  </div>
+</div>
+
   <!-- Add a reference to the modal component -->
 <app-modal #modal></app-modal>
 
-    
+<!-- (click)="onCellClick(room.roomId, day)" -->
     
 
    

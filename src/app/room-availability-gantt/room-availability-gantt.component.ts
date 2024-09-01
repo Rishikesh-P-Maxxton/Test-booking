@@ -4,15 +4,17 @@ import { StayService } from '../stays.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
-import { Reservation, Customer } from '../Interfaces/reservation';
-import { ModalDataService } from '../services/modal-data.service';
+import { Reservation } from '../Interfaces/reservation';
+
 import { ModalComponent } from '../modal/modal.component';
 import { BookingDetails } from '../Interfaces/booking-details';
+import { min } from 'rxjs';
 
 interface Availability {
   start: Date;
   end: Date;
   arrivalDays?: Record<string, { minStay: number; maxStay: number }>; // Optional for reservations
+  status?: "CONFIRM" | "CHECKED-IN" | "CHECKED-OUT";
 }
 
 interface RoomData {
@@ -71,7 +73,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
     private roomService: RoomService,
     private stayService: StayService,
     private reservationStorageService: ReservationStorageService,
-    private modalDataService: ModalDataService
+    
   ) {}
 
   // Initialization and Data Handling
@@ -122,6 +124,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
             minStay: stay.minStay,
             maxStay: stay.maxStay,
           };
+          
           return acc;
         }, {} as Record<string, { minStay: number; maxStay: number }>)
       });
@@ -140,6 +143,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
       const roomId = reservation.roomId;
       const startDate = new Date(reservation.arrivalDate);
       const endDate = new Date(reservation.departureDate);
+      const theStatus = reservation.status;
   
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(0, 0, 0, 0);
@@ -152,6 +156,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
       reservationMap[roomId].push({
         start: startDate,
         end: endDate,
+        status:theStatus
       });
     });
   
@@ -261,6 +266,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
       if (this.isSelectionValid()) {
         this.takeSelections();
       } else {
+        
         console.log('Selection is not valid. No action taken.');
       }
     }
@@ -280,10 +286,15 @@ public takeSelections(): void {
         const startDay = selectedDays[0];
         const endDay = selectedDays[selectedDays.length - 1];
 
-        const arrivalDate = new Date(this.year, this.selectedMonth, startDay);
-        const departureDate = new Date(this.year, this.selectedMonth, endDay);
-        const roomDetails = this.rooms.find(room => room.roomId === this.selectedRoomId);
+       
 
+        const arrivalDate = new Date(this.year, this.selectedMonth - 1, startDay);
+        const departureDate = new Date(this.year, this.selectedMonth - 1, endDay);
+        const roomDetails = this.rooms.find(room => room.roomId === this.selectedRoomId);
+        
+        const show: string[] = [arrivalDate.toLocaleDateString(), departureDate.toLocaleDateString()];
+
+        console.table(show);
         if (roomDetails) {
           const bookingDetails: BookingDetails = {
             roomId: roomDetails.roomId,
@@ -310,6 +321,7 @@ public takeSelections(): void {
             modal.show();
             
           } else {
+            
             console.error('Modal element not found');
           }
         }
@@ -321,6 +333,7 @@ public takeSelections(): void {
 
 
 selectRangeForMinimumStay(startDay: number, roomId: number): void {
+ 
   const roomData = this.availabilityTable.find(
     (data) => data.roomId === roomId
   );
@@ -331,7 +344,10 @@ selectRangeForMinimumStay(startDay: number, roomId: number): void {
     (period) =>
       startDay >= period.start.getDate() && startDay <= period.end.getDate()
   );
-  if (!availabilityPeriod) return;
+  if (!availabilityPeriod) {
+    console.log("availablity not found")
+    return;}
+
 
   // Get minStay for the arrival day
   const arrivalDay = new Date(this.year, this.selectedMonth - 1, startDay)
@@ -341,6 +357,10 @@ selectRangeForMinimumStay(startDay: number, roomId: number): void {
 
   // Calculate endDay based on minStay
   let endDay = startDay + minStay - 1;
+  console.log(minStay, "minstay");
+  
+  console.log(" End day check ", endDay);
+  
 
   // Ensure endDay does not exceed the availability period
   if (endDay > availabilityPeriod.end.getDate()) {
@@ -391,57 +411,46 @@ private isBlockedByReservation(roomId: number, startDay: number, endDay: number)
   });
 }
 
-
-
-
-
 // onCellClick(roomId: number, day: number): void {
-//   console.log('on cell clicked');
+  
+//   console.log(`onCellClick triggered - Room ID: ${roomId}, Day: ${day}`);
 
+//   // Log the current state
+//   console.log(`Current Room ID: ${this.selectedRoomId}`);
+//   console.log(`Current Start Day: ${this.startDay}`);
+//   console.log(`Current End Day: ${this.endDay}`);
+//   console.log(`Is Mouse Down: ${this.isMouseDown}`);
+
+//   // Check if the clicked cell is an arrival day
 //   if (this.isArrivalDay(roomId, day)) {
+//     console.log(`Cell is an arrival day. Proceeding with selection.`);
+    
+//     // Log details of the room data
+//     const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
+//     if (roomData) {
+//       console.log(`Room Data: `, roomData);
+//     } else {
+//       console.log(`No data found for Room ID: ${roomId}`);
+//     }
+    
+//     // Log if selection range logic is applied
+//     console.log(`Calling selectRangeForMinimumStay for Day: ${day}, Room ID: ${roomId}`);
 //     this.selectRangeForMinimumStay(day, roomId);
+
+    
+
+//     // Log the updated state after selection
+//     console.log(`Updated Start Day: ${this.startDay}`);
+//     console.log(`Updated End Day: ${this.endDay}`);
+//     console.log(`Selected Cells: ${Array.from(this.selectedCells).join(', ')}`);
 //   } else {
-//     console.log('Clicked cell is not an arrival day.');
+//     console.log(`Clicked cell is not an arrival day.`);
+    
+//     // Clear all selections if cell is not an arrival day
 //     this.clearAllSelections();
+//     console.log(`Cleared all selections.`);
 //   }
 // }
-onCellClick(roomId: number, day: number): void {
-  console.log(`onCellClick triggered - Room ID: ${roomId}, Day: ${day}`);
-
-  // Log the current state
-  console.log(`Current Room ID: ${this.selectedRoomId}`);
-  console.log(`Current Start Day: ${this.startDay}`);
-  console.log(`Current End Day: ${this.endDay}`);
-  console.log(`Is Mouse Down: ${this.isMouseDown}`);
-
-  // Check if the clicked cell is an arrival day
-  if (this.isArrivalDay(roomId, day)) {
-    console.log(`Cell is an arrival day. Proceeding with selection.`);
-    
-    // Log details of the room data
-    const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
-    if (roomData) {
-      console.log(`Room Data: `, roomData);
-    } else {
-      console.log(`No data found for Room ID: ${roomId}`);
-    }
-    
-    // Log if selection range logic is applied
-    console.log(`Calling selectRangeForMinimumStay for Day: ${day}, Room ID: ${roomId}`);
-    this.selectRangeForMinimumStay(day, roomId);
-
-    // Log the updated state after selection
-    console.log(`Updated Start Day: ${this.startDay}`);
-    console.log(`Updated End Day: ${this.endDay}`);
-    console.log(`Selected Cells: ${Array.from(this.selectedCells).join(', ')}`);
-  } else {
-    console.log(`Clicked cell is not an arrival day.`);
-    
-    // Clear all selections if cell is not an arrival day
-    this.clearAllSelections();
-    console.log(`Cleared all selections.`);
-  }
-}
 
 
   isArrivalDay(roomId: number, day: number): boolean {
@@ -470,17 +479,17 @@ onCellClick(roomId: number, day: number): void {
     let currentStart = start;
     let currentEnd = end;
 
-    // roomData.reservations.forEach((reservation) => {
-    //     const reservationStart = reservation.start.getDate();
-    //     const reservationEnd = reservation.end.getDate();
+    roomData.reservations.forEach((reservation) => {
+        const reservationStart = reservation.start.getDate();
+        const reservationEnd = reservation.end.getDate();
 
-    //     if (currentStart <= reservationEnd && currentEnd >= reservationStart) {
-    //         if (currentStart < reservationStart) {
-    //             this.addSelection(currentStart, reservationStart - 1, roomId);
-    //         }
-    //         currentStart = Math.max(currentEnd + 1, reservationEnd + 1);
-    //     }
-    // });
+        if (currentStart <= reservationEnd && currentEnd >= reservationStart) {
+            if (currentStart < reservationStart) {
+                this.addSelection(currentStart, reservationStart - 1, roomId);
+            }
+            currentStart = Math.max(currentEnd + 1, reservationEnd + 1);
+        }
+    });
 
     if (currentStart <= currentEnd && !this.isBlockedByReservation( roomId, currentStart, currentEnd )) {
         this.addSelection(currentStart, currentEnd, roomId);
@@ -531,21 +540,39 @@ onCellClick(roomId: number, day: number): void {
     );
 
     const isReserved = roomData.reservations.some(
-      (reserv) => date >= reserv.start && date <= reserv.end
+      (reserv) => date >= reserv.start && date <= reserv.end && reserv.status === 'CONFIRM'
     );
-    const isSelected = this.selectedCells.has(`${roomId}-${day}`);
-    if (isArrivalDay && isAvailable && !isReserved) {
+    
+
+    const isCheckedIn = roomData.reservations.some(
+      (reserv) => date >= reserv.start && date <= reserv.end && reserv.status === 'CHECKED-IN'
+    );
+    const isCheckedOut = roomData.reservations.some(
+      (reserv) => date >= new Date(reserv.start) && date <= new Date(reserv.end) && reserv.status === 'CHECKED-OUT'
+    );
+   const isSelected = this.selectedCells.has(`${roomId}-${day}`);
+    if (isArrivalDay && isAvailable && !isReserved && !isCheckedIn && !isCheckedOut) {
       return isSelected ? 'selected-arrival-day' : 'arrival-day'; // Highlight arrival days with a specific color
     }
 
+   // Handle specific combinations
+   if (isReserved && isCheckedIn && isArrivalDay) {
+    return 'checkedin-arrival-day'; // Specific class for checked-in on arrival day
+  }
+  if ( isReserved && isCheckedOut && isArrivalDay) {
+    return 'checkedout-arrival-day'; // Specific class for checked-out on arrival day
+  }
+    if (isCheckedIn) return 'checkedin';
+    if (isCheckedIn) return 'checkedin';
+    if (isCheckedOut) return 'checkedout';
     if (isReserved) return 'reserved'; // Red color for reservations
-    if (isAvailable) return isSelected ? 'selected available' : 'available'; // Green color for availability
+    if (isAvailable) return isSelected ? 'selected available' : 'available'; 
     if (isSelected) return 'selected'; // Blue color for selected cells
     return 'not-available'; // Default color
   }
 
   // Validation and Selection Finalization
- validateSelection(roomId: number): void {
+  validateSelection(roomId: number): void {
     const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
     if (!roomData) return;
   
@@ -559,20 +586,28 @@ onCellClick(roomId: number, day: number): void {
     const start = selectedDays[0];
     const end = selectedDays[selectedDays.length - 1];
   
-    const availabilityPeriod = roomData.availability.find(
-      (period) => start >= period.start.getDate() && end <= period.end.getDate()
-    );
+    // Convert start and end days to Date objects
+    const startDate = new Date(this.year, this.selectedMonth - 1, start);
+    const endDate = new Date(this.year, this.selectedMonth - 1, end);
+  
+    // Check if the entire range falls within any availability period
+    const availabilityPeriod = roomData.availability.find((period) => {
+      const periodStart = period.start;
+      const periodEnd = period.end;
+      return startDate >= periodStart && endDate <= periodEnd;
+    });
   
     if (!availabilityPeriod) {
+      console.log(availabilityPeriod);
+      
       this.clearAllSelections();
-      console.log("cleared in !availablity");
+      console.log("cleared in !availability");
       
       return;
     }
   
-    const arrivalDay = new Date(this.year, this.selectedMonth - 1, start)
-      .toLocaleDateString('en-US', { weekday: 'short' })
-      .toUpperCase();
+    // Check the minimum and maximum stay requirements
+    const arrivalDay = startDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
   
     const minStay = roomData.arrivalDays[arrivalDay]?.minStay || 0;
     const maxStay = roomData.arrivalDays[arrivalDay]?.maxStay || 0;
@@ -581,8 +616,8 @@ onCellClick(roomId: number, day: number): void {
       this.clearAllSelections();
       return;
     }
-  
   }
+
   
 
   addSelection(start: number, end: number, roomId: number) {

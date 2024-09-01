@@ -13,7 +13,6 @@ import { RoomsFilterComponent } from './rooms-filter/rooms-filter.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { RoomAvailabilityChartComponent } from './room-availability-chart/room-availability-chart.component';
-import { SteppersComponent } from './Tests/steppers/steppers.component';
 import {MatStepperModule} from '@angular/material/stepper';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -29,7 +28,7 @@ import {MatListModule} from '@angular/material/list';
 
 import {MatButtonModule} from '@angular/material/button';
 import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
-import { GanttChartComponent } from './gantt-chart/gantt-chart.component';
+
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 import { FilterNavsComponent } from './filter-navs/filter-navs.component';
 import { RoomAvailabilityGanttComponent } from './room-availability-gantt/room-availability-gantt.component';
@@ -39,7 +38,7 @@ import {MatDialogModule} from '@angular/material/dialog';
 import { ModalComponent } from './modal/modal.component';
 
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, SteppersComponent, RoomShowcaseComponent, GanttChartComponent, ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, ],
+  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, RoomShowcaseComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  

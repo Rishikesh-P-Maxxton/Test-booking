@@ -1,22 +1,39 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container">
-      <a class="navbar-brand" routerLink="/">Bookings</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="btn btn-custom btn-custom-filter nav-link" routerLink="/filterroom">Backoffice</a>
-          </li>
-          <li class="nav-item">
-            <a class="btn btn-custom btn-custom-graph nav-link" routerLink="/UserView">UserView</a>
-          </li>
-    
-        </ul>
-      </div>
+<div class="d-flex">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <!-- Logo or brand name here -->
+      <span>Maxxton</span>
+    </div>
+    <div class="nav-list">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/filterroom" routerLinkActive="active">
+            <i class="bi bi-calendar-check"></i>
+            <span>Book Rooms</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/reslist" routerLinkActive="active">
+            <i class="bi bi-book"></i>
+            <span>Reservations</span>
+          </a>
+        </li>
+        <!-- <li class="nav-item">
+          <a class="nav-link" routerLink="/planner" routerLinkActive="active">
+            <i class="bi bi-book"></i>
+            <span>Planner</span>
+          </a>
+        </li> -->
+      </ul>
     </div>
   </nav>
-  <router-outlet></router-outlet>
- 
 
+  <!-- Main Content -->
+  <div class="main-content flex-grow-1">
+    <div class="sticky-top ">
+      <!-- Optional sticky top bar content -->
+    </div>
+    <router-outlet></router-outlet>
+  </div>
+</div>

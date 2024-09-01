@@ -1,14 +1,21 @@
 <div class="container  mt-4">
     <!-- Jumbotron -->
     <div class="row">
-      <div class="col-12">
+      <div class="col-9">
         <div class="jumbotron p-4">
-          <div class="display-6">Rooms and Reservations </div>
-          <p class="lead">All rooms and reservation data</p>
+          <div class="display-6">Rooms </div>
+          <p class="lead">All rooms data</p>
+        </div>
+      </div>
+      <div class="col-3" routerLink="/reslist">
+        <div class="jumbotron p-4">
+          <div class="display-6">{{ reservationCount }} </div>
+          <p class="lead">Total Reservations</p>
         </div>
       </div>
     </div>
-  
+    
+
     <!-- Navigation Tabs -->
     <div class="row">
       <div class="col-12">
@@ -22,14 +29,14 @@
                 All Rooms
               </a>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
               <a class="nav-link" 
                  [routerLink]="[{ outlets: { filternav: ['reslist'] } }]"
                  routerLinkActive="active"
                  [routerLinkActiveOptions]="{ exact: true }">
                 Reservations
               </a>
-            </li>
+            </li> -->
             <li class="nav-item">
                 <a class="nav-link" 
                    [routerLink]="[{ outlets: { filternav: ['planner'] } }]"

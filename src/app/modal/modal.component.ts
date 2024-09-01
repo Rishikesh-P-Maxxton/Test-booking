@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../room.service';
-import { ModalDataService } from '../services/modal-data.service';
+
 
 import { Room } from '../Interfaces/room';
 
@@ -58,10 +58,9 @@ export class ModalComponent implements OnInit {
     private reservationStorageService: ReservationStorageService,
     private cdr: ChangeDetectorRef,
     private geolocsService: GeolocsService,
-    private modalDataService: ModalDataService
+   
   ) {
-    this.bookingDetails = this.modalDataService.getData() || null; // Ensure default value
-    console.log("bookingDetails received", this.bookingDetails);
+   
     
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
@@ -163,48 +162,55 @@ export class ModalComponent implements OnInit {
   //     this.updateConfirmButtonState();
   //   }
   // }
-
   initializeForms(bookingDetails: BookingDetails): void {
     const room = this.rooms.find(r => r.roomId === bookingDetails.roomId) || null;
 
     console.log(bookingDetails, 'object from parent');
     
     if (room) {
-      this.selectedRoom = room;
-      this.availabilityDetails = room.availability;
+        this.selectedRoom = room;
+        this.availabilityDetails = room.availability;
 
-      const stayDateFrom = bookingDetails.arrivalDate;
-      const stayDateTo = bookingDetails.departureDate;
-      const numberOfPersons = 0;
-      const pricePerDay = room.pricePerDayPerPerson;
+        // Parse and normalize the dates
+        const stayDateFrom = new Date(bookingDetails.arrivalDate );
+        const stayDateTo = new Date(bookingDetails.departureDate);
 
-      const startDate = stayDateFrom;
-      const endDate = stayDateTo;
-      const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+        stayDateFrom.setDate(stayDateFrom.getDate() + 1);
+        stayDateTo.setDate(stayDateTo.getDate() + 1);
+        // Reset the time part of the dates to ensure the hours, minutes, seconds, and milliseconds are set to zero
+        stayDateFrom.setHours(0, 0, 0, 0);
+        stayDateTo.setHours(0, 0, 0, 0);
 
-      this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
+        // Ensure numberOfDays calculation works correctly
+        const numberOfDays = Math.ceil((stayDateTo.getTime() - stayDateFrom.getTime()) / (1000 * 3600 * 24)) + 1;
 
-      this.bookingForm.patchValue({
-        reservationId: this.generateReservationId(),
-        roomNo: room.roomId,
-        stayDateFrom: stayDateFrom.toISOString().split('T')[0], // Format as YYYY-MM-DD
-        stayDateTo: stayDateTo.toISOString().split('T')[0], // Format as YYYY-MM-DD
-        totalNumberOfGuests: numberOfPersons,
-        pricePerDayPerPerson: pricePerDay,
-      });
+        const numberOfPersons = 0;
+        const pricePerDay = room.pricePerDayPerPerson;
 
-      this.customerForm.patchValue({
-        customerId: this.generateCustomerId(),
-      });
+        this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
 
-      this.paymentForm.patchValue({
-        paymentId: this.generatePaymentId(),
-      });
+        this.bookingForm.patchValue({
+            reservationId: this.generateReservationId(),
+            roomNo: room.roomId,
+            stayDateFrom: stayDateFrom.toISOString().split('T')[0] , // Format as YYYY-MM-DD
+            stayDateTo: stayDateTo.toISOString().split('T')[0] , // Format as YYYY-MM-DD
+            totalNumberOfGuests: numberOfPersons,
+            pricePerDayPerPerson: pricePerDay,
+            numberOfDays: numberOfDays
+        });
 
-      this.updateTotalPrice();
-      this.updateConfirmButtonState();
+        this.customerForm.patchValue({
+            customerId: this.generateCustomerId(),
+        });
+
+        this.paymentForm.patchValue({
+            paymentId: this.generatePaymentId(),
+        });
+
+        this.updateTotalPrice();
+        this.updateConfirmButtonState();
     }
-  }
+}
   onCountryChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     const countryId = target.value;

@@ -12,7 +12,7 @@ import { GeolocsService } from '../services/geolocs.service';
 @Component({
   selector: 'app-rooms-filter',
   templateUrl: './rooms-filter.component.html',
-  styleUrls: ['./rooms-filter.component.scss'],
+  styleUrls: ['./rooms-filter.component.css'],
  
 })
 export class RoomsFilterComponent implements OnInit {
@@ -32,10 +32,10 @@ export class RoomsFilterComponent implements OnInit {
   isConfirmDisabled = true;
   currentStep = 0;
 
-  animationKey = 0;
+
   dateFilterApplied = false; 
   page: number = 1; // Current page number
-  itemsPerPage: number = 9; // Number of items per page
+  itemsPerPage: number = 7; // Number of items per page
 
   //Customer Form
   countries: any[] = [];
@@ -106,9 +106,11 @@ export class RoomsFilterComponent implements OnInit {
     this.bookingForm
       .get('pricePerDayPerPerson')
       ?.valueChanges.subscribe(() => this.updateTotalPrice());
+      this.paymentForm.get('due')?.valueChanges.subscribe(() => this.updateTotalPriceFromDue());
     this.customerForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
+
     this.paymentForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
@@ -172,6 +174,17 @@ export class RoomsFilterComponent implements OnInit {
       this.customerForm.get('city')?.enable();
     } else {
       this.customerForm.get('city')?.disable();
+    }
+  }
+  
+  private updateTotalPriceFromDue(): void {
+    const dueAmount = this.paymentForm.get('due')?.value || 0;
+    const totalPrice = this.bookingForm.get('totalPrice')?.value || 0;
+  
+    // Ensure totalPrice is valid and greater than or equal to dueAmount
+    if (totalPrice >= dueAmount) {
+      const newPaidAmount = totalPrice - dueAmount;
+      this.paymentForm.patchValue({ paidAmount: newPaidAmount }, { emitEvent: false });
     }
   }
   
@@ -622,13 +635,14 @@ export class RoomsFilterComponent implements OnInit {
     const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
     const pricePerDayPerPerson =
       this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
-
+  
     if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
       const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
       this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
       this.paymentForm.patchValue({ paidAmount: totalPrice }, { emitEvent: false });
     }
   }
+  
 
   private updateConfirmButtonState(): void {
     const filterFormValid =

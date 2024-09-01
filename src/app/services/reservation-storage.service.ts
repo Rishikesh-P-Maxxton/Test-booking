@@ -1,16 +1,13 @@
 import { Injectable } from '@angular/core';
-
+import { BehaviorSubject } from 'rxjs';
 import { Customer, Reservation } from '../Interfaces/reservation';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReservationStorageService {
-  getRoomsAndStays() {
-    throw new Error('Method not implemented.');
-  }
-
   private storageKey = 'reservations';
+  private reservationsSubject = new BehaviorSubject<Array<{ reservation: Reservation, customer: Customer }>>(this.getReservations());
 
   constructor() { }
 
@@ -35,6 +32,7 @@ export class ReservationStorageService {
     }
 
     localStorage.setItem(this.storageKey, JSON.stringify(existingReservations));
+    this.reservationsSubject.next(existingReservations);
   }
 
   // Retrieve all reservations from local storage
@@ -50,9 +48,14 @@ export class ReservationStorageService {
     );
 
     localStorage.setItem(this.storageKey, JSON.stringify(updatedReservations));
+    this.reservationsSubject.next(updatedReservations);
   }
   // Clear all reservations
   clearReservations(): void {
     localStorage.removeItem(this.storageKey);
+    this.reservationsSubject.next([]);
+  }
+  getReservationsObservable() {
+    return this.reservationsSubject.asObservable();
   }
 }

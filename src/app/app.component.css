@@ -1,0 +1,99 @@
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 120px; /* Fixed width for sidebar */
+    background-color: #333; /* Dark gray background */
+    color: #fff; /* White text */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto; /* Allow scrolling if content overflows */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for separation */
+}
+  
+/* Logo Area */
+.sidebar-logo {
+    width: 100%; /* Full width of the sidebar */
+    padding: 12px 0; /* Reduced space around logo by 20% from 20px to 16px */
+    text-align: center; /* Center the logo */
+    background-color: #585858; /* Background color for the logo area */
+    /* Add any additional styling for the logo */
+}
+  
+/* Navigation Links */
+.nav-list {
+    flex: 1; /* Take remaining space in the sidebar */
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Full width for the list */
+}
+  
+/* Individual nav items */
+.nav-item {
+    width: 100%; /* Full width for each item */
+}
+  
+/* Navigation Link */
+.nav-link {
+    color: #fff; /* White text color */
+    font-weight: 350; /* Font weight */
+    font-size: 0.75rem; /* Smaller font size */
+    text-align: center;
+    padding: 18px 0; /* Vertical padding for height, no horizontal padding */
+    border-radius: 0; /* No rounded corners */
+    transition: background-color 0.3s, color 0.3s;
+    display: block; /* Ensure nav links are block-level to take full width */
+    width: 100%; /* Full width for each tab */
+    box-sizing: border-box; /* Include padding in element's total width and height */
+    margin: 0; /* Remove margin */
+}
+
+/* Icon Size */
+.nav-link i {
+    font-size: 1rem; /* Icon size */
+    margin-bottom: 5px; /* Space between icon and text */
+}
+
+/* Active Tab Style */
+.nav-link.active {
+    background-color: #444; /* Darker background for active tab */
+    color: #fff; /* White text for active tab */
+    border: none; /* No border needed */
+}
+
+/* Hover Effect */
+.nav-link:hover {
+    background-color: #555; /* Slightly lighter gray for hover */
+    color: #fff; /* White text on hover */
+    font-weight: 380; /* Font weight */
+}
+
+/* Main Content Styles */
+.main-content {
+    margin-top: 25px;
+    margin-left: 120px; /* Offset main content to the right of the sidebar */
+    padding: 20px;
+    overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+/* Sticky Top Bar */
+.sticky-top {
+    position: fixed; /* Make sure it's fixed at the top */
+    top: 0; /* Align to the top of the viewport */
+    left: 120px; /* Align with the sidebar width */
+    width: calc(100% - 120px); /* Full width minus the sidebar width */
+    height: 48px; /* Match the height of the logo area */
+    z-index: 1060; /* Ensure it stays on top */
+    background-color: #464646; /* Darker background color to match sidebar */
+    padding: 10px; /* Optional padding */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.logoimg{
+    height: 20px; /* Set the height to match your navbar's design */
+    width: auto; /* Maintain aspect ratio */
+    display: block; /* Ensure no extra space around the image */
+}
