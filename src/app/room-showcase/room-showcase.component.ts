@@ -1,8 +1,8 @@
 // room-showcase.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { RoomService } from '../room.service';
-import { StayService } from '../stays.service';
+import { RoomService } from '../services/room.service';
+import { StayService } from '../services/stays.service';
 import { Stay } from '../Interfaces/stay';
 import { Room } from '../Interfaces/room';
 

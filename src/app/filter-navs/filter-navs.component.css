@@ -1,61 +1,128 @@
 /* Jumbotron styling */
 .jumbotron {
-    background-color: #f9f9f9; /* Light gray background */
-    border: 0; /* Subtle border */
-    border-radius: 0; /* Sharp corners */
-    padding: 0 2rem;
-    margin-bottom: 0rem;
-    max-width: 100%; /* Ensure it doesn't exceed container width */
-  }
-  
- 
-  
-  .jumbotron p {
-    font-size: 1rem; /* Slightly larger font size for the lead paragraph */
-  }
-  
- 
-  /* Navigation Tabs */
-  .nav-container {
-    margin-top: 0rem;
-    /* Ensure the tabs are left-aligned */
-  }
-  
-  .nav-tabs {
-    border-bottom: none; /* Remove default bottom border */
-    display: flex;
-    padding: 0; /* Remove padding */
-    margin: 0; /* Remove margin */
-    list-style: none; /* Remove bullet points */
-  }
-  
-  .nav-item {
-    margin: 0; /* Remove margin around items */
-  }
-  
-  .nav-link {
-    font-family: 'Arial', sans-serif; /* Arial font */
-    font-weight: 300; /* Light font weight */
-    color: #6c757d; /* Dark gray for inactive tabs */
-    background-color: #f8f9fa; /* Light background color */
-    border: 1px solid #ddd; /* Subtle border */
-    border-radius: 0; /* Sharp corners */
-    padding: 10px 20px; /* Padding around text */
-    text-align: center; /* Center align text */
-    transition: color 0.2s ease, background-color 0.2s ease; /* Smooth color and background color transition */
-    cursor: pointer; /* Pointer cursor for clickable tabs */
-    margin-right: -1px; /* Remove space between tabs by adjusting right margin */
-  }
-  
-  .nav-link.active {
-    color: #343a40; /* Darker text color for active tab */
-    background-color: #e9ecef; /* Slightly darker background for active tab */
-    border-bottom: 1px solid transparent; /* Maintain the bottom border for active state */
-  }
-  
-  .nav-link:hover {
-    color: #343a40; /* Darker text color on hover */
-    background-color: #e2e6ea; /* Light grey background on hover */
-  }
-  
+  background-color: #f9f9f9; /* Light gray background */
+  border: 0; /* Subtle border */
+  border-radius: 0; /* Sharp corners */
+  padding: 0 2rem;
+  margin-bottom: 0rem;
+  max-width: 100%; /* Ensure it doesn't exceed container width */
+}
 
+.jumbotron-full {
+  height: 100%; /* Make the jumbotron take the full height of its container */
+  align-content: center;
+}
+
+.jumbotron p {
+  font-size: 1.2rem; /* Slightly larger font size for the lead paragraph */
+}
+
+
+/* Chart Container */
+.chart-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Pie Chart */
+.pie-chart {
+  width: 120px; /* Size of the pie chart */
+  height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* SVG Circle */
+.pie-chart svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* SVG Circle Stroke */
+.pie-chart circle {
+  fill: none;
+  stroke-width: 3; /* Thin stroke width */
+}
+
+/* Pie Chart Segments */
+.confirmed { stroke: #a1c4fd; } /* Muted blue */
+.checked-in { stroke: #c2c2f0; } /* Muted light blue */
+.checked-out { stroke: #ffadad; } /* Muted pink */
+
+/* Centered Text */
+.center-text {
+  position: absolute;
+  font-size: 2.5rem; /* Adjusted size for better visibility */
+  font-weight: bold;
+  color: #333;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 20px; /* Space between pie chart and legend */
+}
+
+.legend div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px; /* Space between legend items */
+}
+
+.legend .color-box {
+  width: 15px;
+  height: 15px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+
+/* Navigation Tabs */
+.nav-container {
+  margin-top: 0rem;
+}
+
+.nav-tabs {
+  border-bottom: none; /* Remove default bottom border */
+  display: flex;
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
+  list-style: none; /* Remove bullet points */
+}
+
+.nav-item {
+  margin: 0; /* Remove margin around items */
+}
+
+.nav-link {
+  font-family: 'Arial', sans-serif; /* Arial font */
+  font-weight: 300; /* Light font weight */
+  color: #6c757d; /* Dark gray for inactive tabs */
+  background-color: #f8f9fa; /* Light background color */
+  border: 1px solid #ddd; /* Subtle border */
+  border-radius: 0; /* Sharp corners */
+  padding: 10px 20px; /* Padding around text */
+  text-align: center; /* Center align text */
+  transition: color 0.2s ease, background-color 0.2s ease; /* Smooth color and background color transition */
+  cursor: pointer; /* Pointer cursor for clickable tabs */
+  margin-right: -1px; /* Remove space between tabs by adjusting right margin */
+}
+
+.nav-link.active {
+  color: #343a40; /* Darker text color for active tab */
+  background-color: #e9ecef; /* Slightly darker background for active tab */
+  border-bottom: 1px solid transparent; /* Maintain the bottom border for active state */
+}
+
+.nav-link:hover {
+  color: #343a40; /* Darker text color on hover */
+  background-color: #e2e6ea; /* Light grey background on hover */
+}
+
+.this {
+  vertical-align: middle;
+}

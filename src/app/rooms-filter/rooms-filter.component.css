@@ -95,12 +95,12 @@ body {
   .custom-table thead tr,
   .custom-table thead th {
     padding-bottom: 15px;
-    border-bottom: 2px solid #ddd; /* Subtle border for header */
-    color: #333; /* Dark gray for better readability */
+    /* border-bottom: 2px solid #ddd; */
+    color: #333;  
     font-size: 13px; /* Slightly larger font for better readability */
     text-transform: uppercase;
     letter-spacing: 0.1rem;
-    background-color: #f4f4f4; /* Light background for header */
+     background-color: #f9f9f9;
   }
   
   /* Body cell styling */
@@ -306,58 +306,15 @@ body {
       }
     }
   }
-  
+  .error{
+    font-size: 0.875rem; /* Smaller font size for labels */
+    margin-bottom: 0.25rem;
+    font-weight: 300;
+  }
   .square-input {
     border-radius: 0.25rem;  /* Square corners for all inputs */
   }
   
- /* Ensure that the stepper container has enough width to show all steps */
-.horizontal-stepper {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Style the stepper header container to show all steps */
-.horizontal-stepper .mat-horizontal-stepper-header-container {
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Style individual step headers */
-.horizontal-stepper .mat-horizontal-stepper-header {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-/* Style the step header icons */
-.horizontal-stepper .mat-horizontal-stepper-header .mat-step-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #007bff;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-}
-
-/* Change color for active and completed steps */
-.horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-active .mat-step-icon {
-  background-color: #28a745;
-}
-
-.horizontal-stepper .mat-horizontal-stepper-header.mat-step-header-completed .mat-step-icon {
-  background-color: #17a2b8;
-}
-
-/* Ensure content area is visible */
-.horizontal-stepper .mat-step-content {
-  padding: 15px;
-}
 
 
 /* Total Rooms Found Styling */

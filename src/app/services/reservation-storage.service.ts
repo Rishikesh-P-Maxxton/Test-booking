@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Customer, Reservation } from '../Interfaces/reservation';
+import { Customer, Reservation, ReservationStatus } from '../Interfaces/reservation';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReservationStorageService {
-  private storageKey = 'reservations';
+  private reservationsKey = 'reservations';
+  private bookingHistoryKey = 'bookingHistory';
   private reservationsSubject = new BehaviorSubject<Array<{ reservation: Reservation, customer: Customer }>>(this.getReservations());
+  private bookingHistorySubject = new BehaviorSubject<Array<{ reservation: Reservation, customer: Customer }>>(this.getBookingHistory());
 
   constructor() { }
 
@@ -19,43 +21,141 @@ export class ReservationStorageService {
     }
 
     const existingReservations = this.getReservations();
+    const existingBookingHistory = this.getBookingHistory();
     const index = existingReservations.findIndex(
       res => res.reservation.reservationId === reservationData.reservation.reservationId
     );
 
-    if (index !== -1) {
-      // Update existing reservation
-      existingReservations[index] = reservationData;
+    if (reservationData.reservation.status === 'CHECKED-OUT') {
+      // Remove from reservations if exists
+      if (index !== -1) {
+        existingReservations.splice(index, 1);
+        this.saveToLocalStorage(this.reservationsKey, existingReservations);
+        this.reservationsSubject.next(existingReservations);
+      }
+
+      // Add to booking history
+      const historyIndex = existingBookingHistory.findIndex(
+        res => res.reservation.reservationId === reservationData.reservation.reservationId
+      );
+
+      if (historyIndex === -1) {
+        existingBookingHistory.push(reservationData);
+      } else {
+        existingBookingHistory[historyIndex] = reservationData;
+      }
+      
+      this.saveToLocalStorage(this.bookingHistoryKey, existingBookingHistory);
+      this.bookingHistorySubject.next(existingBookingHistory);
     } else {
-      // Add new reservation
-      existingReservations.push(reservationData);
+      // Update existing reservation or add new one
+      if (index !== -1) {
+        existingReservations[index] = reservationData;
+      } else {
+        existingReservations.push(reservationData);
+      }
+      
+      this.saveToLocalStorage(this.reservationsKey, existingReservations);
+      this.reservationsSubject.next(existingReservations);
+    }
+  }
+
+  // Update the status of a reservation
+  updateReservationStatus(reservationId: string, newStatus: ReservationStatus): void {
+    if (!this.isValidStatus(newStatus)) {
+      console.error('Invalid status:', newStatus);
+      return;
     }
 
-    localStorage.setItem(this.storageKey, JSON.stringify(existingReservations));
-    this.reservationsSubject.next(existingReservations);
+    const existingReservations = this.getReservations();
+    const index = existingReservations.findIndex(res => res.reservation.reservationId === reservationId);
+
+    if (index !== -1) {
+      existingReservations[index].reservation.status = newStatus;
+      
+      if (newStatus === 'CHECKED-OUT') {
+        // Move to booking history if status is CHECKED-OUT
+        const reservationData = existingReservations[index];
+        existingReservations.splice(index, 1);
+        this.saveToLocalStorage(this.reservationsKey, existingReservations);
+        this.reservationsSubject.next(existingReservations);
+
+        const existingBookingHistory = this.getBookingHistory();
+        const historyIndex = existingBookingHistory.findIndex(
+          res => res.reservation.reservationId === reservationId
+        );
+
+        if (historyIndex === -1) {
+          existingBookingHistory.push(reservationData);
+        } else {
+          existingBookingHistory[historyIndex] = reservationData;
+        }
+        
+        this.saveToLocalStorage(this.bookingHistoryKey, existingBookingHistory);
+        this.bookingHistorySubject.next(existingBookingHistory);
+      } else {
+        // Update reservation status only
+        this.saveToLocalStorage(this.reservationsKey, existingReservations);
+        this.reservationsSubject.next(existingReservations);
+      }
+    }
   }
 
   // Retrieve all reservations from local storage
   getReservations(): Array<{ reservation: Reservation, customer: Customer }> {
-    const reservations = localStorage.getItem(this.storageKey);
-    return reservations ? JSON.parse(reservations) : [];
+    return this.getFromLocalStorage(this.reservationsKey) || [];
   }
 
+  // Retrieve all booking history from local storage
+  getBookingHistory(): Array<{ reservation: Reservation, customer: Customer }> {
+    return this.getFromLocalStorage(this.bookingHistoryKey) || [];
+  }
+
+  // Delete a reservation
   deleteReservation(reservationId: string): void {
     const existingReservations = this.getReservations();
     const updatedReservations = existingReservations.filter(
       res => res.reservation.reservationId !== reservationId
     );
 
-    localStorage.setItem(this.storageKey, JSON.stringify(updatedReservations));
+    this.saveToLocalStorage(this.reservationsKey, updatedReservations);
     this.reservationsSubject.next(updatedReservations);
   }
+
   // Clear all reservations
   clearReservations(): void {
-    localStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.reservationsKey);
     this.reservationsSubject.next([]);
   }
+
+  // Clear booking history
+  clearBookingHistory(): void {
+    localStorage.removeItem(this.bookingHistoryKey);
+    this.bookingHistorySubject.next([]);
+  }
+
+  // Get observable for reservations
   getReservationsObservable() {
     return this.reservationsSubject.asObservable();
+  }
+
+  // Get observable for booking history
+  getBookingHistoryObservable() {
+    return this.bookingHistorySubject.asObservable();
+  }
+
+  // Utility methods
+  private saveToLocalStorage(key: string, data: any): void {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  private getFromLocalStorage(key: string): any {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  // Utility method to check if a status is valid
+  private isValidStatus(status: string): boolean {
+    return ['CONFIRM', 'CHECKED-IN', 'CHECKED-OUT'].includes(status);
   }
 }

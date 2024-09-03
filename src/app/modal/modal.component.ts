@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RoomService } from '../room.service';
+import { RoomService } from '../services/room.service';
 
 
 import { Room } from '../Interfaces/room';
@@ -37,10 +37,9 @@ export class ModalComponent implements OnInit {
   isConfirmDisabled = true;
   
 
-  animationKey = 0;
+ 
   dateFilterApplied = false; 
-  page: number = 1; // Current page number
-  itemsPerPage: number = 9; // Number of items per page
+ 
 
   //Customer Form
   countries: any[] = [];
@@ -56,12 +55,11 @@ export class ModalComponent implements OnInit {
     private roomService: RoomService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
-    private cdr: ChangeDetectorRef,
-    private geolocsService: GeolocsService,
-   
+    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService
+
   ) {
-   
-    
+  
+
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
       roomNo: [{ value: '', disabled: true }],
@@ -72,7 +70,8 @@ export class ModalComponent implements OnInit {
       pricePerDayPerPerson: [{ value: 0, disabled: true }],
       totalPrice: [{ value: 0, disabled: true }],
     });
-  
+
+    
     this.customerForm = this.fb.group({
       customerId: [{ value: '', disabled: true }, Validators.required],
       name: ['', Validators.required],
@@ -88,17 +87,32 @@ export class ModalComponent implements OnInit {
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
-      paidAmount: [0, Validators.required],
+      paidAmount: [{ value: 0, disabled: true }, Validators.required],
       due: [0, Validators.required],
     });
-  
-    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
-    this.bookingForm.get('totalNumberOfGuests')?.valueChanges.subscribe(() => this.updateTotalPrice());
-    this.bookingForm.get('numberOfDays')?.valueChanges.subscribe(() => this.updateTotalPrice());
-    this.bookingForm.get('pricePerDayPerPerson')?.valueChanges.subscribe(() => this.updateTotalPrice());
-    this.customerForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
-    this.paymentForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
+
+    this.bookingForm.valueChanges.subscribe(() =>
+      this.updateConfirmButtonState()
+    );
+    this.bookingForm
+      .get('totalNumberOfGuests')
+      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm
+      .get('numberOfDays')
+      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm
+      .get('pricePerDayPerPerson')
+      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+      this.paymentForm.get('due')?.valueChanges.subscribe(() => this.updateTotalPriceFromDue());
+    this.customerForm.valueChanges.subscribe(() =>
+      this.updateConfirmButtonState()
+    );
+
+    this.paymentForm.valueChanges.subscribe(() =>
+      this.updateConfirmButtonState()
+    );
   }
+
   
   ngOnInit(): void {
     console.log('hello');
@@ -116,6 +130,10 @@ export class ModalComponent implements OnInit {
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
     });
+
+    this.bookingForm.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.paymentForm.get('due')?.valueChanges.subscribe(() => this.updateTotalPriceFromDue());
+  
   }
   
 
@@ -211,6 +229,18 @@ export class ModalComponent implements OnInit {
         this.updateConfirmButtonState();
     }
 }
+
+private updateTotalPriceFromDue(): void {
+  const dueAmount = this.paymentForm.get('due')?.value || 0;
+  const totalPrice = this.bookingForm.get('totalPrice')?.value || 0;
+
+  if (totalPrice >= dueAmount) {
+    const newPaidAmount = totalPrice - dueAmount;
+    this.paymentForm.patchValue({ paidAmount: newPaidAmount }, { emitEvent: false });
+  }
+}
+
+
   onCountryChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     const countryId = target.value;
@@ -400,19 +430,23 @@ export class ModalComponent implements OnInit {
       console.log('Please fill out all required fields.');
     }
   }
-  private updateTotalPrice(): void {
-    const numberOfGuests =
-      this.bookingForm.get('totalNumberOfGuests')?.value || 0;
-    const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
-    const pricePerDayPerPerson =
-      this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
 
-    if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
-      const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
-      this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
-      this.paymentForm.patchValue({ paidAmount: totalPrice }, { emitEvent: false });
-    }
+private updateTotalPrice(): void {
+  const numberOfGuests =
+    this.bookingForm.get('totalNumberOfGuests')?.value || 0;
+  const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
+  const pricePerDayPerPerson =
+    this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
+
+  if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
+    const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
+    this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
+
+    // Update payment form based on the new total price
+    this.updateTotalPriceFromDue();
   }
+}
+
 
   private updateConfirmButtonState(): void {
     if(this.bookingDetails){

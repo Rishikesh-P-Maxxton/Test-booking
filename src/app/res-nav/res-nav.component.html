@@ -1,0 +1,29 @@
+<!-- Navigation Tabs -->
+ <div class="container">
+<div class="row">
+    <div class="col-12">
+      <div class="nav-container mt-4">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link active"
+               [routerLink]="[{ outlets: { resnav: ['allres'] } }]"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: true }">
+              Reservations
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link"
+               [routerLink]="[{ outlets: { resnav: ['reshistory'] } }]"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: true }">
+              Planner
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<router-outlet name="resnav"></router-outlet>

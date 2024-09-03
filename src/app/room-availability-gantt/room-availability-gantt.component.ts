@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { RoomService } from '../room.service';
-import { StayService } from '../stays.service';
+import { RoomService } from '../services/room.service';
+import { StayService } from '../services/stays.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
@@ -321,7 +321,7 @@ public takeSelections(): void {
             modal.show();
             
           } else {
-            
+
             console.error('Modal element not found');
           }
         }

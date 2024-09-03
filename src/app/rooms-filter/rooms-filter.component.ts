@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RoomService } from '../room.service';
-import { StayService } from '../stays.service';
+import { RoomService } from '../services/room.service';
+import { StayService } from '../services/stays.service';
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
 import { Reservation, Customer } from '../Interfaces/reservation';
@@ -35,7 +35,7 @@ export class RoomsFilterComponent implements OnInit {
 
   dateFilterApplied = false; 
   page: number = 1; // Current page number
-  itemsPerPage: number = 7; // Number of items per page
+  itemsPerPage: number = 10; // Number of items per page
 
   //Customer Form
   countries: any[] = [];
@@ -78,7 +78,14 @@ export class RoomsFilterComponent implements OnInit {
     this.customerForm = this.fb.group({
       customerId: [{ value: '', disabled: true }, Validators.required],
       name: ['', Validators.required],
-      age: ['', Validators.required],
+      age: [
+        '', 
+        [
+          Validators.required,
+          Validators.min(0), // Ensure age is at least 0
+          Validators.max(99) // Ensure age is less than 100
+        ]
+      ],
       initialAddress: ['', Validators.required],
       mobileNumber: ['', Validators.required],
       pincode: ['', Validators.required],
@@ -90,7 +97,7 @@ export class RoomsFilterComponent implements OnInit {
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
-      paidAmount: [0, Validators.required],
+      paidAmount: [{ value: 0, disabled: true }, Validators.required],
       due: [0, Validators.required],
     });
 
@@ -131,7 +138,51 @@ export class RoomsFilterComponent implements OnInit {
       });
     });
   }
+  mergeData(): void {
+    const roomMap = new Map<number, Room>();
 
+    this.rooms.forEach((room) => {
+      if (!roomMap.has(room.roomId)) {
+        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
+      }
+    });
+
+    this.stays.forEach((stay) => {
+      const room = roomMap.get(stay.roomId);
+      if (room) {
+        room.stays.push(stay);
+
+        const dateFrom = new Date(stay.stayDateFrom);
+        const dateTo = new Date(stay.stayDateTo);
+
+        const formattedDateFrom = dateFrom.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const formattedDateTo = dateTo.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+
+        const availabilityDetail = `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
+        if (!room.availability.includes(availabilityDetail)) {
+          room.availability.push(availabilityDetail);
+        }
+      }
+    });
+
+    this.filteredRooms = Array.from(roomMap.values());
+    console.log('Merged Data:', this.filteredRooms);
+  }
+
+  initializeLocations(): void {
+    const uniqueLocations = Array.from(
+      new Set(this.rooms.map((room) => room.locationName))
+    );
+    this.locations = uniqueLocations;
+  }
 
 
   onCountryChange(event: Event): void {
@@ -209,51 +260,9 @@ export class RoomsFilterComponent implements OnInit {
     return `${prefix}${randomNumber}`;
   }
 
-  mergeData(): void {
-    const roomMap = new Map<number, Room>();
 
-    this.rooms.forEach((room) => {
-      if (!roomMap.has(room.roomId)) {
-        roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
-      }
-    });
 
-    this.stays.forEach((stay) => {
-      const room = roomMap.get(stay.roomId);
-      if (room) {
-        room.stays.push(stay);
 
-        const dateFrom = new Date(stay.stayDateFrom);
-        const dateTo = new Date(stay.stayDateTo);
-
-        const formattedDateFrom = dateFrom.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        const formattedDateTo = dateTo.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-
-        const availabilityDetail = `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
-        if (!room.availability.includes(availabilityDetail)) {
-          room.availability.push(availabilityDetail);
-        }
-      }
-    });
-
-    this.filteredRooms = Array.from(roomMap.values());
-    console.log('Merged Data:', this.filteredRooms);
-  }
-
-  initializeLocations(): void {
-    const uniqueLocations = Array.from(
-      new Set(this.rooms.map((room) => room.locationName))
-    );
-    this.locations = uniqueLocations;
-  }
 
  applyFilter(): void {
    const filters = this.filterForm.value;
@@ -425,7 +434,14 @@ export class RoomsFilterComponent implements OnInit {
 
    console.log('Filtered Rooms with Availability:', this.filteredRooms);
  }
+ get isFilterButtonDisabled(): boolean {
+  const filters = this.filterForm.value;
+  const isDateIncomplete =
+    (filters.stayDateFrom && !filters.stayDateTo) ||
+    (!filters.stayDateFrom && filters.stayDateTo);
 
+  return isDateIncomplete;
+}
  isDateFilterApplied(): boolean {
   const stayDateFrom = this.filterForm.get('stayDateFrom')?.value;
   const stayDateTo = this.filterForm.get('stayDateTo')?.value;

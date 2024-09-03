@@ -6,6 +6,8 @@ import { RoomsFilterComponent } from './rooms-filter/rooms-filter.component';
 import { FilterNavsComponent } from './filter-navs/filter-navs.component';
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 import { RoomAvailabilityGanttComponent } from './room-availability-gantt/room-availability-gantt.component';
+import { BookingHistoryComponent } from './booking-history/booking-history.component';
+import { ResNavComponent } from './res-nav/res-nav.component';
 
 
 const routes: Routes = [
@@ -20,8 +22,19 @@ const routes: Routes = [
 
     ]
    },
-  { path: 'reslist', component: ReservationsListComponent},
 
+   { path: 'reservations', component: ResNavComponent,
+    children:[
+      { path: '', redirectTo: 'allres', pathMatch: 'full', outlet: 'resnav' },
+      {path: 'allres', component:ReservationsListComponent, outlet:'resnav'},
+      {path: 'reshistory', component:BookingHistoryComponent, outlet:'resnav'},
+     
+
+    ]
+   },
+  
+
+  
 
 ];
 

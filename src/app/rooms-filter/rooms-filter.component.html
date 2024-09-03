@@ -39,7 +39,7 @@
         <input type="number" id="maxPrice" formControlName="maxPrice" class="form-control square-input w-100">
       </div>
 
-      <button type="submit"  class="btn btn-custom mt-3 w-100">Filter Room</button>
+      <button type="submit" [disabled]="isFilterButtonDisabled"  class="btn btn-custom mt-3 w-100">Filter Room</button>
 
     </form>
     <!-- <button (click)="clearFilter()" class="btn btn-custom-sec mt-3 w-100">Clear Filters</button> -->
@@ -67,7 +67,7 @@
                 <th>Room Name</th>
                 <th>Price Per Day</th>
                 <th>Guest Capacity</th>
-                <th>Availability</th>
+                <!-- <th>Availability</th> -->
                 <th *ngIf="isDateFilterApplied()"></th>
               </tr>
             </thead>
@@ -81,11 +81,11 @@
                 <td>{{ room.roomName }}</td>
                 <td>{{ room.pricePerDayPerPerson | currency }}</td>
                 <td>{{ room.guestCapacity }}</td>
-                <td>
+                <!-- <td>
                   <ul class="list-unstyled mb-0">
                     <li *ngFor="let availability of room.availability">{{ availability }}</li>
                   </ul>
-                </td>
+                </td> -->
                 <td>
                   <button class="btn btn-custom" *ngIf="isDateFilterApplied()" (click)="openBookingModal(room)">Book</button>
                 </td>
@@ -186,23 +186,32 @@
                   
                   <div class="row">
                     <!-- Name and Age -->
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-7 mb-3">
                       <label for="name" class="form-label">Name</label>
                       <input type="text" class="form-control" id="name" formControlName="name" />
                     </div>
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-5 mb-3">
                       <label for="age" class="form-label">Age</label>
                       <input type="number" class="form-control" id="age" formControlName="age" />
-                    </div>
+                      <div *ngIf="customerForm.get('age')?.touched && customerForm.get('age')?.invalid">
+                        <div class="error" *ngIf="customerForm.get('age')?.errors?.['required']">
+                          Age is required.
+                        </div>
+                        <div class="error" *ngIf="customerForm.get('age')?.errors?.['min']">
+                          Age cannot be less than 0.
+                        </div>
+                        <div class="error" *ngIf="customerForm.get('age')?.errors?.['max']">
+                          Age cannot be 100 or more.
+                        </div>
+                    </div></div>
                   </div>
                   
                   <div class="row">
                     <!-- Initial Address -->
-                    <div class="col-md-10 mb-3">
+                    <div class="col-md-12 mb-3">
                       <label for="initialAddress" class="form-label">Initial Address</label>
                       <input type="text" class="form-control" id="initialAddress" formControlName="initialAddress" rows="3"/>
                     </div>
-                    <div class="col-md-2 mb-3"></div>
                   </div>
                   
                   <div class="row">
@@ -211,7 +220,7 @@
                       <label for="mobileNumber" class="form-label">Mobile Number</label>
                       <input type="tel" class="form-control" id="mobileNumber" formControlName="mobileNumber" />
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-5 mb-3">
                       <label for="pincode" class="form-label">Pincode</label>
                       <input type="number" class="form-control" id="pincode" formControlName="pincode" />
                     </div>
@@ -286,6 +295,54 @@
               </form>
             </mat-step>
             
+             <!-- Confirm Booking Step -->
+          <!-- <mat-step label="Confirm Booking">
+            <div class="container-fluid">
+              <h4>Booking Summary</h4>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>Reservation ID:</strong> {{ bookingForm.value.reservationId }}
+                </div>
+                <div class="col-md-6">
+                  <strong>Room Number:</strong> {{ bookingForm.value.roomNo }}
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>Stay Dates:</strong> {{ bookingForm.value.stayDateFrom | date }} to {{ bookingForm.value.stayDateTo | date }}
+                </div>
+                <div class="col-md-6">
+                  <strong>Total Guests:</strong> {{ bookingForm.value.totalNumberOfGuests }}
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>Price per Day per Person:</strong> {{ bookingForm.value.pricePerDayPerPerson | currency }}
+                </div>
+                <div class="col-md-6">
+                  <strong>Total Price:</strong> {{ bookingForm.value.totalPrice | currency }}
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <strong>Customer Name:</strong> {{ customerForm.value.name }}
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <strong>Payment Mode:</strong> {{ paymentForm.value.paymentMode }}
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>Paid Amount:</strong> {{ paymentForm.value.paidAmount | currency }}
+                </div>
+                <div class="col-md-6">
+                  <strong>Due:</strong> {{ paymentForm.value.due | currency }}
+                </div>
+              </div>
+            </div>
+          </mat-step> -->
           </mat-vertical-stepper>
         </div>
         <div class="modal-footer">

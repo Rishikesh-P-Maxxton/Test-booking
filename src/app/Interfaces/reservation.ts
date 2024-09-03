@@ -7,11 +7,13 @@ export interface Reservation {
     departureDate: string; // "YYYY-MM-DD"
     reservationDate: string; // "YYYY-MM-DD HH:MM:SS"
     totalPrice: number;
-    status: "CONFIRM" | "CHECKED-IN" | "CHECKED-OUT";
+    status: ReservationStatus;
     paidAmount: number;
     numberOfGuest: number;
   }
-  
+ 
+export type ReservationStatus = "CONFIRM" | "CHECKED-IN" | "CHECKED-OUT";
+
   export interface Customer {
     customerId: string;
     age: number;
