@@ -17,6 +17,13 @@ import { GeolocsService } from '../services/geolocs.service';
 })
 export class RoomsFilterComponent implements OnInit {
 
+  emailForm: FormGroup;
+  existingCustomer!: Customer  | undefined ;
+
+  isExistingUser = false;
+  isNewUser = true;
+  emailError: string | null = null;
+  customerName: string | null = null;
 
   rooms: Room[] = [];
   stays: Stay[] = [];
@@ -46,6 +53,7 @@ export class RoomsFilterComponent implements OnInit {
 
   @ViewChild('stepper') stepper!: MatStepper;
   displayedColumns: any;
+  
 
   constructor(
     private roomService: RoomService,
@@ -63,6 +71,9 @@ export class RoomsFilterComponent implements OnInit {
       maxPrice: [0],
     });
 
+    this.emailForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]]
+    });
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
       roomNo: [{ value: '', disabled: true }],
@@ -76,7 +87,7 @@ export class RoomsFilterComponent implements OnInit {
 
     
     this.customerForm = this.fb.group({
-      customerId: [{ value: '', disabled: true }, Validators.required],
+      customerId: [{ value: '' }, Validators.required],
       name: ['', Validators.required],
       age: [
         '', 
@@ -91,14 +102,15 @@ export class RoomsFilterComponent implements OnInit {
       pincode: ['', Validators.required],
       country: ['', Validators.required],
       state: [{ value: '', disabled: true }, Validators.required],
-      city: [{ value: '', disabled: true }, Validators.required]
+      city: [{ value: '', disabled: true }, Validators.required],
+      email: ['', Validators.required],
     });
     
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
-      paidAmount: [{ value: 0, disabled: true }, Validators.required],
-      due: [0, Validators.required],
+      paidAmount: [{ value: 0 }, Validators.required],
+      due: [{ value: 0, disabled: true }, Validators.required],
     });
 
     this.bookingForm.valueChanges.subscribe(() =>
@@ -128,6 +140,14 @@ export class RoomsFilterComponent implements OnInit {
     this.geolocsService.getData().subscribe(response => {
       this.countries = response.countries;
     });
+    
+    const totalPrice = this.bookingForm.get('totalPrice')?.value || 0;
+  this.paymentForm.patchValue({ due: totalPrice });  // Set initial due to total price
+
+  // Set up a listener for changes to the paidAmount
+  this.paymentForm.get('paidAmount')?.valueChanges.subscribe(() => {
+    this.calculateDueAmount();
+  });
 
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
@@ -138,6 +158,18 @@ export class RoomsFilterComponent implements OnInit {
       });
     });
   }
+
+  calculateDueAmount(): void {
+    const totalPrice = this.bookingForm.get('totalPrice')?.value || 0;
+    const paidAmount = this.paymentForm.get('paidAmount')?.value || 0;
+  
+    // Calculate the due amount as totalPrice - paidAmount
+    const dueAmount = totalPrice - paidAmount;
+  
+    // Update the due field in the form
+    this.paymentForm.patchValue({ due: dueAmount }, { emitEvent: false });
+  }
+
   mergeData(): void {
     const roomMap = new Map<number, Room>();
 
@@ -177,6 +209,45 @@ export class RoomsFilterComponent implements OnInit {
     console.log('Merged Data:', this.filteredRooms);
   }
 
+  
+  private parseFullName(fullName: string): { firstName: string, middleName: string, lastName: string } {
+    // List of honorary prefixes to ignore
+    const honoraryPrefixes = ["Mr.", "Ms.", "Mrs.", "Dr.", "Prof.", "Miss"];
+  
+    // Remove any honorary prefix
+    let nameParts = fullName.split(' ').filter(part => !honoraryPrefixes.includes(part));
+  
+    // Ensure we are left with non-empty name parts
+    nameParts = nameParts.filter(part => part.trim() !== '');
+  
+    let firstName = '';
+    let middleName = '';
+    let lastName = '';
+  
+    if (nameParts.length === 2) {
+      // If 2 names: first name + last name
+      firstName = nameParts[0];
+      lastName = nameParts[1];
+    } else if (nameParts.length === 3) {
+      // If 3 names: first name + middle name + last name
+      firstName = nameParts[0];
+      middleName = nameParts[1];
+      lastName = nameParts[2];
+    } else if (nameParts.length > 3) {
+      // If more than 3 names: take the first and last as first and last name
+      firstName = nameParts[0];
+      lastName = nameParts[nameParts.length - 1];
+    } else if (nameParts.length === 1) {
+      // If only one name is provided, consider it as first name
+      firstName = nameParts[0];
+    }
+  
+    return { firstName, middleName, lastName };
+  }
+  
+
+
+
   initializeLocations(): void {
     const uniqueLocations = Array.from(
       new Set(this.rooms.map((room) => room.locationName))
@@ -184,6 +255,89 @@ export class RoomsFilterComponent implements OnInit {
     this.locations = uniqueLocations;
   }
 
+  onUserSelectionChange(isNewUser: boolean): void {
+    if (isNewUser) {
+      this.customerForm.get('customerId')?.enable(); // Enable customerId field for new user
+      this.customerForm.get('customerId')?.setValue(this.generateCustomerId()); // Set new customerId
+    } else {
+      this.customerForm.get('customerId')?.disable(); // Disable customerId field for existing user
+    }
+  }
+  
+  // Method to patch the form with existing customer data
+  patchFormWithExistingCustomer(customer: Customer): void {
+    this.customerForm.patchValue({
+      customerId: customer.customerId, // Existing customerId
+      name: `${customer.firstName} ${customer.middleName} ${customer.lastName}`,
+      age: customer.age,
+      country: customer.country,
+      state: customer.state,
+      city: customer.city,
+      pincode: customer.pinCode,
+      initialAddress: customer.initialAddress,
+      mobileNumber: customer.mobileNumber1,
+      email: customer.email
+    });
+  }
+  
+
+
+  onEmailBlur(): void {
+    const email = this.emailForm.get('email')?.value;
+    if (email) {
+      this.reservationStorageService.getCustomerByEmail(email).subscribe({
+        next: (customer: Customer | undefined) => {
+          if (customer) {
+            this.existingCustomer = customer;
+            this.customerName = `${customer.firstName} ${customer.lastName}`;
+            this.emailError = null; // Clear any previous errors
+          } else {
+            this.emailError = 'Customer not found.';
+            this.existingCustomer = undefined;
+            this.customerName = null;
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching customer by email', err);
+          this.emailError = 'An error occurred while fetching customer details.';
+          this.existingCustomer = undefined;
+          this.customerName = null;
+        }
+      });
+    }
+  }
+  fetchExistingCustomer(): void {
+    const email = this.emailForm.get('email')?.value;
+  
+    if (email) {
+      this.reservationStorageService.getCustomerByEmail(email).subscribe({
+        next: (customer: Customer | undefined) => {
+          if (customer) {
+            this.existingCustomer = customer;
+            this.customerName = `${customer.firstName} ${customer.lastName}`;
+            this.emailError = null;
+            
+            // Directly set the fetched customer in the booking object
+            this.isConfirmDisabled = false; // Enable the stepper when customer is fetched
+          } else {
+            this.emailError = 'Customer not found.';
+            this.existingCustomer = undefined;
+            this.customerName = null;
+            this.isConfirmDisabled = true; // Disable the stepper if customer not found
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching customer by email', err);
+          this.emailError = 'An error occurred while fetching customer details.';
+          this.existingCustomer = undefined;
+          this.customerName = null;
+          this.isConfirmDisabled = true;
+        }
+      });
+    }
+  }
+  
+  
 
   onCountryChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
@@ -260,180 +414,141 @@ export class RoomsFilterComponent implements OnInit {
     return `${prefix}${randomNumber}`;
   }
 
+applyFilter(): void {
+  const filters = this.filterForm.value;
+  console.log('Filter Values:', filters);
+
+  const arrivalDate = filters.stayDateFrom ? new Date(filters.stayDateFrom + 'T11:00:00') : null;
+  const departureDate = filters.stayDateTo ? new Date(filters.stayDateTo + 'T10:00:00') : null;
+
+  // If arrival and departure are the same, increment departureDate by 1 day
+  if (arrivalDate && departureDate && arrivalDate.toDateString() === departureDate.toDateString()) {
+    departureDate.setDate(departureDate.getDate() + 1);
+  }
+
+  const numberOfDays = arrivalDate && departureDate
+    ? this.calculateNumberOfDays(arrivalDate, departureDate)
+    : 0;
+
+  console.log('Parsed Dates:', { arrivalDate, departureDate });
+  console.log('Number of Days:', numberOfDays);
+
+  // Start with all rooms
+  this.filteredRooms = [...this.rooms];
+  console.log('Initial Filtered Rooms:', this.filteredRooms);
+
+  const hasLocationFilter = filters.location.trim() !== '';
+  const hasDateFilter = arrivalDate && departureDate;
+  const hasGuestFilter = filters.numberOfPersons > 0;
+  const hasPriceFilter = filters.maxPrice > 0;
+
+  console.log('Filters Applied:', {
+    hasLocationFilter,
+    hasDateFilter,
+    hasGuestFilter,
+    hasPriceFilter,
+  });
+
+  // Location filter
+  if (hasLocationFilter) {
+    this.filteredRooms = this.filteredRooms.filter((room) =>
+      room.locationName.toLowerCase().includes(filters.location.toLowerCase())
+    );
+    console.log('After Location Filter:', this.filteredRooms);
+  }
+
+  // Fetch reservations from local storage
+  const storedReservations = this.reservationStorageService.getReservations();
+  console.log('Stored Reservations:', storedReservations);
+
+  // Convert storedReservations into an array of objects
+  const reservations = storedReservations.map((reservationData) => ({
+    roomId: reservationData.reservation.roomId,
+    arrivalDate: new Date(reservationData.reservation.arrivalDate),
+    departureDate: new Date(reservationData.reservation.departureDate),
+  }));
+  console.log('Converted Reservations:', reservations);
+
+  // Date filter with minStay and maxStay and availability check
+  if (hasDateFilter) {
+    this.filteredRooms = this.filteredRooms.filter((room) => {
+      const stays = this.stays.filter((stay) => stay.roomId === room.roomId);
+      console.log('Room Stays:', { roomId: room.roomId, stays });
+
+      return stays.some((stay) => {
+        const stayFrom = new Date(stay.stayDateFrom + 'T11:00:00');
+        const stayTo = new Date(stay.stayDateTo + 'T10:00:00');
+        const stayDuration = (stayTo.getTime() - stayFrom.getTime()) / (1000 * 3600 * 24) + 1;
+
+        console.log('Stay Dates:', { stayFrom, stayTo });
+        console.log('Requested Dates:', { arrivalDate, departureDate });
+        console.log('Stay Duration:', stayDuration);
+
+        // Using helper function to check if the requested stay period is completely within the room's available period
+        const isDateCompletelyWithin = this.isDateRangeCompletelyWithin(
+          arrivalDate,
+          departureDate,
+          stayFrom,
+          stayTo
+        );
+        console.log('Is Date Completely Within:', isDateCompletelyWithin);
+
+        // Check if the stay duration is within the room's min and max stay requirements
+        const isDurationValid =
+          numberOfDays >= (stay.minStay || 0) &&
+          numberOfDays <= (stay.maxStay || Infinity);
+        console.log('Is Duration Valid:', isDurationValid);
+
+        return isDateCompletelyWithin && isDurationValid;
+      });
+    });
+    console.log('After Date Filter:', this.filteredRooms);
+  }
+
+  // Only set dateFilterApplied to true if date filters are applied
+  if (hasDateFilter) {
+    this.dateFilterApplied = true;
+  }
+
+  // Additional date overlap check using stored reservations
+  if (hasDateFilter) {
+    this.filteredRooms = this.filteredRooms.filter((room) => {
+      const roomReservations = reservations.filter(
+        (reservation) => reservation.roomId === room.roomId
+      );
+
+      return this.isBookingAvailable(
+        arrivalDate,
+        departureDate,
+        roomReservations
+      );
+    });
+    console.log('After Booking Availability Filter:', this.filteredRooms);
+  }
+
+  // Guest filter
+  if (hasGuestFilter) {
+    this.filteredRooms = this.filteredRooms.filter(
+      (room) => room.guestCapacity >= filters.numberOfPersons
+    );
+    console.log('After Guest Filter:', this.filteredRooms);
+  }
+
+  // Price filter
+  if (hasPriceFilter) {
+    this.filteredRooms = this.filteredRooms.filter(
+      (room) => room.pricePerDayPerPerson <= filters.maxPrice
+    );
+    console.log('After Price Filter:', this.filteredRooms);
+  }
+
+  // Update availability details for filtered rooms
+  
+
+  console.log('Filtered Rooms:', this.filteredRooms);
+}
 
 
-
-
- applyFilter(): void {
-   const filters = this.filterForm.value;
-   console.log('Filter Values:', filters);
-
-   const arrivalDate = filters.stayDateFrom
-     ? new Date(filters.stayDateFrom)
-     : null;
-   const departureDate = filters.stayDateTo
-     ? new Date(filters.stayDateTo)
-     : null;
-   const numberOfDays =
-     arrivalDate && departureDate
-       ? Math.ceil(
-           (departureDate.getTime() - arrivalDate.getTime()) /
-             (1000 * 3600 * 24)
-         ) + 1
-       : 0;
-
-   console.log('Parsed Dates:', { arrivalDate, departureDate });
-   console.log('Number of Days:', numberOfDays);
-
-   // Start with all rooms
-   this.filteredRooms = [...this.rooms];
-   console.log('Initial Filtered Rooms:', this.filteredRooms);
-
-   const hasLocationFilter = filters.location.trim() !== '';
-   const hasDateFilter = arrivalDate && departureDate;
-   const hasGuestFilter = filters.numberOfPersons > 0;
-   const hasPriceFilter = filters.maxPrice > 0;
-
-   console.log('Filters Applied:', {
-     hasLocationFilter,
-     hasDateFilter,
-     hasGuestFilter,
-     hasPriceFilter,
-   });
-
-   // Location filter
-   if (hasLocationFilter) {
-     this.filteredRooms = this.filteredRooms.filter((room) =>
-       room.locationName.toLowerCase().includes(filters.location.toLowerCase())
-     );
-     console.log('After Location Filter:', this.filteredRooms);
-   }
-
-   // Fetch reservations from local storage
-   const storedReservations = this.reservationStorageService.getReservations();
-   console.log('Stored Reservations:', storedReservations);
-
-   // Convert storedReservations into an array of objects
-   const reservations = storedReservations.map((reservationData) => ({
-     roomId: reservationData.reservation.roomId,
-     arrivalDate: new Date(reservationData.reservation.arrivalDate),
-     departureDate: new Date(reservationData.reservation.departureDate),
-   }));
-   console.log('Converted Reservations:', reservations);
-
-   // Date filter with minStay and maxStay and availability check
-   if (hasDateFilter) {
-     this.filteredRooms = this.filteredRooms.filter((room) => {
-       const stays = this.stays.filter((stay) => stay.roomId === room.roomId);
-       console.log('Room Stays:', { roomId: room.roomId, stays });
-
-       return stays.some((stay) => {
-         const stayFrom = new Date(stay.stayDateFrom);
-         const stayTo = new Date(stay.stayDateTo);
-         const stayDuration =
-           (stayTo.getTime() - stayFrom.getTime()) / (1000 * 3600 * 24) + 1;
-
-         console.log('Stay Dates:', { stayFrom, stayTo });
-         console.log('Requested Dates:', { arrivalDate, departureDate });
-         console.log('Stay Duration:', stayDuration);
-
-         // Using helper function to check if the requested stay period is completely within the room's available period
-         const isDateCompletelyWithin = this.isDateRangeCompletelyWithin(
-           arrivalDate,
-           departureDate,
-           stayFrom,
-           stayTo
-         );
-         console.log('Is Date Completely Within:', isDateCompletelyWithin);
-
-         // Check if the stay duration is within the room's min and max stay requirements
-         const isDurationValid =
-           numberOfDays >= (stay.minStay || 0) &&
-           numberOfDays <= (stay.maxStay || Infinity);
-         console.log('Is Duration Valid:', isDurationValid);
-
-         return isDateCompletelyWithin && isDurationValid;
-       });
-     });
-     console.log('After Date Filter:', this.filteredRooms);
-   }
-
-   // Only set dateFilterApplied to true if date filters are applied
-   if (hasDateFilter) {
-     this.dateFilterApplied = true;
-   }
-
-   // Additional date overlap check using stored reservations
-   if (hasDateFilter) {
-     this.filteredRooms = this.filteredRooms.filter((room) => {
-       const roomReservations = reservations.filter(
-         (reservation) => reservation.roomId === room.roomId
-       );
-       console.log('Room Reservations:', roomReservations);
-
-       return !roomReservations.some((reservation) =>
-         this.isDateRangeOverlapping(
-           arrivalDate,
-           departureDate,
-           reservation.arrivalDate,
-           reservation.departureDate
-         )
-       );
-     });
-     console.log('After Stored Reservations Filter:', this.filteredRooms);
-   }
-
-   // Guest filter
-   if (hasGuestFilter) {
-     this.filteredRooms = this.filteredRooms.filter(
-       (room) => room.guestCapacity >= filters.numberOfPersons
-     );
-     console.log('After Guest Filter:', this.filteredRooms);
-   }
-
-   // Price filter
-   if (hasPriceFilter) {
-     this.filteredRooms = this.filteredRooms.filter(
-       (room) => room.pricePerDayPerPerson <= filters.maxPrice
-     );
-     console.log('After Price Filter:', this.filteredRooms);
-   }
-
-   // Update availability details for filtered rooms
-   const availabilityMap = new Map<number, string[]>();
-
-   this.filteredRooms.forEach((room) => {
-     const availabilityDetails = this.stays
-       .filter((stay) => stay.roomId === room.roomId)
-       .map((stay) => {
-         const formattedDateFrom = new Date(
-           stay.stayDateFrom
-         ).toLocaleDateString('en-US', {
-           month: 'short',
-           day: 'numeric',
-           year: 'numeric',
-         });
-         const formattedDateTo = new Date(stay.stayDateTo).toLocaleDateString(
-           'en-US',
-           {
-             month: 'short',
-             day: 'numeric',
-             year: 'numeric',
-           }
-         );
-         return `From: ${formattedDateFrom}, To: ${formattedDateTo}`;
-       });
-
-     availabilityMap.set(room.roomId, availabilityDetails);
-   });
-
-   this.filteredRooms = this.filteredRooms.map((room) => ({
-     ...room,
-     availability: availabilityMap.get(room.roomId) || [],
-   }));
-
-   console.log('Filtered Rooms with Availability:', this.filteredRooms);
- }
  get isFilterButtonDisabled(): boolean {
   const filters = this.filterForm.value;
   const isDateIncomplete =
@@ -449,6 +564,15 @@ export class RoomsFilterComponent implements OnInit {
   // Check if both stayDateFrom and stayDateTo are not empty, are valid dates, and the dateFilterApplied flag is true
   return stayDateFrom && stayDateTo && new Date(stayDateFrom).getTime() <= new Date(stayDateTo).getTime() && this.dateFilterApplied;
 }
+
+calculateNumberOfDays(startDate: Date, endDate: Date): number {
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / millisecondsPerDay);
+
+  // Ensure at least one day is counted if the dates are the same
+  return startDate.toDateString() === endDate.toDateString() ? 1 : numberOfDays;
+}
+
   
 
   // Helper function to check if the requested date range is completely within the room's date range
@@ -461,99 +585,93 @@ export class RoomsFilterComponent implements OnInit {
     return filterStart >= bookingStart && filterEnd <= bookingEnd;
   }
 
-  // Helper function to check date range overlap
-  isDateRangeOverlapping(
-    filterStart: Date,
-    filterEnd: Date,
-    bookingStart: Date,
-    bookingEnd: Date
-  ): boolean {
-    const overlap = filterStart <= bookingEnd && filterEnd >= bookingStart;
-    console.log('Checking Overlap:', {
-      filterStart,
-      filterEnd,
-      bookingStart,
-      bookingEnd,
-      overlap,
-    });
-    return overlap;
-  }
-  
+
+
+private isDateRangeOverlapping(
+  newArrival: Date,
+  newDeparture: Date,
+  existingArrival: Date,
+  existingDeparture: Date
+): boolean {
+  // Check if the new arrival is before the existing departure
+  // and the new departure is after the existing arrival
+  return newArrival < existingDeparture && newDeparture > existingArrival;
+}
+
+// Helper function to check if a new booking can fit in the available period
+private isBookingAvailable(
+  newArrivalDate: Date,
+  newDepartureDate: Date,
+  existingReservations: { arrivalDate: Date; departureDate: Date }[]
+): boolean {
+  return !existingReservations.some((reservation) =>
+    this.isDateRangeOverlapping(
+      newArrivalDate,
+      newDepartureDate,
+      reservation.arrivalDate,
+      reservation.departureDate
+    )
+  );
+}
+
+
   clearFilter(): void {
     this.filterForm.reset();
     this.filteredRooms = [...this.rooms];
     this.dateFilterApplied = false; // Reset the flag when clearing the filter
     
   } 
-  testDateRangeOverlap(): void {
-    console.log('Running Date Range Overlap Tests:');
-  
-    const test1 = this.isDateRangeOverlapping(
-      new Date('2024-10-15'),
-      new Date('2024-10-18'),
-      new Date('2024-10-14'),
-      new Date('2024-10-20')
-    );
-    console.log('Test Case 1:', test1); // Expected: true
-  
-    const test2 = this.isDateRangeOverlapping(
-      new Date('2024-10-21'),
-      new Date('2024-10-25'),
-      new Date('2024-10-14'),
-      new Date('2024-10-20')
-    );
-    console.log('Test Case 2:', test2); // Expected: false
-  }
   
 
-  // // Method to trigger animation
-  // triggerAnimation(): void {
-  //   this.animationKey++; // Change this to force re-render and animation
-  //   this.cdr.detectChanges(); // Ensure change detection happens
-  // }
+
 
   openBookingModal(room: Room): void {
     this.selectedRoom = room;
     this.availabilityDetails = room.availability;
-
-    const stayDateFrom = this.filterForm.get('stayDateFrom')?.value;
-    const stayDateTo = this.filterForm.get('stayDateTo')?.value;
+  
+    let stayDateFrom = this.filterForm.get('stayDateFrom')?.value;
+    let stayDateTo = this.filterForm.get('stayDateTo')?.value;
     const numberOfPersons = this.filterForm.get('numberOfPersons')?.value;
     const pricePerDay = room.pricePerDayPerPerson;
-
-    const startDate = new Date(stayDateFrom);
-    const endDate = new Date(stayDateTo);
-    const numberOfDays =
-      Math.ceil(
-        (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)
-      ) + 1;
-
+  
+    // Adjust start and end dates based on new logic
+    let startDate = new Date(stayDateFrom + 'T11:00:00');
+    let endDate = new Date(stayDateTo + 'T10:00:00');
+  
+    // If stayDateFrom and stayDateTo are the same, increment endDate by 1 day
+    if (startDate.toDateString() === endDate.toDateString()) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
+  
+    // Calculate number of days considering the new logic
+    const numberOfDays = this.calculateNumberOfDays(startDate, endDate);
+  
     this.numberOfGuestsOptions = Array.from(
       { length: room.guestCapacity },
       (_, i) => i + 1
     );
-
+  
     this.bookingForm.patchValue({
       reservationId: this.generateReservationId(),
       roomNo: room.roomId,
-      stayDateFrom,
-      stayDateTo,
+      stayDateFrom: startDate.toISOString().split('T')[0],
+      stayDateTo: endDate.toISOString().split('T')[0],
       numberOfDays,
       totalNumberOfGuests: numberOfPersons,
       pricePerDayPerPerson: pricePerDay,
     });
-
+  
     this.customerForm.patchValue({
       customerId: this.generateCustomerId(),
     });
-
+  
     this.paymentForm.patchValue({
       paymentId: this.generatePaymentId(),
     });
-
+  
     this.updateTotalPrice();
     this.updateConfirmButtonState();
-
+  
     // Initialize forms for stepper
     this.currentStep = 0;
     const bookingModal = new bootstrap.Modal(
@@ -561,6 +679,8 @@ export class RoomsFilterComponent implements OnInit {
     );
     bookingModal.show();
   }
+  
+  
 
   closeBookingModal(): void {
     const bookingModal = bootstrap.Modal.getInstance(
@@ -570,106 +690,140 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   confirmBooking(): void {
-    if (
-      this.bookingForm.valid &&
-      this.customerForm.valid &&
-      this.paymentForm.valid &&
-      !this.isConfirmDisabled
-    ) {
-      // Construct Reservation object
+    if (this.bookingForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
+      let customerId: string;
+    
+      // For new customers, generate a new ID
+      if (this.isNewUser) {
+        customerId = this.generateCustomerId();
+      } else {
+        // For existing customers, use the fetched customer ID
+        if (this.existingCustomer) {
+          customerId = this.existingCustomer.customerId;
+        } else {
+          console.error('Fetched customer is not available');
+          return;
+        }
+      }
+  
+      // Construct the reservation object
       const reservation: Reservation = {
         reservationId: String(this.bookingForm.get('reservationId')?.value),
         locationId: this.selectedRoom?.locationId || 0,
         roomId: Number(this.bookingForm.get('roomNo')?.value),
-        customerId: String(this.customerForm.get('customerId')?.value),
+        customerId: customerId, // Use the generated or fetched customer ID
         arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
         departureDate: this.bookingForm.get('stayDateTo')?.value,
         reservationDate: new Date().toISOString(),
         totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
         status: 'CONFIRM',
         paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
-        numberOfGuest: Number(
-          this.bookingForm.get('totalNumberOfGuests')?.value
-        ),
+        numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
       };
-
-      // Parse customer name
-      const nameParts = this.customerForm.get('name')?.value.split(' ') || [];
-      let firstName = '';
-      let middleName = '';
-      let lastName = '';
-
-      if (nameParts.length >= 2) {
-        firstName = nameParts[0]; // First part is first name
-        lastName = nameParts[nameParts.length - 1]; // Last part is last name
-        if (nameParts.length === 3) {
-          middleName = nameParts[1]; // Middle part is middle name
-        }
-      } else if (nameParts.length === 1) {
-        firstName = nameParts[0]; // Only one name part, consider it as first name
+  
+      let customer: Customer;
+      
+      // If it's a new user, construct the customer object from the form
+      if (this.isNewUser) {
+        const fullName = this.customerForm.get('name')?.value || '';
+    const { firstName, middleName, lastName } = this.parseFullName(fullName);
+  
+        customer = {
+          customerId: customerId,
+          firstName,
+          middleName,
+          lastName,
+          age: Number(this.customerForm.get('age')?.value),
+          country: this.customerForm.get('country')?.value,
+          state: this.customerForm.get('state')?.value,
+          city: this.customerForm.get('city')?.value,
+          pinCode: Number(this.customerForm.get('pincode')?.value),
+          initialAddress: this.customerForm.get('initialAddress')?.value,
+          mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
+          mobileNumber2: 0, // Default mobile number
+          birthDate: '',
+          email: this.customerForm.get('email')?.value,
+        };
+      } else {
+        // For existing users, use the fetched customer object
+        customer = this.existingCustomer as Customer;
       }
-
-      // Construct Customer object
-      const customer: Customer = {
-        customerId: String(this.customerForm.get('customerId')?.value),
-        age: Number(this.customerForm.get('age')?.value),
-        firstName: firstName,
-        middleName: middleName,
-        lastName: lastName,
-        country: this.customerForm.get('country')?.value,
-        state: this.customerForm.get('state')?.value,
-        city: this.customerForm.get('city')?.value,
-        pinCode: Number(this.customerForm.get('pincode')?.value),
-        initialAddress: this.customerForm.get('initialAddress')?.value,
-        mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
-        mobileNumber2: 0,
-        birthDate: '',
-      };
-
-      // Combine both objects
-      const reservationData = {
-        reservation: reservation,
-        customer: customer,
-      };
-
-      // Save to local storage
+  
+      const reservationData = { reservation, customer };
+  
+      // Save the reservation
       this.reservationStorageService.saveReservation(reservationData);
-
-      // Reset and close modal
+  
+      // Reset the forms and close the modal
       this.closeBookingModal();
       this.bookingForm.reset();
       this.customerForm.reset();
       this.paymentForm.reset();
       this.selectedRoom = null;
+      this.isConfirmDisabled = true; // Disable the confirm button until valid forms are filled
     } else {
       console.log('Please fill out all required fields.');
     }
   }
+  
+  
+  
+  
+  
   private updateTotalPrice(): void {
     const numberOfGuests =
       this.bookingForm.get('totalNumberOfGuests')?.value || 0;
-    const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
-    const pricePerDayPerPerson =
-      this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
+    const numberOfDays =
+      this.bookingForm.get('numberOfDays')?.value || 0;
+    const pricePerDay = this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
   
-    if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
-      const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
-      this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
-      this.paymentForm.patchValue({ paidAmount: totalPrice }, { emitEvent: false });
-    }
+    const totalPrice = numberOfGuests * numberOfDays * pricePerDay;
+    this.bookingForm.patchValue({ totalPrice });
   }
+  
   
 
   private updateConfirmButtonState(): void {
-    const filterFormValid =
-      this.filterForm.get('stayDateFrom')?.value &&
-      this.filterForm.get('stayDateTo')?.value;
-    const formValid =
-      this.bookingForm.valid &&
-      this.customerForm.valid &&
-      this.paymentForm.valid;
-    this.isConfirmDisabled = !(formValid && filterFormValid);
+    const filterFormValid = this.filterForm.get('stayDateFrom')?.value && this.filterForm.get('stayDateTo')?.value;
+    
+    // For new users, validate the customer form
+    const isCustomerFormValid = this.isNewUser ? this.customerForm.valid : true;
+    
+    // For existing users, ensure a customer is fetched
+    const isExistingCustomerValid = !this.isNewUser ? !!this.existingCustomer : true;
+  
+    // Payment and booking forms must always be valid
+    const isBookingFormValid = this.bookingForm.valid;
+    const isPaymentFormValid = this.paymentForm.valid;
+    
+    // Enable confirmation only if all required forms are valid
+    this.isConfirmDisabled = !(filterFormValid && (isCustomerFormValid || isExistingCustomerValid) && isBookingFormValid && isPaymentFormValid);
   }
+  
+
+
+  selectNewUser(): void {
+    this.isNewUser = true;
+    this.isExistingUser = false;
+    this.emailError = null;
+    this.customerForm.reset();
+    this.emailForm.reset();
+  
+    // Generate a new customer ID and set it in the customer form
+    const newCustomerId = this.generateCustomerId();
+    this.customerForm.patchValue({ customerId: newCustomerId });
+  }
+  
+
+  selectExistingUser(): void {
+    this.isNewUser = false;
+    this.isExistingUser = true;
+    this.emailError = null;
+    this.customerForm.reset();
+    this.emailForm.reset();
+  }
+  
+
 
   // Stepper Methods
   nextStep(): void {

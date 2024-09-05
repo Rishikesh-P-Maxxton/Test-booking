@@ -16,6 +16,7 @@ export type ReservationStatus = "CONFIRM" | "CHECKED-IN" | "CHECKED-OUT";
 
   export interface Customer {
     customerId: string;
+    email:string;
     age: number;
     birthDate: string; // "YYYY-MM-DD"
     firstName: string;

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Customer, Reservation, ReservationStatus } from '../Interfaces/reservation';
+import { of, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -106,6 +107,30 @@ export class ReservationStorageService {
     return this.getFromLocalStorage(this.reservationsKey) || [];
   }
 
+  // Add this method to ReservationStorageService
+  getCustomerById(customerId: string): Customer | undefined {
+    if (!customerId) {
+      return undefined;
+    }
+    
+    const reservations = this.getReservations();
+    const customer = reservations.find(res => res.customer.customerId === customerId)?.customer;
+    return customer;
+  }
+  
+
+  getCustomerByEmail(email: string): Observable<Customer | undefined> {
+    if (!email) {
+      return of(undefined); // Return an observable of undefined if email is empty
+    }
+  
+    const reservations = this.getReservations();
+    const customer = reservations.find(res => res.customer.email === email)?.customer;
+    return of(customer); // Return the customer wrapped in an observable
+  }
+  
+
+
   // Retrieve all booking history from local storage
   getBookingHistory(): Array<{ reservation: Reservation, customer: Customer }> {
     return this.getFromLocalStorage(this.bookingHistoryKey) || [];
@@ -148,6 +173,8 @@ export class ReservationStorageService {
   private saveToLocalStorage(key: string, data: any): void {
     localStorage.setItem(key, JSON.stringify(data));
   }
+
+  
 
   private getFromLocalStorage(key: string): any {
     const data = localStorage.getItem(key);

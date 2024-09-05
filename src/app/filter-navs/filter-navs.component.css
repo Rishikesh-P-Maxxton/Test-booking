@@ -13,6 +13,13 @@
   align-content: center;
 }
 
+.container-fluid {
+  padding: 0;
+  margin: 0;
+  background-color: #e9e9e9;
+  
+}
+
 .jumbotron p {
   font-size: 1.2rem; /* Slightly larger font size for the lead paragraph */
 }
@@ -48,9 +55,15 @@
 }
 
 /* Pie Chart Segments */
-.confirmed { stroke: #a1c4fd; } /* Muted blue */
-.checked-in { stroke: #c2c2f0; } /* Muted light blue */
-.checked-out { stroke: #ffadad; } /* Muted pink */
+
+/* Checked-In Segment */
+.checked-in { stroke: #76c7c0; } /* Greenish-blue for checked-in */
+
+/* Confirmed Segment */
+.confirmed { stroke: #a1c4fd; } /* Blue for confirmed */
+
+/* Checked-Out Segment */
+.checked-out { stroke: #ffadad; } /* Pink for checked-out */
 
 /* Centered Text */
 .center-text {

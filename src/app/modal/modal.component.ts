@@ -409,6 +409,7 @@ private updateTotalPriceFromDue(): void {
         mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
         mobileNumber2: 0,
         birthDate: '',
+        email: ''
       };
 
       // Combine both objects

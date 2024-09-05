@@ -1,5 +1,5 @@
+<div class="container-fluid">
 <div class="container mt-4">
-  <!-- Jumbotron -->
   <div class="row">
     <div class="col-8">
       <div class="jumbotron p-4 jumbotron-full">
@@ -14,17 +14,8 @@
             <svg viewBox="0 0 32 32">
               <!-- Background Circle -->
               <circle r="14" cx="16" cy="16" stroke="#e9ecef" stroke-width="5"></circle>
-              <!-- Pie Chart Segments -->
-              <circle
-                class="confirmed"
-                r="14"
-                cx="16"
-                cy="16"
-                [attr.stroke-dasharray]="confirmedDashArray"
-                transform="rotate(-90 16 16)"
-                matTooltip="Confirmed: {{ confirmedPercent }}%"
-                matTooltipPosition="above"
-              ></circle>
+            
+              <!-- Checked-In Segment -->
               <circle
                 class="checked-in"
                 r="14"
@@ -32,31 +23,37 @@
                 cy="16"
                 [attr.stroke-dasharray]="checkedInDashArray"
                 transform="rotate(-90 16 16)"
-                matTooltip="Checked In: {{ checkedInPercent }}%"
+                matTooltip="Checked In: {{ checkedInCount }} reservations"
                 matTooltipPosition="above"
               ></circle>
+            
+              <!-- Confirmed Reservations Segment -->
               <circle
-                class="checked-out"
+                class="confirmed"
                 r="14"
                 cx="16"
                 cy="16"
-                [attr.stroke-dasharray]="checkedOutDashArray"
+                [attr.stroke-dasharray]="confirmedDashArray"
                 transform="rotate(-90 16 16)"
-                matTooltip="Checked Out: {{ checkedOutPercent }}%"
+                matTooltip="Confirmed: {{ confirmedCount }} reservations"
                 matTooltipPosition="above"
               ></circle>
             </svg>
+            
+
+            
+
             <!-- Number Display in Center -->
-            <div class="center-text display-4">{{ reservationCount }}</div>
+            <div class="center-text display-4">{{ totalReservationsCount }}</div>
           </div>
           <!-- Text Below the Chart -->
-          <p class="this">Total <br> Reservations</p>
+          <p class="this">Total <br> Active Reservations</p>
         </div>
       </div>
     </div>
   </div>
-  <!-- Navigation Tabs -->
-  <div class="row">
+   <!-- Navigation Tabs -->
+   <div class="row">
     <div class="col-12">
       <div class="nav-container mt-4">
         <ul class="nav nav-tabs">
@@ -80,5 +77,9 @@
       </div>
     </div>
   </div>
-</div>
+
 <router-outlet name="filternav"></router-outlet>
+
+</div>
+
+ </div>

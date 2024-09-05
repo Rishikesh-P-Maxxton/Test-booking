@@ -8,7 +8,7 @@ import { Reservation } from '../Interfaces/reservation';
 
 import { ModalComponent } from '../modal/modal.component';
 import { BookingDetails } from '../Interfaces/booking-details';
-import { min } from 'rxjs';
+
 
 interface Availability {
   start: Date;
@@ -321,7 +321,7 @@ public takeSelections(): void {
             modal.show();
             
           } else {
-
+            
             console.error('Modal element not found');
           }
         }

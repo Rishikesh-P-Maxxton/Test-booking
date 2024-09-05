@@ -8,11 +8,13 @@ import { ReservationsListComponent } from './reservations-list/reservations-list
 import { RoomAvailabilityGanttComponent } from './room-availability-gantt/room-availability-gantt.component';
 import { BookingHistoryComponent } from './booking-history/booking-history.component';
 import { ResNavComponent } from './res-nav/res-nav.component';
+import { CustomerFormComponent } from './cust-test/cust-test.component';
 
 
 const routes: Routes = [
   { path: 'filter', component: RoomsFilterComponent },
   { path: 'planner', component: RoomAvailabilityGanttComponent },
+  { path: 'cust', component: CustomerFormComponent },
   { path: 'filterroom', component: FilterNavsComponent,
     children:[
       { path: '', redirectTo: 'allrooms', pathMatch: 'full', outlet: 'filternav' },
