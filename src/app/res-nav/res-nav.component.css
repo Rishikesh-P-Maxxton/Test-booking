@@ -1,46 +1,60 @@
 /* Navigation Tabs */
 .nav-container {
-    margin-top: 0rem;
-  }
-  
-  .nav-tabs {
-    border-bottom: none; /* Remove default bottom border */
-    display: flex;
-    padding: 0; /* Remove padding */
-    margin: 0; /* Remove margin */
-    list-style: none; /* Remove bullet points */
-  }
-  
-  .nav-item {
-    margin: 0; /* Remove margin around items */
-  }
-  
-  .nav-link {
-    font-family: 'Arial', sans-serif; /* Arial font */
-    font-weight: 300; /* Light font weight */
-    color: #6c757d; /* Dark gray for inactive tabs */
-    background-color: #f8f9fa; /* Light background color */
-    border: 1px solid #ddd; /* Subtle border */
-    border-radius: 0; /* Sharp corners */
-    padding: 10px 20px; /* Padding around text */
-    text-align: center; /* Center align text */
-    transition: color 0.2s ease, background-color 0.2s ease; /* Smooth color and background color transition */
-    cursor: pointer; /* Pointer cursor for clickable tabs */
-    margin-right: -1px; /* Remove space between tabs by adjusting right margin */
-  }
-  
-  .nav-link.active {
-    color: #343a40; /* Darker text color for active tab */
-    background-color: #e9ecef; /* Slightly darker background for active tab */
-    border-bottom: 1px solid transparent; /* Maintain the bottom border for active state */
-  }
-  
-  .nav-link:hover {
-    color: #343a40; /* Darker text color on hover */
-    background-color: #e2e6ea; /* Light grey background on hover */
-  }
-  
-  .this {
-    vertical-align: middle;
-  }
-  
+  margin-top: 0;
+}
+
+.nav-tabs {
+  border-bottom: none; /* Remove default bottom border */
+  display: flex;
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
+  list-style: none; /* Remove bullet points */
+}
+
+.nav-item {
+  margin: 0; /* Remove margin around items */
+}
+
+/* Default Inactive Tab Style */
+.nav-link {
+  font-family: 'Arial', sans-serif;
+  font-weight: 300;
+  color: #fff; /* White text */
+  background-color: #4caf50; /* Muted green background */
+  border: none; /* No border */
+  border-radius: 0; /* Sharp corners */
+  padding: 10px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease; /* Smooth transition */
+  margin-right: 0; /* No negative margins to avoid overlap */
+}
+
+/* Hover State */
+.nav-link:hover {
+  background-color: #66bb6a; /* Slightly lighter green on hover */
+  color: #fff; /* Keep white text */
+}
+
+/* Active Tab Style */
+.nav-link.active {
+  color: #fff; /* White text */
+  background-color: #2e7d32; /* Darker green background for active tab */
+  border-bottom: none; /* No border on active state */
+}
+
+/* Dark Grey/Black Button Theme (Optional) */
+.btn-dark-grey {
+  background-color: #333; /* Dark grey */
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-dark-grey:hover {
+  background-color: #4a4a4a; /* Slightly lighter grey on hover */
+  color: #fff;
+}

@@ -3,9 +3,13 @@
   background-color: #f9f9f9; /* Light gray background */
   border: 0; /* Subtle border */
   border-radius: 0; /* Sharp corners */
-  padding: 0 2rem;
+  /* padding: 0 2rem; */
+  padding: 0;
   margin-bottom: 0rem;
   max-width: 100%; /* Ensure it doesn't exceed container width */
+}
+.j1{
+
 }
 
 .jumbotron-full {
@@ -16,7 +20,7 @@
 .container-fluid {
   padding: 0;
   margin: 0;
-  background-color: #e9e9e9;
+
   
 }
 
@@ -111,31 +115,46 @@
   margin: 0; /* Remove margin around items */
 }
 
+/* Button Styling for Tabs and Other Buttons */
 .nav-link {
-  font-family: 'Arial', sans-serif; /* Arial font */
-  font-weight: 300; /* Light font weight */
-  color: #6c757d; /* Dark gray for inactive tabs */
-  background-color: #f8f9fa; /* Light background color */
-  border: 1px solid #ddd; /* Subtle border */
+  font-family: 'Arial', sans-serif;
+  font-weight: 300;
+  color: #fff; /* White text */
+  background-color: #4caf50; /* Muted green */
+  border: none;
   border-radius: 0; /* Sharp corners */
-  padding: 10px 20px; /* Padding around text */
-  text-align: center; /* Center align text */
-  transition: color 0.2s ease, background-color 0.2s ease; /* Smooth color and background color transition */
-  cursor: pointer; /* Pointer cursor for clickable tabs */
-  margin-right: -1px; /* Remove space between tabs by adjusting right margin */
-}
-
-.nav-link.active {
-  color: #343a40; /* Darker text color for active tab */
-  background-color: #e9ecef; /* Slightly darker background for active tab */
-  border-bottom: 1px solid transparent; /* Maintain the bottom border for active state */
+  padding: 10px 20px;
+  text-align: center;
+  cursor: pointer;
+  margin-right: 0; /* No negative margins */
+  border-bottom: none; /* No border to avoid size differences */
 }
 
 .nav-link:hover {
-  color: #343a40; /* Darker text color on hover */
-  background-color: #e2e6ea; /* Light grey background on hover */
+  background-color: #66bb6a; /* Slightly brighter green on hover */
+  color: #fff; /* Keep white text */
+  border-bottom: none; /* No border changes on hover */
 }
 
-.this {
-  vertical-align: middle;
+/* Active State for Tab */
+.nav-link.active {
+  color: #fff; /* White text */
+  background-color: #2e7d32; /* Darker green for active state */
+  border-bottom: none; /* No border on active state */
+}
+
+/* Optional Dark Grey/Black Button Styling */
+.btn-dark-grey {
+  background-color: #333; /* Dark grey */
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-dark-grey:hover {
+  background-color: #4a4a4a; /* Slightly lighter grey on hover */
+  color: #fff; /* Keep white text */
 }

@@ -1,0 +1,17 @@
+/* Global styles in styles.css */
+html, body {
+    height: 100%; /* Ensures full height for background */
+    background-color: #f7f7f7; /* Slightly off-white background */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Ensure root Angular app container (app-root) fills the full height */
+  app-root {
+    display: flex;
+    min-height: 100vh; /* Ensure the app takes at least the full height */
+    flex-direction: column;
+    background-color: #f9f9f9; /* Slightly off-white background */
+  }
+  

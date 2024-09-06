@@ -7,15 +7,7 @@
   margin: 0;
 
 }
-.container-fluid {
-  padding: 0;
-  margin: 0;
-  
-  
-}
-.bg{
-  background-color: #e9e9e9;
-}
+
 
 /* Buttons - Apply Green with Flat Design */
 .btn-custom {
@@ -51,7 +43,7 @@
 
 /* Filter Section */
 .filter-section {
-  background-color: #f2f2f2;
+  background-color: #ffffff;
   padding: 1rem;
   border: none;
   border-radius: 0;
@@ -88,7 +80,9 @@
 .table-responsive {
   overflow-x: auto;
 }
-
+.result-section{
+  background-color: #ffffff;
+}
 .custom-table {
   width: 100%;
   background-color: #f2f2f2;
