@@ -1,3 +1,4 @@
+import { RoomAvailability } from "../rooms-filter/rooms-filter.component";
 import { Stay } from "./stay";
 
 export interface Room {
@@ -8,5 +9,5 @@ export interface Room {
     guestCapacity: number;
     roomName: string;
     stays: Stay[];
-    availability: string[];
+    availability: RoomAvailability[];
   }

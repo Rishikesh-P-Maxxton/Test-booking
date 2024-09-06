@@ -26,7 +26,7 @@ import {MatListModule} from '@angular/material/list';
 
 
 import {MatButtonModule} from '@angular/material/button';
-import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
+// import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
 
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 import { FilterNavsComponent } from './filter-navs/filter-navs.component';
@@ -41,7 +41,7 @@ import { ResNavComponent } from './res-nav/res-nav.component';
 import { CustomerFormComponent } from './cust-test/cust-test.component';
 @NgModule({
 
-declarations: [AppComponent, RoomsFilterComponent, RoomShowcaseComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent,CustomerFormComponent  ],
+declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent,CustomerFormComponent  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  
