@@ -310,42 +310,46 @@
 
 
             
-            <!-- Payment Details Step -->
-            <mat-step label="Payment Details" [stepControl]="paymentForm">
-              <form [formGroup]="paymentForm" class="custom-form needs-validation" novalidate>
-                <div class="container-fluid">
-                  <div class="row">
-                    <!-- Payment ID -->
-                    <div class="col-md-6 mb-3">
-                      <label for="paymentId" class="form-label">Payment ID</label>
-                      <input type="text" class="form-control" id="paymentId" formControlName="paymentId" readonly />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label for="paymentMode" class="form-label">Payment Mode</label>
-                      <input type="text" class="form-control" id="paymentMode" formControlName="paymentMode" />
-                    </div>
-                  </div>
-                  <div class="row">
-                    <!-- Paid Amount and Due -->
-                    <div class="row">
-                      <div class="row">
-                        <!-- Paid Amount (input) -->
-                        <div class="col-md-6 mb-3">
-                          <label for="paidAmount" class="form-label">Paid Amount</label>
-                          <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" (input)="calculateDueAmount()" />
-                        </div>
-                        
-                        <!-- Due (disabled) -->
-                        <div class="col-md-6 mb-3">
-                          <label for="due" class="form-label">Due</label>
-                          <input type="number" class="form-control" id="due" formControlName="due" readonly />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </mat-step>
+         <!-- Payment Details Step -->
+<mat-step label="Payment Details" [stepControl]="paymentForm">
+  <form [formGroup]="paymentForm" class="custom-form needs-validation" novalidate>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Payment ID -->
+        <div class="col-md-6 mb-3">
+          <label for="paymentId" class="form-label">Payment ID</label>
+          <input type="text" class="form-control" id="paymentId" formControlName="paymentId" readonly />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="paymentMode" class="form-label">Payment Mode</label>
+          <select class="form-control square-input w-100" id="paymentMode" formControlName="paymentMode">
+            <option value="">Select Payment Mode</option> <!-- Default option -->
+            <option value="Debit Card">Debit Card</option>
+            <option value="UPI">UPI</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <!-- Paid Amount and Due -->
+        <div class="row">
+          <div class="row">
+            <!-- Paid Amount (input) -->
+            <div class="col-md-6 mb-3">
+              <label for="paidAmount" class="form-label">Paid Amount</label>
+              <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" (input)="calculateDueAmount()" />
+            </div>
+            <!-- Due (disabled) -->
+            <div class="col-md-6 mb-3">
+              <label for="due" class="form-label">Due</label>
+              <input type="number" class="form-control" id="due" formControlName="due" readonly />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</mat-step>
 
             
 
@@ -412,10 +416,7 @@
           <span>{{ paymentForm.get('due')?.value | currency }}</span>
         </div>
       </div>
-      <!-- Confirm Button -->
-      <div class="text-center mt-4">
-        <button mat-raised-button color="primary" (click)="confirmBooking()">Confirm Booking</button>
-      </div>
+      
     </div>
   </mat-step>
           </mat-vertical-stepper>

@@ -12,7 +12,7 @@
           <th>Customer Name</th>
           <th>Status</th>
           <th>Paid Amount</th>
-          <th></th>
+          
         </tr>
       </thead>
       <tbody>
@@ -33,13 +33,13 @@
           <td>{{ reservation.customer.firstName }} {{ reservation.customer.middleName }} {{ reservation.customer.lastName }}</td>
           <td>{{ reservation.reservation.status }}</td>
           <td>{{ reservation.reservation.paidAmount }}</td>
-          <td> <button (click)="deleteReservation(reservation.reservation.reservationId)">Remove</button></td>
+          
         </tr>
       </tbody>
     </table>
   </div>
   
-  <div class="container">
+  <!-- <div class="container">
     <button class="clear-button" (click)="clearReservations()">Clear Reservations</button>
-  </div>
+  </div> -->
   

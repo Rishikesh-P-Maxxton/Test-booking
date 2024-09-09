@@ -178,6 +178,7 @@ export class RoomsFilterComponent implements OnInit {
         roomMap.set(room.roomId, { ...room, stays: [], availability: [] });
       }
     });
+    console.log("roomMap",[...roomMap],this.rooms,this.stays);
 
     this.stays.forEach((stay) => {
       const room = roomMap.get(stay.roomId);
