@@ -192,18 +192,19 @@ export class RoomsFilterComponent implements OnInit {
         roomName: room.roomName,
         pricePerDayPerPerson: room.pricePerDayPerPerson,
         guestCapacity: room.guestCapacity,
-        stays: matchingStays  // Directly assigning matching stays using the existing Stay interface
+        stays: matchingStays  //assigning matching stays using the existing Stay interface
       } as FilteredRoom;
     });
+    console.log("Merged Data",this.filteredRooms )
   }
   
 
   
   private parseFullName(fullName: string): { firstName: string, middleName: string, lastName: string } {
-    // List of honorary prefixes to ignore
+    // List of prefixes to ignore
     const honoraryPrefixes = ["Mr.", "Ms.", "Mrs.", "Dr.", "Prof.", "Miss"];
   
-    // Remove any honorary prefix
+    // Remove any prefix
     let nameParts = fullName.split(' ').filter(part => !honoraryPrefixes.includes(part));
   
     // Ensure we are left with non-empty name parts
@@ -456,14 +457,16 @@ export class RoomsFilterComponent implements OnInit {
     }));
     console.log('Converted Reservations:', reservations);
   
-    // Apply Date Filter with minStay, maxStay, arrival day, and availability checks
+    // Apply Date Filter with minStay, maxStay, arrival day, and departure day checks
     if (hasDateFilter) {
       const arrivalDay: string = arrivalDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+      const departureDay: string = departureDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
   
       this.filteredRooms = this.filteredRooms.reduce((filtered: FilteredRoom[], room) => {
         const stays = this.stays.filter((stay) => stay.roomId === room.roomId);
         console.log('Room Stays:', { roomId: room.roomId, stays });
   
+        // Find a matching stay that satisfies the filter criteria, including departure day check
         const matchingStay = stays.find((stay) => {
           const stayFrom = new Date(stay.stayDateFrom + 'T11:00:00');
           const stayTo = new Date(stay.stayDateTo + 'T10:00:00');
@@ -473,7 +476,7 @@ export class RoomsFilterComponent implements OnInit {
           console.log('Requested Dates:', { arrivalDate, departureDate });
           console.log('Stay Duration:', stayDuration);
   
-          // Check if the requested date range is completely within the stay period
+          // Check if the requested date range is within the stay period
           const isDateCompletelyWithin = this.isDateRangeCompletelyWithin(
             arrivalDate,
             departureDate,
@@ -487,12 +490,17 @@ export class RoomsFilterComponent implements OnInit {
           console.log('Arrival day fetched:', arrivalDay);
           console.log('Is Arrival Day Match:', isArrivalDayMatch);
   
+          // Check if the requested departure day matches the stay's available departure days
+          const isDepartureDayMatch = stay.departureDays.includes(departureDay);
+          console.log('Departure day fetched:', departureDay);
+          console.log('Is Departure Day Match:', isDepartureDayMatch);
+  
           // Check if the stay duration is within the room's min and max stay requirements
           const isDurationValid = numberOfDays >= (stay.minStay || 0) && numberOfDays <= (stay.maxStay || Infinity);
           console.log('Is Duration Valid:', isDurationValid);
   
-          // Return true only if all conditions are satisfied
-          return isDateCompletelyWithin && isArrivalDayMatch && isDurationValid;
+          // Return true only if all conditions (date range, arrival day, departure day, and duration) are satisfied
+          return isDateCompletelyWithin && isArrivalDayMatch && isDepartureDayMatch && isDurationValid;
         });
   
         // If a matching stay is found, push room with attached stay into the filtered array
@@ -506,7 +514,7 @@ export class RoomsFilterComponent implements OnInit {
         return filtered;
       }, []);
   
-      console.log('After Date Filter:', this.filteredRooms);
+      console.log('After Date Filter (including arrival & departure checks):', this.filteredRooms);
     }
   
     // Set dateFilterApplied to true if date filters are applied
@@ -541,6 +549,7 @@ export class RoomsFilterComponent implements OnInit {
   
     console.log('Filtered Rooms:', this.filteredRooms);
   }
+  
   
   
 
