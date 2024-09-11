@@ -68,6 +68,8 @@
       <th>Room Name</th>
       <th>Price Per Day</th>
       <th>Guest Capacity</th>
+      <th>Minstay</th>
+      <th>Maxstay</th>
       <th *ngIf="isDateFilterApplied()"></th>
     </tr>
   </thead>
@@ -81,6 +83,8 @@
       <td>{{ room.roomName }}</td>
       <td>{{ room.pricePerDayPerPerson | currency }}</td>
       <td>{{ room.guestCapacity }}</td>
+      <td>{{ room.selectedStay?.minStay }}</td>
+      <td>{{ room.selectedStay?.maxStay }}</td>
       <td>
         <button class="btn btn-custom" *ngIf="isDateFilterApplied()" (click)="openBookingModal(room)">Book</button>
       </td>
