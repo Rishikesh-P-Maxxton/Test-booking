@@ -39,9 +39,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { BookingHistoryComponent } from './booking-history/booking-history.component';
 import { ResNavComponent } from './res-nav/res-nav.component';
 import { CustomerFormComponent } from './cust-test/cust-test.component';
+import { RoomFilterButtonComponent } from './room-filter-button/room-filter-button.component';
 @NgModule({
 
-declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent,CustomerFormComponent  ],
+declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent,CustomerFormComponent, RoomFilterButtonComponent  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  
