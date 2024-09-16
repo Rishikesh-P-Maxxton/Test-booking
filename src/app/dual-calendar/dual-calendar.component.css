@@ -1,0 +1,107 @@
+/* General Styling */
+.calendar-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.calendar {
+  padding: 15px;
+  background-color: white;
+  width: 360px; /* Increased the width for bigger cells */
+  
+}
+
+.month-header-left {
+  font-weight: 400;
+  font-size: 1.2rem;
+  text-align: left;
+  margin-bottom: 10px;
+  width: 100%; /* Ensures the month/year header spans the full width */
+  border-bottom: 1px solid #ddd; /* Bottom border for separation */
+}
+
+.month-header-right {
+  display: flex;
+  gap: 5px; /* Space between the buttons */
+}
+
+/* Weekdays Styling */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 400;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #ddd; /* Bottom border for clean separation */
+}
+
+/* Days Grid */
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+}
+
+.day {
+  text-align: center;
+  padding: 20px 0; /* Larger padding for more space */
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 400;
+  background-color: white;
+  border: 1px solid #ddd; /* Only bottom and right borders */
+  
+  height: 60px; /* Height consistent for square-like cells */
+}
+
+.day:first-child {
+  border-left: 1px solid #ddd; /* Left border for the first column */
+}
+
+.weekdays {
+  border-top: 1px solid #ddd; /* Top border for the first row */
+}
+
+/* Disabled days styling */
+.day.disabled {
+  pointer-events: none;
+  color: #ccc;
+  background-color: #f0f0f0;
+}
+
+/* Selected day styling */
+.day.selected {
+  background-color: #007bff; /* Blue background for selected */
+  color: white; /* White text for selected day */
+}
+
+/* Range styling (light blue background) */
+.day.range {
+  background-color: rgba(0, 123, 255, 0.2); /* Light blue for range */
+}
+
+/* Button styles */
+.calendar-nav-btn {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  background-color: #f8f9fa;
+  border-radius: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.calendar-nav-btn:hover {
+  background-color: #e2e6ea;
+  border-color: #bbb;
+}
+
+/* Input Box (Non-Rounded Borders) */
+input.no-border {
+  border: none;
+  background-color: #f0f0f0;
+  width: 100%;
+  box-shadow: none;
+  border-radius: 0;
+}

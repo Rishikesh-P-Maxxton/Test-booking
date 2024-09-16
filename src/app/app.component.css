@@ -86,7 +86,7 @@
     left: 120px; /* Align with the sidebar width */
     width: calc(100% - 120px); /* Full width minus the sidebar width */
     height: 48px; /* Match the height of the logo area */
-    z-index: 1060; /* Ensure it stays on top */
+    z-index: 1049; /* Ensure it stays on top */
     background-color: #464646; /* Darker background color to match sidebar */
     padding: 10px; /* Optional padding */
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);

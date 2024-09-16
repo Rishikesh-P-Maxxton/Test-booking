@@ -38,13 +38,13 @@ import { ModalComponent } from './modal/modal.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { BookingHistoryComponent } from './booking-history/booking-history.component';
 import { ResNavComponent } from './res-nav/res-nav.component';
-import { CustomerFormComponent } from './cust-test/cust-test.component';
+
 import { RoomFilterButtonComponent } from './room-filter-button/room-filter-button.component';
 import { NewRoomsFilterComponent } from './new-rooms-filter/new-rooms-filter.component';
 import { DualCalendarComponent } from './dual-calendar/dual-calendar.component';
 @NgModule({
 
-declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent,CustomerFormComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent  ],
+declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  
