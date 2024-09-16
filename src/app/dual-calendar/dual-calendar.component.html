@@ -1,85 +1,77 @@
 <!-- Trigger Button to Open Modal -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dualCalendarModal">
+<button type="button" class="btn-custom" data-bs-toggle="modal" data-bs-target="#dualCalendarModal">
     Open Dual Calendar
-  </button>
-  
-  <!-- Modal for Dual Calendar -->
-  <div class="modal fade" id="dualCalendarModal" tabindex="-1" aria-labelledby="dualCalendarModalLabel" aria-hidden="true">
+</button>
+
+<!-- Modal for Dual Calendar -->
+<div class="modal fade" id="dualCalendarModal" tabindex="-1" aria-labelledby="dualCalendarModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="dualCalendarModalLabel">Select Dates</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dualCalendarModalLabel">Select Dates</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Selected Date Fields (aligned with calendar) -->
+                <div class="row mb-3" style="width: 720px; margin: 0 auto;">
+                    <div class="col-6">
+                        <label for="arrivalDate" class="form-label">Arrival Date</label>
+                        <input type="text" id="arrivalDate" class="form-control no-border" [value]="arrivalDateDisplay" disabled>
+                    </div>
+                    <div class="col-6">
+                        <label for="departureDate" class="form-label">Departure Date</label>
+                        <input type="text" id="departureDate" class="form-control no-border" [value]="departureDateDisplay" disabled>
+                    </div>
+                </div>
+
+                <!-- Month Navigation Controls and Month Name/Year -->
+                <div class="calendar-controls-right" style="width: 100%; display: flex; justify-content: flex-end;">
+                    <button (click)="previousMonthClick()" class="btn calendar-nav-btn left">
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <button (click)="nextMonthClick()" class="btn calendar-nav-btn right">
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Calendar for Current Month -->
+                <div class="calendar-container" style="width: 720px; margin: 0 auto;">
+                    <div class="calendar">
+                        <div class="month-header-left">{{ getMonthName(currentMonth) }} {{ currentYear }}</div>
+                        <div class="weekdays">
+                            <div *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" class="weekday">
+                                {{ day }}
+                            </div>
+                        </div>
+                        <div class="days-grid">
+                            <div *ngFor="let dayObj of daysInCurrentMonth"
+                                 [ngClass]="getCellClass(dayObj, currentMonth, currentYear)"
+                                 (click)="selectDate(dayObj.day, currentMonth, currentYear)"
+                                 class="day">
+                                {{ dayObj.day > 0 ? dayObj.day : '' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar for Next Month -->
+                    <div class="calendar">
+                        <div class="month-header-left">{{ getMonthName(nextMonth) }} {{ nextYear }}</div>
+                        <div class="weekdays">
+                            <div *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" class="weekday">
+                                {{ day }}
+                            </div>
+                        </div>
+                        <div class="days-grid">
+                            <div *ngFor="let dayObj of daysInNextMonth"
+                                 [ngClass]="getCellClass(dayObj, nextMonth, nextYear)"
+                                 (click)="selectDate(dayObj.day, nextMonth, nextYear)"
+                                 class="day">
+                                {{ dayObj.day > 0 ? dayObj.day : '' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <!-- Selected Date Fields (aligned with calendar) -->
-          <div class="row mb-3" style="width: 720px; margin: 0 auto;"> <!-- Increased width -->
-            <div class="col-6">
-              <label for="arrivalDate" class="form-label">Arrival Date</label>
-              <input type="text" id="arrivalDate" class="form-control no-border" [value]="arrivalDateDisplay" disabled>
-            </div>
-            <div class="col-6">
-              <label for="departureDate" class="form-label">Departure Date</label>
-              <input type="text" id="departureDate" class="form-control no-border" [value]="departureDateDisplay" disabled>
-            </div>
-          </div>
-  
-          <!-- Month Navigation Controls and Month Name/Year -->
-          <div class="calendar-controls" style="width: 720px; margin: 0 auto; display: flex; justify-content: space-between;">
-           
-            <div class="month-header-right">
-              <button (click)="previousMonthClick()" class="btn calendar-nav-btn left">
-                <i class="fa fa-chevron-left"></i>
-              </button>
-              <button (click)="nextMonthClick()" class="btn calendar-nav-btn right">
-                <i class="fa fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-  
-          <div class="calendar-container" style="width: 720px; margin: 0 auto;">
-            <!-- Current Month Calendar -->
-            <div class="calendar">
-              <div class="month-header">{{ getMonthName(currentMonth) }} {{ currentYear }}</div>
-              <div class="weekdays">
-                <div *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" class="weekday">
-                  {{ day }}
-                </div>
-              </div>
-              <div class="days-grid">
-                <div *ngFor="let dayObj of daysInCurrentMonth"
-                     [class.disabled]="isDateDisabled(dayObj.day, currentMonth, currentYear, dayObj.fromPreviousMonth)"
-                     [class.selected]="isDateSelected(dayObj.day, currentMonth, currentYear)"
-                     [class.range]="isDateInRange(dayObj.day, currentMonth, currentYear)"
-                     (click)="selectDate(dayObj.day, currentMonth, currentYear, dayObj.fromPreviousMonth)"
-                     class="day">
-                  {{ dayObj.day > 0 ? dayObj.day : '' }}
-                </div>
-              </div>
-            </div>
-  
-            <!-- Next Month Calendar -->
-            <div class="calendar">
-              <div class="month-header">{{ getMonthName(nextMonth) }} {{ nextYear }}</div>
-              <div class="weekdays">
-                <div *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" class="weekday">
-                  {{ day }}
-                </div>
-              </div>
-              <div class="days-grid">
-                <div *ngFor="let dayObj of daysInNextMonth"
-                     [class.disabled]="isDateDisabled(dayObj.day, nextMonth, nextYear, dayObj.fromPreviousMonth)"
-                     [class.selected]="isDateSelected(dayObj.day, nextMonth, nextYear)"
-                     [class.range]="isDateInRange(dayObj.day, nextMonth, nextYear)"
-                     (click)="selectDate(dayObj.day, nextMonth, nextYear, dayObj.fromPreviousMonth)"
-                     class="day">
-                  {{ dayObj.day > 0 ? dayObj.day : '' }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-  
+</div>

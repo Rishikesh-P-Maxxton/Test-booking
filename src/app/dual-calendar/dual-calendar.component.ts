@@ -18,6 +18,9 @@ export class DualCalendarComponent implements OnInit {
   arrivalDateDisplay: string = '';
   departureDateDisplay: string = '';
 
+  selectedDays: Set<number> = new Set();  // Track selected days
+
+
   constructor() {
     this.currentYear = this.today.getFullYear();
     this.nextYear = this.today.getFullYear();
@@ -97,34 +100,83 @@ export class DualCalendarComponent implements OnInit {
   }
 
   // Select start or end date
-  selectDate(day: number, month: number, year: number, fromPreviousMonth: boolean): void {
-    if (fromPreviousMonth) return; // Do not allow selection from previous or next months
-    const selectedDate = new Date(year, month - 1, day);
+  selectedArrivalDate: Date | null = null;  // Track the selected arrival date
+  selectedDepartureDate: Date | null = null;  // Track the selected departure date
 
-    if (!this.selectedStartDate) {
-      // Set the arrival date with check-in time at 11:00 AM
-      this.selectedStartDate = new Date(year, month - 1, day, 11, 0, 0);
-      this.arrivalDateDisplay = this.formatDate(this.selectedStartDate); // Update arrival display
-      this.selectedEndDate = null; // Reset the end date
-      this.departureDateDisplay = ''; // Clear the departure display
-    } else if (!this.selectedEndDate) {
-      if (selectedDate.getTime() === this.selectedStartDate.getTime()) {
-        // Case 1: One-day booking -> set departure to the next day at 10:00 AM
-        this.selectedEndDate = new Date(year, month - 1, day + 1, 10, 0, 0);
-      } else {
-        // Case 2: Multi-day booking -> set departure to 10:00 AM on the selected departure day
-        this.selectedEndDate = new Date(year, month - 1, day, 10, 0, 0);
+  selectDate(day: number, month: number, year: number): void {
+    const selectedDate = new Date(year, month - 1, day);  // Create the selected date object
+  
+    // If no arrival date is selected, set this as the arrival date
+    if (!this.selectedArrivalDate) {
+      this.selectedArrivalDate = selectedDate;
+      this.arrivalDateDisplay = this.formatDate(this.selectedArrivalDate);
+      this.departureDateDisplay = ''; // Clear the departure date until it's selected
+      console.log("Arrival date selected:", this.selectedArrivalDate);
+    } 
+    // If the arrival date is already selected, pick this as the departure date
+    else {
+      if (selectedDate > this.selectedArrivalDate) {
+        this.selectedDepartureDate = selectedDate;  // Set the departure date
+        this.departureDateDisplay = this.formatDate(this.selectedDepartureDate);  // Display departure date
+  
+        // Calculate the stay using the planning chart logic
+        const stayDuration = this.calculateNightStay(this.selectedArrivalDate, this.selectedDepartureDate);
+        console.log("Departure date selected:", this.selectedDepartureDate);
+        console.log(`Total stay duration: ${stayDuration} nights`);
       }
-      this.departureDateDisplay = this.formatDate(this.selectedEndDate); // Update departure display
-    } else {
-      // Reset the selection for a new booking
-      this.selectedStartDate = new Date(year, month - 1, day, 11, 0, 0);
-      this.arrivalDateDisplay = this.formatDate(this.selectedStartDate); // Update arrival display
-      this.selectedEndDate = null;
-      this.departureDateDisplay = ''; // Clear the departure display
     }
   }
-
+  calculateNightStay(arrivalDate: Date, departureDate: Date): number {
+    // Set check-in time for arrival day at 11:00 AM
+    const checkInDate = new Date(arrivalDate);
+    checkInDate.setHours(11, 0, 0, 0);  // 11:00 AM
+  
+    // Set check-out time for departure day at 10:00 AM
+    const checkOutDate = new Date(departureDate);
+    checkOutDate.setHours(10, 0, 0, 0);  // 10:00 AM
+  
+    // Calculate the difference in time (in milliseconds)
+    const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+  
+    // Convert the time difference from milliseconds to days
+    const daysDiff = timeDiff / (1000 * 3600 * 24);  // 1000 ms * 3600 s * 24 h
+  
+    // Return the number of nights (round up if partial day)
+    return Math.ceil(daysDiff);
+  }
+  
+  getCellClass(dayObj: { day: number, fromPreviousMonth: boolean }, month: number, year: number): string {
+    // If the cell is from the previous month (empty cells at the start of the month)
+    if (dayObj.fromPreviousMonth || dayObj.day === 0) {
+      return 'empty-cell';  // Apply the empty-cell class to make it white and non-selectable
+    }
+  
+    // If the date is disabled
+    if (this.isDateDisabled(dayObj.day, month, year)) {
+      return 'disabled';
+    }
+  
+    // If this date is the arrival day
+    if (this.selectedArrivalDate && new Date(year, month - 1, dayObj.day).getTime() === this.selectedArrivalDate.getTime()) {
+      return 'selected-arrival';
+    }
+  
+    // If this date is the departure day
+    if (this.selectedDepartureDate && new Date(year, month - 1, dayObj.day).getTime() === this.selectedDepartureDate.getTime()) {
+      return 'selected-departure';
+    }
+  
+    // If this date is within the range between arrival and departure
+    if (this.selectedArrivalDate && this.selectedDepartureDate &&
+        new Date(year, month - 1, dayObj.day) > this.selectedArrivalDate &&
+        new Date(year, month - 1, dayObj.day) < this.selectedDepartureDate) {
+      return 'selected-range';
+    }
+  
+    return '';  // Default case for regular cells
+  }
+  
+  
   // Format the date for display in the input fields
   formatDate(date: Date): string {
     const day = date.getDate().toString().padStart(2, '0');
@@ -152,12 +204,22 @@ export class DualCalendarComponent implements OnInit {
     return date > this.selectedStartDate && date < this.selectedEndDate;
   }
 
-  // Disable dates before today
-  isDateDisabled(day: number, month: number, year: number, fromPreviousMonth: boolean): boolean {
-    if (fromPreviousMonth || day === 0) return true; // Disable previous or empty days
+  isDateDisabled(day: number, month: number, year: number): boolean {
     const selectedDate = new Date(year, month - 1, day);
-    return selectedDate < this.today;
+  
+    // Disable dates before the selected arrival date
+    if (this.selectedArrivalDate && selectedDate < this.selectedArrivalDate) {
+      return true;
+    }
+  
+    // Optionally disable past dates (before today)
+    if (selectedDate < this.today) {
+      return true;
+    }
+  
+    return false;  // Otherwise, the date is enabled
   }
+  
 
   // Utility to get the name of the month
   getMonthName(month: number): string {
