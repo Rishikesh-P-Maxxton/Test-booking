@@ -436,56 +436,55 @@ formatDate2(date: Date): string {
 }
 
 
-  getCellClass(dayObj: { day: number, fromPreviousMonth: boolean }, month: number, year: number): string {
-    const date = new Date(year, month - 1, dayObj.day);
-  
-    // Skip empty cells
-    if (dayObj.fromPreviousMonth || dayObj.day === 0) {
-      console.log(`Date ${date.toDateString()}: Skipped - from previous month or empty cell.`);
+getCellClass(dayObj: { day: number, fromPreviousMonth: boolean }, month: number, year: number): string {
+  const date = new Date(year, month - 1, dayObj.day);
+  const formattedDate = this.formatDateToYYYYMMDD(date);
+
+  // Skip empty cells
+  if (dayObj.fromPreviousMonth || dayObj.day === 0) {
       return 'empty-cell';
-    }
-  
-    // Disable past dates
-    if (date < this.today) {
-      console.log(`Date ${date.toDateString()}: Disabled - in the past.`);
-      return 'disabled';
-    }
-  
-    // If no arrival date is selected, enable only valid arrival dates
-    if (!this.selectedArrivalDate) {
-      const validArrivalDates = this.generateCombinedArrivalDates();
-      const formattedDate = this.formatDateToYYYYMMDD(date);
-      if (validArrivalDates.has(formattedDate)) {
-        console.log(`Date ${date.toDateString()}: Valid arrival date.`);
-        return 'valid-date';
-      } else {
-        console.log(`Date ${date.toDateString()}: Disabled - not a valid arrival date.`);
-        return 'disabled';
-      }
-    }
-  
-    // Disable dates before the selected arrival date
-    if (this.selectedArrivalDate && date < this.selectedArrivalDate) {
-      console.log(`Date ${date.toDateString()}: Disabled - before selected arrival date.`);
-      return 'disabled';
-    }
-  
-    // Highlight the selected arrival date
-    if (this.selectedArrivalDate && this.formatDateToYYYYMMDD(date) === this.formatDateToYYYYMMDD(this.selectedArrivalDate)) {
-      console.log(`Date ${date.toDateString()}: Selected as arrival date.`);
-      return 'selected-arrival';
-    }
-  
-    // Check if the date is a valid departure date
-    const isValidDeparture = this.isValidDateInRange(date); // Validate using formatted dates
-    if (isValidDeparture) {
-      console.log(`Date ${date.toDateString()}: Valid departure date.`);
-      return 'valid-date';
-    } else {
-      console.log(`Date ${date.toDateString()}: Disabled - not a valid departure date.`);
-      return 'disabled';
-    }
   }
+
+  // Disable past dates
+  if (date < this.today) {
+      return 'disabled';
+  }
+
+  // Check if the date is the selected arrival date
+  if (this.selectedArrivalDate && formattedDate === this.formatDateToYYYYMMDD(this.selectedArrivalDate)) {
+      return 'selected-arrival';
+  }
+
+  // Check if the date is the selected departure date
+  if (this.selectedDepartureDate && formattedDate === this.formatDateToYYYYMMDD(this.selectedDepartureDate)) {
+      return 'selected-departure';
+  }
+
+  // If the date is between the selected arrival and departure dates, highlight the range
+  if (this.selectedArrivalDate && this.selectedDepartureDate && date > this.selectedArrivalDate && date < this.selectedDepartureDate) {
+      return 'selected-range';
+  }
+
+  // If no arrival date is selected, show valid arrival dates only
+  if (!this.selectedArrivalDate) {
+      const validArrivalDates = this.generateCombinedArrivalDates();
+      if (validArrivalDates.has(formattedDate)) {
+          return 'valid-date';
+      }
+      return 'disabled';
+  }
+
+  // Check if the date is a valid departure date (only after selecting the arrival date)
+  const isValidDeparture = this.isValidDateInRange(date);
+  if (isValidDeparture) {
+      return 'valid-date';
+  }
+
+  // If it's none of the above, disable the date
+  return 'disabled';
+}
+
+
   
   
   

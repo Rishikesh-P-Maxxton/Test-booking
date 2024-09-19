@@ -15,9 +15,9 @@
 /* Month Header: Align to left */
 .month-header-left {
     font-weight: 400;
-    font-size: 1.2rem; /* Text size back to original */
-    text-align: left;  /* Left-align the month/year */
-    margin-bottom: 15px; /* Slightly increase space between month/year and weekdays */
+    font-size: 1.2rem;
+    text-align: left;
+    margin-bottom: 15px;
 }
 
 /* Weekdays Styling */
@@ -26,46 +26,45 @@
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
     font-weight: 500;
-    margin-bottom: 10px; /* Add a bit more space between the weekdays and grid */
+    margin-bottom: 10px;
     font-size: 0.9rem;
-    gap: 2px; /* Space between weekday labels */
+    gap: 2px;
 }
 
 /* Days Grid */
 .days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0; /* No extra space between day cells */
+    gap: 0;
 }
 
 .day {
     text-align: center;
-    padding: 20px 0; /* Keep larger padding */
+    padding: 20px 0;
     cursor: pointer;
     font-size: 0.8rem;
     font-weight: 400;
     background-color: white;
-    border: 1px solid #ddd; /* Border settings restored */
+  
     height: 60px;
 }
 
-.day:first-child {
-    border-left: 1px solid #ddd;
-}
+
 
 /* Empty cell styling */
 .day.empty-cell {
     background-color: white;
     border: none;
     pointer-events: none;
-    opacity: 0.5; /* Make these cells appear dimmed */
+    opacity: 0.5;
 }
 
 /* Disabled day styling */
 .day.disabled {
     pointer-events: none;
-    color: #ccc;
+    color: #000000;
     background-color: #f0f0f0;
+    
 }
 
 /* Valid selectable date */
@@ -73,33 +72,47 @@
     background-color: white;
     color: #000;
     cursor: pointer;
-    border: 1px solid #28a745; /* Add a green border to make it clear it's selectable */
+    font-weight: 400;
+   
 }
 
 .day.valid-date:hover {
-    background-color: #e6ffe6; /* Light green background for hover effect */
+    background-color: #fdfdfd;
+    font-weight: 470;
 }
 
 /* Selected arrival day */
 .day.selected-arrival {
     background-color: #007bff;
     color: white;
+    border-bottom: .5px solid white; /* Thin white bottom border */
+    border-top: .5px solid white;
+    border-radius: 8px 0 0 8px; /* Rounded left corners */
 }
 
 /* Selected departure day */
 .day.selected-departure {
     background-color: #28a745;
     color: white;
+    border-bottom: .5px solid white; /* Thin white bottom border */
+    border-top: .5px solid white;
+    border-radius: 0 8px  8px 0; /* Rounded rght corners */
 }
-
 
 /* Selected range styling */
 .day.selected-range {
     background-color: rgba(0, 123, 255, 0.2);
     color: black;
-    border-left: 0.5px solid #ffffff;
-    border-right: 0.5px solid #ffffff;
-    border-bottom: 0.5px solid #ffffff;
+ 
+    pointer-events: none;
+    border-top: .5px solid #ffffff;
+    border-bottom: .5px solid #ffffff;
+}
+
+/* No border, no background for disabled dates */
+.day.disabled {
+    background-color: transparent;
+    color: rgba(17, 17, 17, 0.3); /* Faint black for disabled dates */
 }
 
 /* Button styles aligned to the right */
@@ -107,12 +120,13 @@
     width: 100%;
     display: flex;
     justify-content: flex-end;
+    padding-right: 2.3rem;
     margin-bottom: 10px;
 }
 
 .calendar-nav-btn {
     border: 1px solid #ccc;
-    padding: 5px 10px;  /* Adjust this padding to control the size of the buttons */
+    padding: 5px 10px;
     background-color: #f8f9fa;
     border-radius: 0;
     transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -124,12 +138,6 @@
     border-color: #bbb;
 }
 
-/* Align chevrons with input boxes */
-.calendar-controls-right .btn.right {
-    margin-right: 36px; 
-}
-
-/* Input Box (Non-Rounded Borders) */
 input.no-border {
     border: none;
     background-color: #f0f0f0;
@@ -140,20 +148,20 @@ input.no-border {
 
 /* Buttons - Apply Green with Flat Design */
 .btn-custom {
-    background-color: #4caf50; /* Muted/Brighter green */
+    background-color: #4caf50;
     color: #fff;
     padding: 0.5rem 1rem;
     text-transform: uppercase;
     font-size: 0.875rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    border: none; /* No border */
-    border-radius: 0; /* No border radius */
-    height: 2.5rem; /* Consistent with input fields */
+    border: none;
+    border-radius: 0;
+    height: 2.5rem;
 }
 
 .btn-custom:hover {
-    background-color: #66bb6a; /* Lighter green on hover */
+    background-color: #66bb6a;
 }
 
 .btn-custom-sec {
@@ -162,39 +170,12 @@ input.no-border {
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 0;
-    height: 2.5rem; /* Consistent with input fields */
+    height: 2.5rem;
 }
 
 .btn-custom-sec:hover {
     color: #000;
-    background-color: #e0e0e0; /* Slightly lighter background on hover */
-}
-
-.modal-title {
-    padding-left: 2.5rem;
-}
-
-.modal-header {
-    border: none;
-    height: inherit;
-}
-.footer1 {
-    border: none;
-    font-weight: 400;
-    font-size: .8rem;
-    font-family: Arial, Helvetica, sans-serif;
-    padding-left: 2.7rem;
-    padding-right: 2.7rem;
-    padding-bottom: 2rem;
-}
-
-.buttonclose {
-    margin-right: 2rem;
-    margin-bottom: 2rem;
-}
-
-.modal {
-    border-radius: 0;
+    background-color: #e0e0e0;
 }
 
 .reset-link {
@@ -206,4 +187,28 @@ input.no-border {
 
 .reset-link:hover {
     color: #0056b3;
+}
+
+/* Modal and Footer Styling */
+.modal-header {
+    border: none;
+    height: inherit;
+}
+
+.modal-title {
+    padding-left: 2.5rem;
+}
+
+.buttonclose {
+    margin-right: 2rem;
+    margin-bottom: 1.6rem;
+}
+.footer1 {
+    border: none;
+    font-weight: 400;
+    font-size: 0.8rem;
+    font-family: Arial, Helvetica, sans-serif;
+    padding-left: 2.7rem;
+    padding-right: 2.7rem;
+    padding-bottom: 2rem;
 }
