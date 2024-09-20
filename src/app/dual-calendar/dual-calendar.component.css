@@ -212,3 +212,14 @@ input.no-border {
     padding-right: 2.7rem;
     padding-bottom: 2rem;
 }
+
+
+.table {
+    width: 100%;
+    min-width: 600px; /* Adjusted minimum width for smaller screens */
+    background-color: #f9f9f9; /* Light gray background for the table */
+    border-radius: 0; /* No rounded corners */
+    overflow: hidden; /* Ensures rounded corners apply to the table */
+    border-collapse: separate; /* Ensure borders are not collapsed */
+    border-spacing: 0; /* Remove spacing between cells */
+}

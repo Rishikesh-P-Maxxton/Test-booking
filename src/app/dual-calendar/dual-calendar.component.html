@@ -78,3 +78,33 @@
         </div>
     </div>
 </div>
+
+<table *ngIf="filteredRooms.length > 0">
+    <thead>
+      <tr>
+        <th>Room Id</th>
+        <th>Location</th>
+        <th>Price per Day</th>
+        <th>Guest Capacity</th>
+        <th>Stay From</th>
+        <th>Stay To</th>
+        <th>min stay</th>
+        <th>max stay</th>
+        <th>arrivalDate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let room of filteredRooms">
+        <td>{{ room.roomId }}</td>
+        <td>{{ room.locationName }}</td>
+        <td>{{ room.pricePerDayPerPerson }}</td>
+        <td>{{ room.guestCapacity }}</td>
+        <td>{{ room.selectedStay ? formatStayDate(room.selectedStay.stayDateFrom) : 'N/A' }}</td>
+        <td>{{ room.selectedStay ? formatStayDate(room.selectedStay.stayDateTo) : 'N/A' }}</td>
+        <td>{{ room.selectedStay?.minStay }}</td>
+        <td>{{ room.selectedStay?.maxStay }}</td>
+        <th>{{ room.selectedStay?.arrivalDays}}</th>
+      </tr>
+    </tbody>
+  </table>
+  

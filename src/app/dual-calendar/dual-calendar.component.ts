@@ -12,6 +12,12 @@ export interface SimplifiedReservation {
   arrivalDate: string; // "YYYY-MM-DD"
   departureDate: string; // "YYYY-MM-DD"
 }
+
+interface ValidDeparture {
+  date: string;    // Departure date in "YYYY-MM-DD"
+  stays: Stay[];   // Stays that enable this departure date
+}
+
 @Component({
   selector: 'app-dual-calendar',
   templateUrl: './dual-calendar.component.html',
@@ -29,6 +35,7 @@ export class DualCalendarComponent implements OnInit {
   today: Date = new Date();
   rooms: Room[] = []; // Array of rooms with stays
   validDepartureDates: Date[] = []; // Combined valid departure dates after arrival selection
+  filteredRooms: CalendarRoom[] = []; // Store the filtered rooms here
 
   constructor(
     private roomService: RoomService,
@@ -242,27 +249,22 @@ generateCombinedArrivalDates(): Set<string> {
   selectDate(day: number, month: number, year: number): void {
     const selectedDate = new Date(year, month - 1, day);
   
-    // If no arrival date is selected, set this as the arrival date
     if (!this.selectedArrivalDate) {
       this.selectedArrivalDate = selectedDate;
       this.selectedArrivalDate.setHours(11, 0, 0, 0); // Set arrival time to 11:00 AM
   
       console.log('Selected Arrival Date:', this.formatDate(this.selectedArrivalDate));
   
-      // Calculate valid departure dates and map after selecting an arrival date
+      // Calculate valid departure dates after selecting an arrival date
       const { validDepartureDates, validDepartureMap } = this.calculateValidDepartureDatesForArrival(this.selectedArrivalDate);
   
-      // Assign the valid departure dates array to the class property
+      // Assign the valid departure dates array and the map
       this.validDepartureDates = validDepartureDates;
-      console.log('Valid Departure Map:', validDepartureMap); // Log the valid departure map for debugging
-  
-      // Store the valid departure map for future use
       this.validDepartureMap = validDepartureMap;
+      console.log('Valid Departure Map:', this.validDepartureMap);
   
       console.log('Valid Departure Dates:', this.validDepartureDates.map(date => this.formatDate(date)));
-  
     } else if (this.selectedArrivalDate && selectedDate > this.selectedArrivalDate) {
-      // If the arrival date is already selected, pick this as the departure date
       this.selectedDepartureDate = selectedDate;
       this.selectedDepartureDate.setHours(10, 0, 0, 0); // Set departure time to 10:00 AM
   
@@ -273,66 +275,61 @@ generateCombinedArrivalDates(): Set<string> {
   }
   
   
+  
 
-  validDepartureMap: Map<string, Map<number, Stay[]>> = new Map(); // departure date => (roomId => [stays])
+  validDepartureMap: ValidDeparture[] = [];
 
   calculateValidDepartureDatesForArrival(arrivalDate: Date): {
-    validDepartureDates: Date[],
-    validDepartureMap: Map<string, Map<number, Stay[]>>
-  } {
+    validDepartureDates: Date[], 
+    validDepartureMap: ValidDeparture[]
+} {
     const validDepartureDates: Date[] = [];
-    const validDepartureMap: Map<string, Map<number, Stay[]>> = new Map<string, Map<number, Stay[]>>();
-  
-    // Go through each room and its stays
+    const validDepartures: ValidDeparture[] = [];
+
+    // Iterate through each room and its stays
     this.rooms.forEach(room => {
       room.stays.forEach(stay => {
         // Ensure the stay allows the selected arrival date
         if (this.isValidArrivalDate(arrivalDate, stay)) {
-          // Calculate the base valid departure dates for this specific stay
+          // Calculate the valid departure dates for this specific stay
           const departureDates = this.calculateValidDepartureDates(arrivalDate, stay);
-  
+
           // Filter the valid departure dates using the `filterOutReservedDates` function
           const filteredDepartureDates = this.filterOutReservedDates(departureDates, stay.roomId);
-  
+
           // For each valid and filtered departure date
           filteredDepartureDates.forEach(departureDate => {
-            // Format departureDate to a string 'yyyy-mm-dd'
             const formattedDepartureDate = this.formatDateToYYYYMMDD(departureDate);
-  
-            // Retrieve or initialize the map for this departure date
-            let staysForDate: Map<number, Stay[]> = validDepartureMap.get(formattedDepartureDate) || new Map<number, Stay[]>();
-  
-            // Retrieve or initialize the array of stays for this room
-            const staysForRoom: Stay[] = staysForDate.get(room.roomId) || [];
-  
-            // Add the current stay to the array for this room
-            staysForRoom.push(stay);
-  
-            // Update the map with the array of stays for this room
-            staysForDate.set(room.roomId, staysForRoom);
-  
-            // Update the outer map with the stays map for this departure date
-            validDepartureMap.set(formattedDepartureDate, staysForDate);
-  
-            // Add the departure date to the valid dates array
-            validDepartureDates.push(departureDate);
-  
-            // Log for debugging
-            console.log(`Valid Departure date: ${this.formatDate(departureDate)}, Room: ${room.roomId}`);
+
+            // Check if this date already exists in the validDepartures array
+            let existingDeparture = validDepartures.find(vd => vd.date === formattedDepartureDate);
+
+            if (existingDeparture) {
+              // If the date already exists, just add the stay to the list
+              existingDeparture.stays.push(stay);
+            } else {
+              // If the date doesn't exist, create a new entry
+              validDepartures.push({
+                date: formattedDepartureDate,
+                stays: [stay]
+              });
+            }
+
+            validDepartureDates.push(departureDate); // Add the valid date to the array
           });
         }
       });
     });
-  
-    // Remove duplicates from validDepartureDates
+
+    // Remove duplicate dates in validDepartureDates
     const uniqueDepartureDates = Array.from(new Set(validDepartureDates.map(date => date.getTime()))).map(time => new Date(time));
-  
-    // Return the departure dates and map
+
     return {
       validDepartureDates: uniqueDepartureDates,
-      validDepartureMap: validDepartureMap
+      validDepartureMap: validDepartures
     };
   }
+
   
   
   
@@ -636,57 +633,50 @@ formatDateToYYYYMMDD(date: Date): string {
     if (this.selectedArrivalDate && this.selectedDepartureDate) {
       const selectedArrivalDateStr = this.formatDateToYYYYMMDD(this.selectedArrivalDate);
       const selectedDepartureDateStr = this.formatDateToYYYYMMDD(this.selectedDepartureDate);
-    
+  
       console.log('Selected Arrival Date:', selectedArrivalDateStr);
       console.log('Selected Departure Date:', selectedDepartureDateStr);
-    
-      // Check if the selected departure date exists in the validDepartureMap
-      if (this.validDepartureMap.has(selectedDepartureDateStr)) {
-        const staysForDeparture = this.validDepartureMap.get(selectedDepartureDateStr);
-        const filteredRooms: CalendarRoom[] = [];
   
-        // Iterate over stays for the selected departure date
-        staysForDeparture?.forEach((stays, roomId) => {
-          // Log which room we are checking stays for
-          console.log(`Checking Room ID: ${roomId}, Stays:`, stays);
+      // Find the valid departure for the selected date in validDepartureMap
+      const validDeparture = this.validDepartureMap.find(vd => vd.date === selectedDepartureDateStr);
   
-          // Filter stays that match the selected arrival date
-          const matchingStay = stays.find(stay => {
-            const stayArrivalDateStr = this.formatDateToYYYYMMDD(new Date(stay.stayDateFrom));
-            console.log(`Checking Stay with Arrival Date: ${stayArrivalDateStr}`);
-            return stayArrivalDateStr === selectedArrivalDateStr;
-          });
+      if (validDeparture && validDeparture.stays.length > 0) {
+        // Clear the current filteredRooms array before filtering new rooms
+        this.filteredRooms = [];
   
-          // If a matching stay is found, add the room with selectedStay to the filtered array
-          if (matchingStay) {
-            console.log(`Found matching stay for Room ID: ${roomId}, Stay:`, matchingStay);
-            filteredRooms.push({
-              roomId: roomId,
-              locationId: this.rooms.find(room => room.roomId === roomId)?.locationId || 0,
-              locationName: this.rooms.find(room => room.roomId === roomId)?.locationName || '',
-              roomName: this.rooms.find(room => room.roomId === roomId)?.roomName || '',
-              pricePerDayPerPerson: this.rooms.find(room => room.roomId === roomId)?.pricePerDayPerPerson || 0,
-              guestCapacity: this.rooms.find(room => room.roomId === roomId)?.guestCapacity || 0,
-              selectedStay: matchingStay
+        // Iterate over the stays in the validDeparture object
+        validDeparture.stays.forEach(stay => {
+          const room = this.rooms.find(room => room.roomId === stay.roomId);
+          if (room) {
+            // Add the room with the stay information to the filteredRooms array
+            this.filteredRooms.push({
+              roomId: room.roomId,
+              locationId: room.locationId || 0,
+              locationName: room.locationName || '',
+              roomName: room.roomName || '',
+              pricePerDayPerPerson: room.pricePerDayPerPerson || 0,
+              guestCapacity: room.guestCapacity || 0,
+              selectedStay: stay // Store the selected stay information
             });
-          } else {
-            console.log(`No matching stay found for Room ID: ${roomId} with Arrival Date: ${selectedArrivalDateStr}`);
           }
         });
   
-        // Log the filtered rooms with their selected stays
-        if (filteredRooms.length > 0) {
-          console.log('Filtered Rooms with Selected Stay:', filteredRooms);
+        // Log the filtered rooms with their selected stays for debugging
+        if (this.filteredRooms.length > 0) {
+          console.log('Filtered Rooms with Selected Stay:', this.filteredRooms);
         } else {
           console.log('No matching rooms found for the selected criteria.');
         }
       } else {
-        console.log('No matching stays found for the selected departure date.');
+        console.log('No valid stays found for the selected departure date.');
       }
     } else {
       console.log('Please select both arrival and departure dates.');
     }
   }
+  
+  
+  
   
 
   // Helper to get the month name
@@ -695,5 +685,13 @@ formatDateToYYYYMMDD(date: Date): string {
     return monthNames[month - 1];
   }
 
-  
+// Method to safely format the stay date, handling undefined cases
+formatStayDate(stayDateFrom?: string): string {
+  if (!stayDateFrom) {
+    return 'N/A'; // or return an empty string or some other placeholder if stayDateFrom is not defined
+  }
+  const date = new Date(stayDateFrom);
+  return this.formatDate(date);  // Assuming formatDate is the helper for formatting
+}
+
 }
