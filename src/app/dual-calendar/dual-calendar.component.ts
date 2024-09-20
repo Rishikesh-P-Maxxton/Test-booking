@@ -628,52 +628,62 @@ formatDateToYYYYMMDD(date: Date): string {
     return 0;
   }
 
-  // Save the selection with dates and night stays
-  saveSelection(): void {
-    if (this.selectedArrivalDate && this.selectedDepartureDate) {
-      const selectedArrivalDateStr = this.formatDateToYYYYMMDD(this.selectedArrivalDate);
-      const selectedDepartureDateStr = this.formatDateToYYYYMMDD(this.selectedDepartureDate);
-  
-      console.log('Selected Arrival Date:', selectedArrivalDateStr);
-      console.log('Selected Departure Date:', selectedDepartureDateStr);
-  
-      // Find the valid departure for the selected date in validDepartureMap
-      const validDeparture = this.validDepartureMap.find(vd => vd.date === selectedDepartureDateStr);
-  
-      if (validDeparture && validDeparture.stays.length > 0) {
-        // Clear the current filteredRooms array before filtering new rooms
-        this.filteredRooms = [];
-  
-        // Iterate over the stays in the validDeparture object
-        validDeparture.stays.forEach(stay => {
-          const room = this.rooms.find(room => room.roomId === stay.roomId);
-          if (room) {
-            // Add the room with the stay information to the filteredRooms array
-            this.filteredRooms.push({
-              roomId: room.roomId,
-              locationId: room.locationId || 0,
-              locationName: room.locationName || '',
-              roomName: room.roomName || '',
-              pricePerDayPerPerson: room.pricePerDayPerPerson || 0,
-              guestCapacity: room.guestCapacity || 0,
-              selectedStay: stay // Store the selected stay information
-            });
-          }
-        });
-  
-        // Log the filtered rooms with their selected stays for debugging
-        if (this.filteredRooms.length > 0) {
-          console.log('Filtered Rooms with Selected Stay:', this.filteredRooms);
-        } else {
-          console.log('No matching rooms found for the selected criteria.');
+ 
+// Save the selection with dates and night stays
+saveSelection(): void {
+  if (this.selectedArrivalDate && this.selectedDepartureDate) {
+    const selectedArrivalDateStr = this.formatDateToYYYYMMDD(this.selectedArrivalDate);
+    const selectedDepartureDateStr = this.formatDateToYYYYMMDD(this.selectedDepartureDate);
+
+    console.log('Selected Arrival Date:', selectedArrivalDateStr);
+    console.log('Selected Departure Date:', selectedDepartureDateStr);
+
+    // Find the valid departure for the selected date
+    const validDeparture = this.validDepartureMap.find(vd => vd.date === selectedDepartureDateStr);
+
+    if (validDeparture && validDeparture.stays.length > 0) {
+      // Clear the current filteredRooms array
+      this.filteredRooms = [];
+
+      const addedRoomIds = new Set<number>(); // To track rooms that have been added
+
+      // Iterate over the stays in the validDeparture object
+      for (const stay of validDeparture.stays) {
+        const room = this.rooms.find(room => room.roomId === stay.roomId);
+
+        // If the room exists and has not been added yet
+        if (room && !addedRoomIds.has(room.roomId)) {
+          // Add the room to the filteredRooms array with the stay information
+          this.filteredRooms.push({
+            roomId: room.roomId,
+            locationId: room.locationId || 0,
+            locationName: room.locationName || '',
+            roomName: room.roomName || '',
+            pricePerDayPerPerson: room.pricePerDayPerPerson || 0,
+            guestCapacity: room.guestCapacity || 0,
+            selectedStay: stay // Store the selected stay information
+          });
+
+          // Mark the room as added
+          addedRoomIds.add(room.roomId);
         }
+      }
+
+      // Log the filtered rooms with their selected stays
+      if (this.filteredRooms.length > 0) {
+        console.log('Filtered Rooms with Selected Stay:', this.filteredRooms);
       } else {
-        console.log('No valid stays found for the selected departure date.');
+        console.log('No matching rooms found for the selected criteria.');
       }
     } else {
-      console.log('Please select both arrival and departure dates.');
+      console.log('No valid stays found for the selected departure date.');
     }
+  } else {
+    console.log('Please select both arrival and departure dates.');
   }
+  
+}
+
   
   
   
