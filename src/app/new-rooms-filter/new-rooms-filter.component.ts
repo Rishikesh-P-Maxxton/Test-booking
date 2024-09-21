@@ -698,7 +698,7 @@ private isBookingAvailable(
     const bookingModal = new bootstrap.Modal(
       document.getElementById('bookingModal')!
     );
-    bookingModal.show();
+    
   }
   
   
@@ -707,12 +707,7 @@ private isBookingAvailable(
   
   
 
-  closeBookingModal(): void {
-    const bookingModal = bootstrap.Modal.getInstance(
-      document.getElementById('bookingModal')!
-    );
-    bookingModal.hide();
-  }
+ 
 
   confirmBooking(): void {
     if (this.bookingForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
@@ -873,7 +868,54 @@ private isBookingAvailable(
       disableClose: true,
     });
   }
+
+  //edits that replaced modal
+    // Variable to track current modal page (0: Filter, 1: Room List, 2: Booking Form)
+    currentModalPage: number = 0;
   
+      // Function to move to the room list view
+  goToRoomList() {
+    this.currentModalPage = 1;
+  }
+
+   // Function to move back to the filter form view
+   goToFilterForm() {
+    this.currentModalPage = 0;
+  }
+
+  populateBookingForm(room: FilteredRoom): void {
+    // Ensure selected stay and other data exist
+    const numberOfDays = this.calculateNumberOfDays(new Date(), new Date()); // Example, replace with actual logic
+    const totalPrice = numberOfDays * room.pricePerDayPerPerson;
+  
+    this.bookingForm.patchValue({
+      reservationId: this.generateReservationId(),
+      roomNo: room.roomId,
+      stayDateFrom: this.filterForm.get('stayDateFrom')?.value,
+      stayDateTo: this.filterForm.get('stayDateTo')?.value,
+      numberOfDays,
+      totalNumberOfGuests: this.filterForm.get('numberOfPersons')?.value,
+      pricePerDayPerPerson: room.pricePerDayPerPerson,
+      totalPrice,
+    });
+  
+    // Update guest options based on room capacity
+    this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
+  }
+  
+
+  // Function to close the booking modal (if needed)
+  closeBookingModal() {
+    // Set modal state back to default
+    this.currentModalPage = 0;  // This resets to the filter form
+  }
+  goToBookingForm(room: FilteredRoom): void {
+    this.selectedRoom = room;
+    // Call your existing method to populate the booking form
+    this.populateBookingForm(room);
+    // Switch to the booking form view
+    this.currentModalPage = 2;
+  }
   
   
 }

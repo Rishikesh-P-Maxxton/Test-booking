@@ -136,25 +136,31 @@ export class DualCalendarComponent implements OnInit {
   }
 
   const today = new Date();
-  const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : today; 
+  const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
   const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
 
-  const minDeviation = stay.minDeviation ?? 0; 
+  // Ensure today's date falls within the booking window (before considering deviations)
+  const isBookable = this.isWithinBookingWindow(today, bookDateFrom, bookDateTo);
+
+  if (!isBookable) {
+    console.log(`Room ${stay.roomId} is not bookable today.`);
+    return arrivalDates; // If today's date is not within the booking window, return an empty set
+  }
+
+  // Handle deviation rules (minDeviation and maxDeviation)
+  const minDeviation = stay.minDeviation ?? 0;
   const maxDeviation = stay.maxDeviation ?? Infinity;
 
+  // Calculate min/max dates with deviation
   const minDate = new Date(today.getTime() + minDeviation * 24 * 60 * 60 * 1000);
   const maxDate = new Date(today.getTime() + maxDeviation * 24 * 60 * 60 * 1000);
 
   // Clamp the dates within the booking window
-  const effectiveMinDate = minDate < bookDateFrom ? bookDateFrom : minDate;
-  let effectiveMaxDate = maxDate;
-  if (bookDateTo) {
-    effectiveMaxDate = new Date(Math.min(maxDate.getTime(), bookDateTo.getTime()));
-  }
+  const effectiveMinDate = bookDateFrom && minDate < bookDateFrom ? bookDateFrom : minDate;
+  const effectiveMaxDate = bookDateTo && maxDate > bookDateTo ? bookDateTo : maxDate;
 
   if (effectiveMaxDate < effectiveMinDate) {
-    
-    return arrivalDates;
+    return arrivalDates; // No valid dates available if the range is invalid
   }
 
   // Generate valid arrival dates within the effective date range
@@ -168,6 +174,18 @@ export class DualCalendarComponent implements OnInit {
 
   return arrivalDates;
 }
+isWithinBookingWindow(today: Date, bookDateFrom: Date | null, bookDateTo: Date | null): boolean {
+  // If bookDateFrom is provided, today should not be earlier than bookDateFrom
+  const validFrom = !bookDateFrom || today >= bookDateFrom;
+  
+  // If bookDateTo is provided, today should not be later than bookDateTo
+  const validTo = !bookDateTo || today <= bookDateTo;
+
+  // Room is only bookable if both conditions hold true
+  return validFrom && validTo;
+}
+
+
 
 
 
@@ -651,8 +669,8 @@ saveSelection(): void {
       for (const stay of validDeparture.stays) {
         const room = this.rooms.find(room => room.roomId === stay.roomId);
 
-        // If the room exists and has not been added yet
-        if (room && !addedRoomIds.has(room.roomId)) {
+        // Check if the room is within the booking window
+        if (room && this.isWithinBookingWindow(this.today, stay.bookDateFrom ? new Date(stay.bookDateFrom) : null, stay.bookDateTo ? new Date(stay.bookDateTo) : null)) {
           // Add the room to the filteredRooms array with the stay information
           this.filteredRooms.push({
             roomId: room.roomId,
@@ -681,8 +699,8 @@ saveSelection(): void {
   } else {
     console.log('Please select both arrival and departure dates.');
   }
-  
 }
+
 
   
   

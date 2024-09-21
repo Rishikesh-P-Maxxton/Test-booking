@@ -88,6 +88,8 @@
         <th>Guest Capacity</th>
         <th>Stay From</th>
         <th>Stay To</th>
+        <th>Book From</th>
+        <th>Book To</th>
         <th>min stay</th>
         <th>max stay</th>
         <th>arrivalDate</th>
@@ -101,6 +103,8 @@
         <td>{{ room.guestCapacity }}</td>
         <td>{{ room.selectedStay ? formatStayDate(room.selectedStay.stayDateFrom) : 'N/A' }}</td>
         <td>{{ room.selectedStay ? formatStayDate(room.selectedStay.stayDateTo) : 'N/A' }}</td>
+        <td>{{ room.selectedStay?.bookDateFrom}}</td>
+        <td>{{ room.selectedStay?.bookDateTo}}</td>
         <td>{{ room.selectedStay?.minStay }}</td>
         <td>{{ room.selectedStay?.maxStay }}</td>
         <th>{{ room.selectedStay?.arrivalDays}}</th>
