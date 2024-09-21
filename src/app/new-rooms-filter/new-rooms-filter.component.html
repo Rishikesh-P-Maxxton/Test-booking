@@ -1,8 +1,10 @@
-<app-dual-calendar></app-dual-calendar>
 
-
-<ng-template #reservationDialog>
-
+<!-- Reservation Modal (Main Modal) -->
+<div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg ">
+    <div class="modal-content">
+    
+      <div class="modal-body">
     <div class="container mt-4">
       <div class="row">
         <!-- Left Column: Filters -->
@@ -105,7 +107,7 @@
         </div>
       </div>
     </div>
-  </ng-template>
+ 
   
     <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -437,12 +439,13 @@
       </div>
     </div>
           
-    
-    <div class="container text-center mt-4">
-        <button class="btn btn-custom" (click)="openReservationDialog()">
-          Create a Reservation
-        </button>
-      </div>
-      
+  </div>
+</div>
+</div>
+</div>
+<!-- Replace Angular Material Dialog with Bootstrap Modal -->
+<button type="button" class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#reservationModal">
+  Create a Reservation
+</button>
       
     

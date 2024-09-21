@@ -864,15 +864,16 @@ private isBookingAvailable(
   }
 
   openReservationDialog(): void {
-    this.filteredRooms = []; // Reset filtered rooms before opening the dialog
+    this.filteredRooms = [];
     this.dialog.open(this.reservationDialog, {
-      width: '60vw',  // Set the width to 90% of the viewport width
-      maxWidth: 'none', // Ensure no max-width limitation
-      height: '80vh', // Set height to 90% of the viewport height
-      panelClass: 'custom-dialog-container', // Custom class for styling if needed
-      disableClose: true, // Disable background close
+      width: '60vw',
+      maxWidth: 'none',
+      height: '80vh',
+      panelClass: 'custom-dialog-container',
+      disableClose: true,
     });
   }
+  
   
   
 }
