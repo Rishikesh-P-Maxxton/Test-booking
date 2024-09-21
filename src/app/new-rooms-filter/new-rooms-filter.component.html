@@ -1,448 +1,733 @@
-<app-dual-calendar></app-dual-calendar>
-
-
 <ng-template #reservationDialog>
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-md-12">
+        <!-- Adjusted column size for dialog layout -->
+        <div class="filter-section p-3">
+          <p class="display-6 titles">Filter Rooms</p>
 
-    <div class="container mt-4">
-      <div class="row">
-        <!-- Left Column: Filters -->
-        <div class="col-md-12"> <!-- Adjusted column size for dialog layout -->
-          <div class="filter-section p-3">
-            <p class="display-6 titles">Filter Rooms</p>
-            <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
-              <!-- Location Dropdown -->
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="form-group mb-3">
-                    <label for="location">Location</label>
-                    <select id="location" formControlName="location" class="form-control square-input w-100">
-                      <option value="">All Locations</option>
-                      <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
+          <form [formGroup]="filterForm" (ngSubmit)="onSubmit()">
+            <!-- Button to open dual-calendar -->
+            <div class="row">
+              <div class="col-md-6">
+                <label>Arrival & Departure Dates</label>
+                <!-- Button that opens the dual-calendar and displays selected dates -->
+                <button
+                  type="button"
+                  class="btn btn-secondary w-100"
+                  (click)="openDualCalendar()"
+                >
+                  {{ selectedDatesText || 'Select Dates' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Number of Guests -->
+            <div class="row mt-3" *ngIf="filteredRooms.length > 0">
+              <div class="col-md-6">
+                <label for="numberOfPersons">Number of Guests</label>
+                <select
+                  id="numberOfPersons"
+                  formControlName="numberOfPersons"
+                  class="form-control"
+                >
+                  <option
+                    *ngFor="let option of numberOfGuestsOptions"
+                    [value]="option"
+                  >
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <button
+                  type="submit"
+                  [disabled]="isSubmitDisabled"
+                  class="btn btn-custom w-100"
+                >
+                  Search Rooms
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="col-md-12" *ngIf="filteredRooms.length">
+        <div class="result-section p-3">
+          <p class="display-6 titles">Available Rooms</p>
+          <div class="total-rooms-found mb-3">
+            {{ filteredRooms.length }} Rooms Are Available
+          </div>
+
+          <table class="table custom-table mt-4 table-animate">
+            <thead>
+              <tr class="table-row">
+                <th>Room ID</th>
+                <th>Location</th>
+                <th>Room Name</th>
+                <th>Price Per Day</th>
+                <th>Guest Capacity</th>
+                <th>Minstay</th>
+                <th>Maxstay</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="table-row"
+                *ngFor="
+                  let room of filteredRooms
+                    | paginate
+                      : { itemsPerPage: itemsPerPage, currentPage: page };
+                  let i = index
+                "
+                [ngStyle]="{ '--animation-delay': i * 0.1 + 's' }"
+              >
+                <td>{{ room.roomId }}</td>
+                <td>{{ room.locationName }}</td>
+                <td>{{ room.roomName }}</td>
+                <td>{{ room.pricePerDayPerPerson | currency }}</td>
+                <td>{{ room.guestCapacity }}</td>
+                <td>{{ room.selectedStay?.minStay }}</td>
+                <td>{{ room.selectedStay?.maxStay }}</td>
+                <td>
+                  <button
+                    class="btn btn-custom"
+                    (click)="openBookingModal(room)"
+                  >
+                    Book
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="d-flex justify-content-center mt-4">
+            <pagination-controls
+              previousLabel="Prev"
+              nextLabel="Next"
+              (pageChange)="page = $event"
+            ></pagination-controls>
+          </div>
+
+          <p *ngIf="filteredRooms.length === 0" class="mt-4">
+            No rooms match the selected filters.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual Calendar rendered directly -->
+  <app-dual-calendar
+    *ngIf="showDualCalendar"
+    (selection)="onDateSelection($event)"
+  ></app-dual-calendar>
+</ng-template>
+
+<div
+  class="modal fade"
+  id="bookingModal"
+  tabindex="-1"
+  aria-labelledby="bookingModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <p class="p-3 display-6">Please provide details to confirm booking</p>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="closeBookingModal()"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <mat-vertical-stepper [linear]="true" #stepper>
+          <!-- Booking Form Step -->
+          <mat-step label="Booking Details" [stepControl]="bookingForm">
+            <form
+              [formGroup]="bookingForm"
+              class="custom-form needs-validation"
+              novalidate
+            >
+              <div class="container-fluid">
+                <div class="row">
+                  <!-- Reservation ID and Room Number -->
+                  <div class="col-md-6 mb-3">
+                    <label for="reservationId" class="form-label"
+                      >Reservation ID</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="reservationId"
+                      formControlName="reservationId"
+                      readonly
+                    />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="roomNo" class="form-label">Room Number</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="roomNo"
+                      formControlName="roomNo"
+                      readonly
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <!-- Stay Date From and Stay Date To -->
+                  <div class="col-md-6 mb-3">
+                    <label for="stayDateFrom" class="form-label"
+                      >Stay Date From</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="stayDateFrom"
+                      formControlName="stayDateFrom"
+                    />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="stayDateTo" class="form-label"
+                      >Stay Date To</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="stayDateTo"
+                      formControlName="stayDateTo"
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <!-- Number of Days and Total Number of Guests -->
+                  <div class="col-md-6 mb-3">
+                    <label for="numberOfDays" class="form-label"
+                      >Number of Days</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="numberOfDays"
+                      formControlName="numberOfDays"
+                      readonly
+                    />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="totalNumberOfGuests" class="form-label"
+                      >Total Number of Guests</label
+                    >
+                    <select
+                      id="totalNumberOfGuests"
+                      class="form-select"
+                      formControlName="totalNumberOfGuests"
+                    >
+                      <option
+                        *ngFor="let option of numberOfGuestsOptions"
+                        [value]="option"
+                      >
+                        {{ option }}
+                      </option>
                     </select>
                   </div>
                 </div>
-                <!-- Stay Date From -->
-                <div class="col-md-4">
-                  <div class="form-group mb-3">
-                    <label for="stayDateFrom">Stay Date From</label>
-                    <input type="date" id="stayDateFrom" formControlName="stayDateFrom" class="form-control square-input w-100">
+                <div class="row">
+                  <!-- Price per Day per Person and Total Price -->
+                  <div class="col-md-8 mb-3">
+                    <label for="pricePerDayPerPerson" class="form-label"
+                      >Price per Day per Person</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="pricePerDayPerPerson"
+                      formControlName="pricePerDayPerPerson"
+                      readonly
+                    />
                   </div>
-                </div>
-                <!-- Stay Date To -->
-                <div class="col-md-4">
-                  <div class="form-group mb-3">
-                    <label for="stayDateTo">Stay Date To</label>
-                    <input type="date" id="stayDateTo" formControlName="stayDateTo" class="form-control square-input w-100">
+                  <div class="col-md-4 mb-3">
+                    <label for="totalPrice" class="form-label"
+                      >Total Price</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="totalPrice"
+                      formControlName="totalPrice"
+                      readonly
+                    />
                   </div>
-                </div>
-              </div>
-              <!-- Number of Persons and Max Price -->
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="form-group mb-3">
-                    <label for="numberOfPersons">Number of Persons</label>
-                    <input type="number" id="numberOfPersons" formControlName="numberOfPersons" class="form-control square-input w-100">
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group mb-3">
-                    <label for="maxPrice">Max Price Per Day Per Person</label>
-                    <input type="number" id="maxPrice" formControlName="maxPrice" class="form-control square-input w-100">
-                  </div>
-                </div>
-                <!-- Submit Button -->
-                <div class="col-md-4 d-flex align-items-end">
-                  <button type="submit" [disabled]="isFilterButtonDisabled" class="btn btn-custom w-100">Filter Room</button>
                 </div>
               </div>
             </form>
-          </div>
-        </div>
-  
-        <!-- Right Column: Results (only visible if filters applied) -->
-        <div class="col-md-12" *ngIf="filteredRooms.length">
-          <div class="result-section p-3">
-            <p class="display-6 titles">Available Rooms</p>
-            <div class="total-rooms-found mb-3">
-              {{ filteredRooms.length }} Rooms Are Available
-            </div>
-            <table class="table custom-table mt-4 table-animate">
-              <thead>
-                <tr class="table-row">
-                  <th>Room ID</th>
-                  <th>Location</th>
-                  <th>Room Name</th>
-                  <th>Price Per Day</th>
-                  <th>Guest Capacity</th>
-                  <th>Minstay</th>
-                  <th>Maxstay</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  class="table-row"
-                  *ngFor="let room of filteredRooms | paginate: { itemsPerPage: itemsPerPage, currentPage: page }; let i = index"
-                  [ngStyle]="{'--animation-delay': i * 0.1 + 's'}">
-                  <td>{{ room.roomId }}</td>
-                  <td>{{ room.locationName }}</td>
-                  <td>{{ room.roomName }}</td>
-                  <td>{{ room.pricePerDayPerPerson | currency }}</td>
-                  <td>{{ room.guestCapacity }}</td>
-                  <td>{{ room.selectedStay?.minStay }}</td>
-                  <td>{{ room.selectedStay?.maxStay }}</td>
-                  <td>
-                    <button class="btn btn-custom" (click)="openBookingModal(room)">Book</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="d-flex justify-content-center mt-4">
-              <pagination-controls previousLabel="Prev" nextLabel="Next" (pageChange)="page = $event"></pagination-controls>
-            </div>
-            <p *ngIf="filteredRooms.length === 0" class="mt-4">No rooms match the selected filters.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </ng-template>
-  
-    <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <p class="p-3 display-6">Please provide details to confirm booking</p>
-            <button type="button" class="btn-close" aria-label="Close" (click)="closeBookingModal()"></button>
-          </div>
-          <div class="modal-body">
-            <mat-vertical-stepper [linear]="true" #stepper>
-              <!-- Booking Form Step -->
-              <mat-step label="Booking Details" [stepControl]="bookingForm">
-                <form [formGroup]="bookingForm" class="custom-form needs-validation" novalidate>
-                  <div class="container-fluid">
-                    <div class="row">
-                      <!-- Reservation ID and Room Number -->
-                      <div class="col-md-6 mb-3">
-                        <label for="reservationId" class="form-label">Reservation ID</label>
-                        <input type="text" class="form-control" id="reservationId" formControlName="reservationId" readonly />
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <label for="roomNo" class="form-label">Room Number</label>
-                        <input type="text" class="form-control" id="roomNo" formControlName="roomNo" readonly />
+          </mat-step>
+
+          <!-- Customer Details Step -->
+          <!-- Customer Details Step -->
+          <mat-step
+            label="Customer Details"
+            [stepControl]="isExistingUser ? emailForm : customerForm"
+          >
+            <div class="container-fluid">
+              <div class="row">
+                <!-- Existing/New User Buttons -->
+                <div class="col-md-12 mb-3">
+                  <div class="new-existing-buttons">
+                    <button
+                      type="button"
+                      class="btn btn-custom"
+                      (click)="selectNewUser()"
+                    >
+                      New Customer
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-custom-sec"
+                      (click)="selectExistingUser()"
+                    >
+                      Existing Customer
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Customer Details Form -->
+              <form
+                [formGroup]="isExistingUser ? emailForm : customerForm"
+                class="custom-form needs-validation"
+                novalidate
+              >
+                <!-- Existing User Email Input with Search Button -->
+                <div *ngIf="isExistingUser">
+                  <div class="row">
+                    <div class="col-md-12 mb-3 d-flex">
+                      <!-- Email Input Field -->
+                      <input
+                        type="email"
+                        class="form-control me-2"
+                        id="email"
+                        formControlName="email"
+                        placeholder="Enter Email"
+                      />
+                      <!-- Search Button -->
+                      <button
+                        type="button"
+                        class="btn btn-custom"
+                        (click)="fetchExistingCustomer()"
+                      >
+                        Login
+                      </button>
+                    </div>
+
+                    <!-- Validation/Error and Welcome Messages with Bootstrap Alert -->
+                    <div *ngIf="emailError" class="alert alert-error mt-2">
+                      {{ emailError }}
+                    </div>
+                    <div *ngIf="customerName" class="alert alert-success mt-2">
+                      Welcome, {{ customerName }}!
+                    </div>
+                  </div>
+                </div>
+
+                <!-- New Customer Form Fields -->
+                <div *ngIf="isNewUser">
+                  <div class="row">
+                    <!-- Name and Age -->
+                    <div class="col-md-7 mb-3">
+                      <label for="name" class="form-label">Name</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="name"
+                        formControlName="name"
+                      />
+                      <div
+                        *ngIf="
+                          customerForm.get('name')?.touched &&
+                          customerForm.get('name')?.invalid
+                        "
+                      >
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('name')?.errors?.['required']"
+                        >
+                          Name is required.
+                        </div>
                       </div>
                     </div>
-                    <div class="row">
-                      <!-- Stay Date From and Stay Date To -->
-                      <div class="col-md-6 mb-3">
-                        <label for="stayDateFrom" class="form-label">Stay Date From</label>
-                        <input type="date" class="form-control" id="stayDateFrom" formControlName="stayDateFrom" />
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <label for="stayDateTo" class="form-label">Stay Date To</label>
-                        <input type="date" class="form-control" id="stayDateTo" formControlName="stayDateTo" />
-                      </div>
-                    </div>
-                    <div class="row">
-                      <!-- Number of Days and Total Number of Guests -->
-                      <div class="col-md-6 mb-3">
-                        <label for="numberOfDays" class="form-label">Number of Days</label>
-                        <input type="text" class="form-control" id="numberOfDays" formControlName="numberOfDays" readonly />
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <label for="totalNumberOfGuests" class="form-label">Total Number of Guests</label>
-                        <select id="totalNumberOfGuests" class="form-select" formControlName="totalNumberOfGuests">
-                          <option *ngFor="let option of numberOfGuestsOptions" [value]="option">{{ option }}</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="row">
-                      <!-- Price per Day per Person and Total Price -->
-                      <div class="col-md-8 mb-3">
-                        <label for="pricePerDayPerPerson" class="form-label">Price per Day per Person</label>
-                        <input type="text" class="form-control" id="pricePerDayPerPerson" formControlName="pricePerDayPerPerson" readonly />
-                      </div>
-                      <div class="col-md-4 mb-3">
-                        <label for="totalPrice" class="form-label">Total Price</label>
-                        <input type="text" class="form-control" id="totalPrice" formControlName="totalPrice" readonly />
+                    <div class="col-md-5 mb-3">
+                      <label for="age" class="form-label">Age</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        id="age"
+                        formControlName="age"
+                      />
+                      <div
+                        *ngIf="
+                          customerForm.get('age')?.touched &&
+                          customerForm.get('age')?.invalid
+                        "
+                      >
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('age')?.errors?.['required']"
+                        >
+                          Age is required.
+                        </div>
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('age')?.errors?.['min']"
+                        >
+                          Age cannot be less than 0.
+                        </div>
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('age')?.errors?.['max']"
+                        >
+                          Age cannot be 100 or more.
+                        </div>
                       </div>
                     </div>
                   </div>
-                </form>
-              </mat-step>
-              
-            
-             <!-- Customer Details Step -->
-  <!-- Customer Details Step -->
-  <mat-step label="Customer Details" [stepControl]="isExistingUser ? emailForm : customerForm">
-    <div class="container-fluid">
-      <div class="row">
-        <!-- Existing/New User Buttons -->
-        <div class="col-md-12 mb-3">
-          <div class="new-existing-buttons">
-            <button type="button" class="btn btn-custom" (click)="selectNewUser()">New Customer</button>
-            <button type="button" class="btn btn-custom-sec" (click)="selectExistingUser()">Existing Customer</button>
-          </div>
-        </div>
+
+                  <div class="row">
+                    <!-- Initial Address -->
+                    <div class="col-md-12 mb-3">
+                      <label for="initialAddress" class="form-label"
+                        >Initial Address</label
+                      >
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="initialAddress"
+                        formControlName="initialAddress"
+                      />
+                    </div>
+                  </div>
+                  <div class="row">
+                    <!-- Email -->
+                    <div class="col-md-12 mb-3">
+                      <label for="email" class="form-label">Email</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="email"
+                        formControlName="email"
+                      />
+                      <div
+                        *ngIf="
+                          customerForm.get('email')?.touched &&
+                          customerForm.get('email')?.invalid
+                        "
+                      >
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('email')?.errors?.['required']"
+                        >
+                          Email is required.
+                        </div>
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('email')?.errors?.['email']"
+                        >
+                          Invalid email format.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <!-- Mobile Number and Pincode -->
+                    <div class="col-md-7 mb-3">
+                      <label for="mobileNumber" class="form-label"
+                        >Mobile Number</label
+                      >
+                      <input
+                        type="tel"
+                        class="form-control"
+                        id="mobileNumber"
+                        formControlName="mobileNumber"
+                      />
+                      <div
+                        *ngIf="
+                          customerForm.get('mobileNumber')?.touched &&
+                          customerForm.get('mobileNumber')?.invalid
+                        "
+                      >
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('mobileNumber')?.errors?.['required']"
+                        >
+                          Mobile number is required.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-5 mb-3">
+                      <label for="pincode" class="form-label">Pincode</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        id="pincode"
+                        formControlName="pincode"
+                      />
+                      <div
+                        *ngIf="
+                          customerForm.get('pincode')?.touched &&
+                          customerForm.get('pincode')?.invalid
+                        "
+                      >
+                        <div
+                          class="error"
+                          *ngIf="customerForm.get('pincode')?.errors?.['required']"
+                        >
+                          Pincode is required.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <!-- Country, State, and City -->
+                    <div class="col-md-4 mb-3">
+                      <label for="country" class="form-label">Country</label>
+                      <select
+                        id="country"
+                        class="form-control"
+                        formControlName="country"
+                        (change)="onCountryChange($event)"
+                      >
+                        <option value="">Select a country</option>
+                        <option
+                          *ngFor="let country of countries"
+                          [value]="country.countryId"
+                        >
+                          {{ country.countryName }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label for="state" class="form-label">State</label>
+                      <select
+                        id="state"
+                        class="form-control"
+                        formControlName="state"
+                        (change)="onStateChange($event)"
+                      >
+                        <option value="">Select a state</option>
+                        <option
+                          *ngFor="let state of states"
+                          [value]="state.stateId"
+                        >
+                          {{ state.stateName }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label for="city" class="form-label">City</label>
+                      <select
+                        id="city"
+                        class="form-control"
+                        formControlName="city"
+                      >
+                        <option value="">Select a city</option>
+                        <option
+                          *ngFor="let city of cities"
+                          [value]="city.cityId"
+                        >
+                          {{ city.cityName }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </mat-step>
+
+          <!-- Payment Details Step -->
+          <mat-step label="Payment Details" [stepControl]="paymentForm">
+            <form
+              [formGroup]="paymentForm"
+              class="custom-form needs-validation"
+              novalidate
+            >
+              <div class="container-fluid">
+                <div class="row">
+                  <!-- Payment ID -->
+                  <div class="col-md-6 mb-3">
+                    <label for="paymentId" class="form-label">Payment ID</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="paymentId"
+                      formControlName="paymentId"
+                      readonly
+                    />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="paymentMode" class="form-label"
+                      >Payment Mode</label
+                    >
+                    <select
+                      class="form-control square-input w-100"
+                      id="paymentMode"
+                      formControlName="paymentMode"
+                    >
+                      <option value="">Select Payment Mode</option>
+                      <!-- Default option -->
+                      <option value="Debit Card">Debit Card</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Cash">Cash</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <!-- Paid Amount and Due -->
+                  <div class="row">
+                    <div class="row">
+                      <!-- Paid Amount (input) -->
+                      <div class="col-md-6 mb-3">
+                        <label for="paidAmount" class="form-label"
+                          >Paid Amount</label
+                        >
+                        <input
+                          type="number"
+                          class="form-control"
+                          id="paidAmount"
+                          formControlName="paidAmount"
+                          (input)="calculateDueAmount()"
+                        />
+                      </div>
+                      <!-- Due (disabled) -->
+                      <div class="col-md-6 mb-3">
+                        <label for="due" class="form-label">Due</label>
+                        <input
+                          type="number"
+                          class="form-control"
+                          id="due"
+                          formControlName="due"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- New Invoice Step -->
+          <mat-step label="Confirm Booking" [completed]="!isConfirmDisabled">
+            <div class="container-fluid">
+              <h4 class="text-center my-3">Booking Invoice</h4>
+              <div class="row">
+                <!-- Reservation ID -->
+                <div class="col-md-6 mb-3">
+                  <strong>Reservation ID:</strong>
+                  <span>{{ bookingForm.get("reservationId")?.value }}</span>
+                </div>
+                <!-- Room Number -->
+                <div class="col-md-6 mb-3">
+                  <strong>Room Number:</strong>
+                  <span>{{ bookingForm.get("roomNo")?.value }}</span>
+                </div>
+              </div>
+              <div class="row">
+                <!-- Stay Dates -->
+                <div class="col-md-6 mb-3">
+                  <strong>Stay Date From:</strong>
+                  <span>{{
+                    bookingForm.get("stayDateFrom")?.value | date : "longDate"
+                  }}</span>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Stay Date To:</strong>
+                  <span>{{
+                    bookingForm.get("stayDateTo")?.value | date : "longDate"
+                  }}</span>
+                </div>
+              </div>
+              <div class="row">
+                <!-- Number of Guests -->
+                <div class="col-md-6 mb-3">
+                  <strong>Total Guests:</strong>
+                  <span>{{
+                    bookingForm.get("totalNumberOfGuests")?.value
+                  }}</span>
+                </div>
+                <!-- Total Days -->
+                <div class="col-md-6 mb-3">
+                  <strong>Total Days:</strong>
+                  <span>{{ bookingForm.get("numberOfDays")?.value }}</span>
+                </div>
+              </div>
+              <div class="row">
+                <!-- Price per Day -->
+                <div class="col-md-6 mb-3">
+                  <strong>Price per Day per Person:</strong>
+                  <span>{{
+                    bookingForm.get("pricePerDayPerPerson")?.value | currency
+                  }}</span>
+                </div>
+                <!-- Total Price -->
+                <div class="col-md-6 mb-3">
+                  <strong>Total Price:</strong>
+                  <span>{{
+                    bookingForm.get("totalPrice")?.value | currency
+                  }}</span>
+                </div>
+              </div>
+              <div class="row">
+                <!-- Paid Amount -->
+                <div class="col-md-6 mb-3">
+                  <strong>Paid Amount:</strong>
+                  <span>{{
+                    paymentForm.get("paidAmount")?.value | currency
+                  }}</span>
+                </div>
+                <!-- Due Amount -->
+                <div class="col-md-6 mb-3">
+                  <strong>Due Amount:</strong>
+                  <span>{{ paymentForm.get("due")?.value | currency }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-step>
+        </mat-vertical-stepper>
       </div>
-      
-      <!-- Customer Details Form -->
-  <form [formGroup]="isExistingUser ? emailForm : customerForm" class="custom-form needs-validation" novalidate>
-    <!-- Existing User Email Input with Search Button -->
-    <div *ngIf="isExistingUser">
-      <div class="row">
-        <div class="col-md-12 mb-3 d-flex">
-          <!-- Email Input Field -->
-          <input type="email" class="form-control me-2" id="email" formControlName="email" placeholder="Enter Email" />
-          <!-- Search Button -->
-          <button type="button" class="btn btn-custom" (click)="fetchExistingCustomer()">Login</button>
-        </div>
-  
-        <!-- Validation/Error and Welcome Messages with Bootstrap Alert -->
-        <div *ngIf="emailError" class="alert alert-error mt-2">
-          {{ emailError }}
-        </div>
-        <div *ngIf="customerName" class="alert alert-success mt-2">
-          Welcome, {{ customerName }}!
-        </div>
-      </div>
-    </div>
-  
-  
-  
-  
-        <!-- New Customer Form Fields -->
-        <div *ngIf="isNewUser">
-          <div class="row">
-            <!-- Name and Age -->
-            <div class="col-md-7 mb-3">
-              <label for="name" class="form-label">Name</label>
-              <input type="text" class="form-control" id="name" formControlName="name" />
-              <div *ngIf="customerForm.get('name')?.touched && customerForm.get('name')?.invalid">
-                <div class="error" *ngIf="customerForm.get('name')?.errors?.['required']">
-                  Name is required.
-                </div>
-              </div>
-            </div>
-            <div class="col-md-5 mb-3">
-              <label for="age" class="form-label">Age</label>
-              <input type="number" class="form-control" id="age" formControlName="age" />
-              <div *ngIf="customerForm.get('age')?.touched && customerForm.get('age')?.invalid">
-                <div class="error" *ngIf="customerForm.get('age')?.errors?.['required']">
-                  Age is required.
-                </div>
-                <div class="error" *ngIf="customerForm.get('age')?.errors?.['min']">
-                  Age cannot be less than 0.
-                </div>
-                <div class="error" *ngIf="customerForm.get('age')?.errors?.['max']">
-                  Age cannot be 100 or more.
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <div class="row">
-            <!-- Initial Address -->
-            <div class="col-md-12 mb-3">
-              <label for="initialAddress" class="form-label">Initial Address</label>
-              <input type="text" class="form-control" id="initialAddress" formControlName="initialAddress" />
-            </div>
-          </div>
-          <div class="row">
-            <!-- Email -->
-            <div class="col-md-12 mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input type="text" class="form-control" id="email" formControlName="email" />
-              <div *ngIf="customerForm.get('email')?.touched && customerForm.get('email')?.invalid">
-                <div class="error" *ngIf="customerForm.get('email')?.errors?.['required']">
-                  Email is required.
-                </div>
-                <div class="error" *ngIf="customerForm.get('email')?.errors?.['email']">
-                  Invalid email format.
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <div class="row">
-            <!-- Mobile Number and Pincode -->
-            <div class="col-md-7 mb-3">
-              <label for="mobileNumber" class="form-label">Mobile Number</label>
-              <input type="tel" class="form-control" id="mobileNumber" formControlName="mobileNumber" />
-              <div *ngIf="customerForm.get('mobileNumber')?.touched && customerForm.get('mobileNumber')?.invalid">
-                <div class="error" *ngIf="customerForm.get('mobileNumber')?.errors?.['required']">
-                  Mobile number is required.
-                </div>
-              </div>
-            </div>
-            <div class="col-md-5 mb-3">
-              <label for="pincode" class="form-label">Pincode</label>
-              <input type="number" class="form-control" id="pincode" formControlName="pincode" />
-              <div *ngIf="customerForm.get('pincode')?.touched && customerForm.get('pincode')?.invalid">
-                <div class="error" *ngIf="customerForm.get('pincode')?.errors?.['required']">
-                  Pincode is required.
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <div class="row">
-            <!-- Country, State, and City -->
-            <div class="col-md-4 mb-3">
-              <label for="country" class="form-label">Country</label>
-              <select id="country" class="form-control" formControlName="country" (change)="onCountryChange($event)">
-                <option value="">Select a country</option>
-                <option *ngFor="let country of countries" [value]="country.countryId">{{ country.countryName }}</option>
-              </select>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label for="state" class="form-label">State</label>
-              <select id="state" class="form-control" formControlName="state" (change)="onStateChange($event)">
-                <option value="">Select a state</option>
-                <option *ngFor="let state of states" [value]="state.stateId">{{ state.stateName }}</option>
-              </select>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label for="city" class="form-label">City</label>
-              <select id="city" class="form-control" formControlName="city">
-                <option value="">Select a city</option>
-                <option *ngFor="let city of cities" [value]="city.cityId">{{ city.cityName }}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
-      </form>
-    </div>
-  </mat-step>
-  
-  
-  
-              
-           <!-- Payment Details Step -->
-  <mat-step label="Payment Details" [stepControl]="paymentForm">
-    <form [formGroup]="paymentForm" class="custom-form needs-validation" novalidate>
-      <div class="container-fluid">
-        <div class="row">
-          <!-- Payment ID -->
-          <div class="col-md-6 mb-3">
-            <label for="paymentId" class="form-label">Payment ID</label>
-            <input type="text" class="form-control" id="paymentId" formControlName="paymentId" readonly />
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="paymentMode" class="form-label">Payment Mode</label>
-            <select class="form-control square-input w-100" id="paymentMode" formControlName="paymentMode">
-              <option value="">Select Payment Mode</option> <!-- Default option -->
-              <option value="Debit Card">Debit Card</option>
-              <option value="UPI">UPI</option>
-              <option value="Cash">Cash</option>
-            </select>
-          </div>
-        </div>
-        <div class="row">
-          <!-- Paid Amount and Due -->
-          <div class="row">
-            <div class="row">
-              <!-- Paid Amount (input) -->
-              <div class="col-md-6 mb-3">
-                <label for="paidAmount" class="form-label">Paid Amount</label>
-                <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" (input)="calculateDueAmount()" />
-              </div>
-              <!-- Due (disabled) -->
-              <div class="col-md-6 mb-3">
-                <label for="due" class="form-label">Due</label>
-                <input type="number" class="form-control" id="due" formControlName="due" readonly />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
-  </mat-step>
-  
-              
-  
-    <!-- New Invoice Step -->
-    <mat-step label="Confirm Booking" [completed]="!isConfirmDisabled">
-      <div class="container-fluid">
-        <h4 class="text-center my-3">Booking Invoice</h4>
-        <div class="row">
-          <!-- Reservation ID -->
-          <div class="col-md-6 mb-3">
-            <strong>Reservation ID:</strong>
-            <span>{{ bookingForm.get('reservationId')?.value }}</span>
-          </div>
-          <!-- Room Number -->
-          <div class="col-md-6 mb-3">
-            <strong>Room Number:</strong>
-            <span>{{ bookingForm.get('roomNo')?.value }}</span>
-          </div>
-        </div>
-        <div class="row">
-          <!-- Stay Dates -->
-          <div class="col-md-6 mb-3">
-            <strong>Stay Date From:</strong>
-            <span>{{ bookingForm.get('stayDateFrom')?.value | date:'longDate' }}</span>
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Stay Date To:</strong>
-            <span>{{ bookingForm.get('stayDateTo')?.value | date:'longDate' }}</span>
-          </div>
-        </div>
-        <div class="row">
-          <!-- Number of Guests -->
-          <div class="col-md-6 mb-3">
-            <strong>Total Guests:</strong>
-            <span>{{ bookingForm.get('totalNumberOfGuests')?.value }}</span>
-          </div>
-          <!-- Total Days -->
-          <div class="col-md-6 mb-3">
-            <strong>Total Days:</strong>
-            <span>{{ bookingForm.get('numberOfDays')?.value }}</span>
-          </div>
-        </div>
-        <div class="row">
-          <!-- Price per Day -->
-          <div class="col-md-6 mb-3">
-            <strong>Price per Day per Person:</strong>
-            <span>{{ bookingForm.get('pricePerDayPerPerson')?.value | currency }}</span>
-          </div>
-          <!-- Total Price -->
-          <div class="col-md-6 mb-3">
-            <strong>Total Price:</strong>
-            <span>{{ bookingForm.get('totalPrice')?.value | currency }}</span>
-          </div>
-        </div>
-        <div class="row">
-          <!-- Paid Amount -->
-          <div class="col-md-6 mb-3">
-            <strong>Paid Amount:</strong>
-            <span>{{ paymentForm.get('paidAmount')?.value | currency }}</span>
-          </div>
-          <!-- Due Amount -->
-          <div class="col-md-6 mb-3">
-            <strong>Due Amount:</strong>
-            <span>{{ paymentForm.get('due')?.value | currency }}</span>
-          </div>
-        </div>
-        
-      </div>
-    </mat-step>
-            </mat-vertical-stepper>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeBookingModal()">Close</button>
-            <button type="button" class="btn btn-primary" (click)="confirmBooking()">Confirm Booking</button>
-          </div>
-        </div>
-      </div>
-    </div>
-          
-    
-    <div class="container text-center mt-4">
-        <button class="btn btn-custom" (click)="openReservationDialog()">
-          Create a Reservation
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeBookingModal()"
+        >
+          Close
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="confirmBooking()"
+        >
+          Confirm Booking
         </button>
       </div>
-      
-      
-    
+    </div>
+  </div>
+</div>
+
+<div class="container text-center mt-4">
+  <button class="btn btn-custom" (click)="openReservationDialog()">
+    Create a Reservation
+  </button>
+</div>

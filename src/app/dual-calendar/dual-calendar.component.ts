@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { RoomService } from '../services/room.service';
 import { StayService } from '../services/stays.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
@@ -50,6 +50,7 @@ export class DualCalendarComponent implements OnInit {
       this.nextYear += 1; // Handle year increment for next month
     }
   }
+  @ViewChild('dualCalendarModal', { static: true }) dualCalendarModal!: ElementRef;
 
   ngOnInit(): void {
     this.generateCalendarDays();
@@ -681,7 +682,7 @@ saveSelection(): void {
   } else {
     console.log('Please select both arrival and departure dates.');
   }
-  
+
 }
 
   
