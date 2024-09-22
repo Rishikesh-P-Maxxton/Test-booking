@@ -5,60 +5,44 @@
       <div class="modal-body">
 
         <!-- Filter Rooms View -->
-        <div *ngIf="currentModalPage === 0">
-          <div class="container mt-4">
+<!-- Filter Rooms View -->
+<div *ngIf="currentModalPage === 0">
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="filter-section p-3">
+          <p class="display-6 titles">Filter Rooms</p>
+          <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
             <div class="row">
-              <div class="col-md-12">
-                <div class="filter-section p-3">
-                  <p class="display-6 titles">Filter Rooms</p>
-                  <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
-                    <div class="row">
-                      <div class="col-md-4">
-                        <div class="form-group mb-3">
-                          <label for="location">Location</label>
-                          <select id="location" formControlName="location" class="form-control square-input w-100">
-                            <option value="">All Locations</option>
-                            <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-4">
-                        <div class="form-group mb-3">
-                          <label for="stayDateFrom">Stay Date From</label>
-                          <input type="date" id="stayDateFrom" formControlName="stayDateFrom" class="form-control square-input w-100">
-                        </div>
-                      </div>
-                      <app-dual-calendar (selectionConfirmed)="onSelectionConfirmed($event)"></app-dual-calendar>
-                      <div class="col-md-4">
-                        <div class="form-group mb-3">
-                          <label for="stayDateTo">Stay Date To</label>
-                          <input type="date" id="stayDateTo" formControlName="stayDateTo" class="form-control square-input w-100">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row">
-                      <div class="col-md-4">
-                        <div class="form-group mb-3">
-                          <label for="numberOfPersons">Number of Persons</label>
-                          <input type="number" id="numberOfPersons" formControlName="numberOfPersons" class="form-control square-input w-100">
-                        </div>
-                      </div>
-                      <div class="col-md-4">
-                        <div class="form-group mb-3">
-                          <label for="maxPrice">Max Price Per Day Per Person</label>
-                          <input type="number" id="maxPrice" formControlName="maxPrice" class="form-control square-input w-100">
-                        </div>
-                      </div>
-                      <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" [disabled]="isFilterButtonDisabled" class="btn btn-custom w-100" (click)="goToRoomList()">Filter Room</button>
-                      </div>
-                    </div>
-                  </form>
+              
+              <!-- Dual Calendar (Keep this as it is) -->
+              <app-dual-calendar (selectionConfirmed)="onSelectionConfirmed($event)"></app-dual-calendar>
+                
+            </div>
+            <div class="row">
+              <!-- Number of Guests Dropdown -->
+              <div class="col-md-4">
+                <div class="form-group mb-3">
+                  <label for="numberOfGuests">Number of Guests</label>
+                  <select id="numberOfGuests" formControlName="numberOfGuests" class="form-control square-input w-100" [disabled]="!numberOfGuestsOptions.length">
+                    <option value="">Select Guests</option>
+                    <option *ngFor="let option of numberOfGuestsOptions" [value]="option">{{ option }}</option>
+                  </select>
                 </div>
               </div>
+
+              <!-- Filter Room Button -->
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" [disabled]="isFilterButtonDisabled"  class="btn btn-custom w-100">Filter Room</button>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
         <!-- Room List View -->
         <div *ngIf="currentModalPage === 1">
