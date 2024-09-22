@@ -32,4 +32,9 @@ export class BookingHistoryComponent implements OnInit {
     this.reservationStorageService.clearBookingHistory();
     this.loadBookingHistory(); // Reload reservations to reflect the cleared data
   }
+  onSelectionConfirmed(selectionData: any): void {
+    console.log('Received selection:', selectionData);
+    // Do something with the selectionData, like storing it or passing it to another service
+  }
+  
 }

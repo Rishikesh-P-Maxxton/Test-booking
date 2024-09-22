@@ -223,3 +223,72 @@ input.no-border {
     border-collapse: separate; /* Ensure borders are not collapsed */
     border-spacing: 0; /* Remove spacing between cells */
 }
+
+
+/* Form Styling */
+.custom-form {
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  .form-label {
+    font-size: 0.875rem;
+    color: #333;
+  }
+  
+  .form-control {
+    background-color: #e3e3e3;
+    border-radius: 0;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    border: none;
+  }
+  
+  .form-control:focus {
+    background-color: #dcdcdc;
+    outline: none;
+  }
+  
+  .custom-form .btn-custom {
+    background-color: #4caf50;
+  }
+  
+  .custom-form .btn-custom:hover {
+    background-color: #66bb6a;
+  }
+  
+  .error {
+    color: #ff6b6b;
+    font-size: 0.875rem;
+    font-weight: 300;
+  }
+  
+  .square-input[disabled] {
+    cursor: pointer;
+    pointer-events: all;
+  }
+
+   /* Modal Styling */
+   .modal {
+    z-index: 2060;
+  }
+  
+  .modal-backdrop {
+    z-index: 2050;
+  }
+  
+  .modal-content {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background-color: #fff;
+  }
+  
+
+  .btn-close {
+    font-size: 1.5rem;
+    color: #000;
+    background: transparent;
+  }
+  

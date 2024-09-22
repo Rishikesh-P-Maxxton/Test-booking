@@ -1,4 +1,7 @@
 <div class="container">
+  <!-- <app-dual-calendar (selectionConfirmed)="onSelectionConfirmed($event)"></app-dual-calendar> -->
+   
+
     <div *ngIf="reservations.length === 0">No reservations found.</div>
     <table *ngIf="reservations.length > 0" class="table">
       <thead>

@@ -1,7 +1,17 @@
-<!-- Trigger Button to Open Modal -->
-<button type="button" class="btn-custom" data-bs-toggle="modal" data-bs-target="#dualCalendarModal">
-    Choose Dates
-</button>
+
+<!-- Div that acts as a button/input -->
+<div class="col-md-4">
+    <div class="form-group mb-3">
+      <label for="selectDatesBtn" class="form-label">Select Dates</label>
+      <div 
+        id="selectDatesBtn" 
+        class="form-control square-input w-100 text-muted"
+        (click)="openDateModal()"
+      >
+        {{ formattedSelectedDates || 'When Do You Want to Go?' }}
+      </div>
+    </div>
+  </div>
 
 <!-- Modal for Dual Calendar -->
 <div class="modal fade" id="dualCalendarModal" tabindex="-1" aria-labelledby="dualCalendarModalLabel" aria-hidden="true">

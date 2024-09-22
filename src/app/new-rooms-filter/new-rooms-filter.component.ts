@@ -916,6 +916,10 @@ private isBookingAvailable(
     // Switch to the booking form view
     this.currentModalPage = 2;
   }
+  onSelectionConfirmed(selectionData: any): void {
+    console.log('Received selection:', selectionData);
+    // Do something with the selectionData, like storing it or passing it to another service
+  }
   
   
 }
