@@ -678,19 +678,21 @@ private isBookingAvailable(
   
 
   private updateConfirmButtonState(): void {
-    const filterFormValid = this.filterForm.get('stayDateFrom')?.value && this.filterForm.get('stayDateTo')?.value;
+    const filterFormValid = this.filterForm.valid;
     
-    // For new users, validate the customer form
     const isCustomerFormValid = this.isNewUser ? this.customerForm.valid : true;
-    
-    // For existing users, ensure a customer is fetched
     const isExistingCustomerValid = !this.isNewUser ? !!this.existingCustomer : true;
-  
-    // Payment and booking forms must always be valid
     const isBookingFormValid = this.bookingForm.valid;
     const isPaymentFormValid = this.paymentForm.valid;
-    
-    // Enable confirmation only if all required forms are valid
+  
+    console.log('Confirm Button State: ', {
+      filterFormValid,
+      isCustomerFormValid,
+      isExistingCustomerValid,
+      isBookingFormValid,
+      isPaymentFormValid
+    });
+  
     this.isConfirmDisabled = !(filterFormValid && (isCustomerFormValid || isExistingCustomerValid) && isBookingFormValid && isPaymentFormValid);
   }
   
@@ -830,4 +832,3 @@ private isBookingAvailable(
   
   
 }
-

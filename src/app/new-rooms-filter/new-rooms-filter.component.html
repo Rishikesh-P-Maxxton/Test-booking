@@ -15,11 +15,10 @@
           <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
             <div class="row">
               
-              <!-- Dual Calendar (Keep this as it is) -->
+              <!-- Dual Calendar (Keep this as it is) --><div class="col-md-8">
               <app-dual-calendar (selectionConfirmed)="onSelectionConfirmed($event)"></app-dual-calendar>
-                
-            </div>
-            <div class="row">
+                </div>
+            
               <!-- Number of Guests Dropdown -->
               <div class="col-md-4">
                 <div class="form-group mb-3">
@@ -32,7 +31,7 @@
               </div>
 
               <!-- Filter Room Button -->
-              <div class="col-md-4 d-flex align-items-end">
+              <div class="col-md-4 ">
                 <button type="submit" [disabled]="isFilterButtonDisabled"  class="btn btn-custom w-100">Filter Room</button>
               </div>
             </div>
@@ -88,7 +87,7 @@
                   <div class="d-flex justify-content-center mt-4">
                     <pagination-controls previousLabel="Prev" nextLabel="Next" (pageChange)="page = $event"></pagination-controls>
                   </div>
-                  <button class="btn btn-secondary mt-3" (click)="goToFilterForm()">Back to Filter</button>
+                  <button class="btn-custom mt-3" (click)="goToFilterForm()">Back to Filter</button>
                 </div>
               </div>
             </div>

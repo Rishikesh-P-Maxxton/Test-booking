@@ -8,7 +8,7 @@
         class="form-control square-input w-100 text-muted"
         (click)="openDateModal()"
       >
-        {{ formattedSelectedDates || 'When Do You Want to Go?' }}
+        {{ formattedSelectedDates || 'When?' }}
       </div>
     </div>
   </div>
@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<table *ngIf="filteredRooms.length > 0">
+<!-- <table *ngIf="filteredRooms.length > 0">
     <thead>
       <tr>
         <th>Room Id</th>
@@ -120,5 +120,5 @@
         <th>{{ room.selectedStay?.arrivalDays}}</th>
       </tr>
     </tbody>
-  </table>
+  </table> -->
   

@@ -689,11 +689,15 @@ formatDateToYYYYMMDD(date: Date): string {
   
       if (validDeparture && validDeparture.stays.length > 0) {
         this.filteredRooms = [];
-        const addedRoomIds = new Set<number>(); // To track rooms that have been added
+        const addedRoomIds = new Set<number>(); // To track room IDs that have been added
   
         for (const stay of validDeparture.stays) {
           const room = this.rooms.find(room => room.roomId === stay.roomId);
-          if (room && this.isWithinBookingWindow(this.today, stay.bookDateFrom ? new Date(stay.bookDateFrom) : null, stay.bookDateTo ? new Date(stay.bookDateTo) : null)) {
+          
+          // Ensure the room is added only once
+          if (room && !addedRoomIds.has(room.roomId) && 
+              this.isWithinBookingWindow(this.today, stay.bookDateFrom ? new Date(stay.bookDateFrom) : null, stay.bookDateTo ? new Date(stay.bookDateTo) : null)) {
+            
             this.filteredRooms.push({
               roomId: room.roomId,
               locationId: room.locationId || 0,
@@ -703,6 +707,8 @@ formatDateToYYYYMMDD(date: Date): string {
               guestCapacity: room.guestCapacity || 0,
               selectedStay: stay // Store the selected stay information
             });
+  
+            // Mark the room as added
             addedRoomIds.add(room.roomId);
           }
         }
@@ -718,7 +724,7 @@ formatDateToYYYYMMDD(date: Date): string {
           selectedArrivalDate: selectedArrivalDateStr,
           selectedDepartureDate: selectedDepartureDateStr,
           nightsStay: nightsStay,
-          filteredRooms: this.filteredRooms
+          filteredRooms: this.filteredRooms // No duplicates here
         };
   
         // Log the emitted object
@@ -734,6 +740,7 @@ formatDateToYYYYMMDD(date: Date): string {
       console.log('Please select both arrival and departure dates.');
     }
   }
+  
   
 
 
