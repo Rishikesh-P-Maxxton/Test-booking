@@ -140,4 +140,263 @@
     animation-delay: var(--animation-delay, 0s); /* Delay each row individually */
 }
 
+   /* Buttons - Apply Green with Flat Design */
+   .btn-custom {
+    background-color: #4caf50; /* Muted/Brighter green */
+    color: #fff;
+    padding: 0.5rem 1rem;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none; /* No border */
+    border-radius: 0; /* No border radius */
+    height: 2.5rem; /* Consistent with input fields */
+  }
   
+  .btn-custom:hover {
+    background-color: #66bb6a; /* Lighter green on hover */
+  }
+  
+  .btn-custom-sec {
+    background-color: transparent;
+    color: #666;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0;
+    height: 2.5rem; /* Consistent with input fields */
+  }
+  .btn-custom-tri {
+    background-color: black;
+    color: #ffffff;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0;
+    height: 2.5rem; /* Consistent with input fields */
+  }
+  
+  .btn-custom-quo {
+    background-color: rgb(69, 69, 69);
+    color: #e4e4e4;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0;
+    height: 2.5rem; /* Consistent with input fields */
+  }
+  
+  .btn-custom-sec:hover {
+    color: #000;
+    background-color: #e0e0e0; /* Slightly lighter background on hover */
+  }
+  
+  .btn-custom-tri:hover {
+    color: #ffffff;
+    background-color: #757575; /* Slightly lighter background on hover */
+  }
+  .btn-custom-quo:hover {
+    color: #ffffff;
+    background-color: rgb(39, 39, 39);/* Slightly lighter background on hover */
+  }
+  /* Filter Section */
+
+
+  .form-control {
+    background-color: #e3e3e3;
+    border: none;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0;
+  }
+  
+  .form-control:focus {
+    background-color: #dcdcdc;
+    outline: none;
+  }
+  
+   .btn-custom {
+    margin-top: 1rem;
+    background-color: #4caf50;
+  }
+  
+  .btn-custom:hover {
+    background-color: #66bb6a;
+  }
+  
+ 
+  /* Form Styling */
+  .custom-form {
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  /* Ensure the table takes full width */
+.table {
+    width: 100%;
+    min-width: 600px; /* Adjusted minimum width for smaller screens */
+    background-color: #f9f9f9; /* Light gray background for the table */
+    border-radius: 0; /* No rounded corners */
+    overflow: hidden; /* Ensures rounded corners apply to the table */
+    border-collapse: separate; /* Ensure borders are not collapsed */
+    border-spacing: 0; /* Remove spacing between cells */
+}
+
+.container {
+    padding-top: 2rem;
+}
+
+/* Header styling */
+.table thead tr,
+.table thead th {
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd; /* Subtle border for header */
+    color: #333; /* Dark gray for better readability */
+    font-size: 13px; /* Slightly larger font for better readability */
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    background-color: #f4f4f4; /* Light background for header */
+}
+
+/* Body cell styling */
+.table tbody th,
+.table tbody td {
+    color: #555; /* Darker gray for better readability */
+    padding: 12px; /* Adjusted padding for a balanced look */
+    border-bottom: 1px solid #ddd; /* Light border between rows */
+    font-weight: 400; /* Consistent font weight */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Faster transition for a snappy effect */
+}
+
+/* Styling for small elements within table cells */
+.table tbody th small,
+.table tbody td small {
+    color: rgba(0, 0, 0, 0.5); /* Slightly transparent text for small elements */
+}
+
+/* Styling for links within table cells */
+.table tbody th a,
+.table tbody td a {
+    color: #007bff; /* Blue links for better visibility */
+    transition: color 0.2s ease; /* Smooth transition for link color */
+}
+
+/* Styling for elements with "more" class */
+.table tbody th .more,
+.table tbody td .more {
+    color: #007bff;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+}
+
+/* Row transition for hover effect */
+.table tbody tr {
+    transition: background-color 0.2s ease; /* Faster transition for a snappy effect */
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover,
+.table tbody tr:focus {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Hover effect for table cells */
+.table tbody tr:hover td,
+.table tbody tr:focus td {
+    color: #000; /* Black text color on hover */
+}
+
+/* Additional row color styles based on status */
+.table-row {
+    transition: background-color 0.2s ease; /* Smooth transition for background color */
+}
+
+/* Status color styles */
+.status-confirmed {
+    background-color: #d4edda !important; /* Light green background */
+}
+
+.status-checked-in {
+    background-color: #cce5ff !important; /* Light blue background */
+}
+
+.status-checked-out {
+    background-color: #f8d7da !important; /* Light red background */
+}
+
+/* Override hover effect to maintain background color */
+.table tbody tr:hover {
+    background-color: inherit; /* Maintain the status color on hover */
+}
+
+/* Ensure the clear button styles are applied correctly */
+.clear-button {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    background-color: #000;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    margin-bottom: 20px;
+    margin-left: 0;
+}
+
+.clear-button:hover {
+    background-color: #333;
+}
+
+.clear-button:focus {
+    outline: none;
+}
+
+/* Keyframes for row animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply the animation to table rows */
+.table-row {
+    opacity: 0; /* Initial state */
+    animation: fadeIn 0.5s ease-out forwards; /* Animation effect */
+    animation-delay: var(--animation-delay, 0s); /* Delay each row individually */
+}
+ .sec1{
+    margin-left: 1rem; 
+    margin-bottom: 6px;
+ }
+
+
+
+/* Toast container */
+.custom-toast {
+    background-color: #f8f9fa;  /* Light background color */
+    border: 2px;   
+    border-color: #333;            /* No border */
+    border-radius: 0;           /* No border radius */
+    font-family: Arial, sans-serif;  /* Arial font */
+    font-size: 0.8rem;          /* Font size */
+    font-weight: 400;           /* Font weight */
+    
+}
+
+/* Toast body and message */
+.toast-body {
+    color: #333;                /* Text color */
+    padding: 16px 20px;         /* Padding for body */
+}
+
+.toast-message {
+    display: block;
+    margin-bottom: 12px;
+}

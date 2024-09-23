@@ -418,6 +418,10 @@
             </div>
             <div class="modal-footer">
               <button class="btn btn-custom" (click)="confirmBooking()">Confirm Booking</button>
+              <!-- Download Invoice PDF Button (Visible when Confirm is enabled) -->
+<button *ngIf="!isConfirmDisabled" class="btn-custom-sec"(click)="generatePDF()">
+  Download Invoice PDF
+</button>
             </div>
           </div>
         </div>

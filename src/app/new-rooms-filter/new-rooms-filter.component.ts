@@ -10,7 +10,7 @@ import { ReservationStorageService } from '../services/reservation-storage.servi
 import { GeolocsService } from '../services/geolocs.service';
 import { MatDialog } from '@angular/material/dialog';
 
-
+import jspdf, { jsPDF } from 'jspdf';
 interface FilteredRoom {
   roomId: number;
   locationId: number;
@@ -585,63 +585,8 @@ private isBookingAvailable(
 
   confirmBooking(): void {
     if (this.bookingForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
-      let customerId: string;
-    
-      // For new customers, generate a new ID
-      if (this.isNewUser) {
-        customerId = this.generateCustomerId();
-      } else {
-        // For existing customers, use the fetched customer ID
-        if (this.existingCustomer) {
-          customerId = this.existingCustomer.customerId;
-        } else {
-          console.error('Fetched customer is not available');
-          return;
-        }
-      }
-  
-      // Construct the reservation object
-      const reservation: Reservation = {
-        reservationId: String(this.bookingForm.get('reservationId')?.value),
-        locationId: this.selectedRoom?.locationId || 0,
-        roomId: Number(this.bookingForm.get('roomNo')?.value),
-        customerId: customerId, // Use the generated or fetched customer ID
-        arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
-        departureDate: this.bookingForm.get('stayDateTo')?.value,
-        reservationDate: new Date().toISOString(),
-        totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
-        status: 'CONFIRM',
-        paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
-        numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
-      };
-  
-      let customer: Customer;
-      
-      // If it's a new user, construct the customer object from the form
-      if (this.isNewUser) {
-        const fullName = this.customerForm.get('name')?.value || '';
-    const { firstName, middleName, lastName } = this.parseFullName(fullName);
-  
-        customer = {
-          customerId: customerId,
-          firstName,
-          middleName,
-          lastName,
-          age: Number(this.customerForm.get('age')?.value),
-          country: this.customerForm.get('country')?.value,
-          state: this.customerForm.get('state')?.value,
-          city: this.customerForm.get('city')?.value,
-          pinCode: Number(this.customerForm.get('pincode')?.value),
-          initialAddress: this.customerForm.get('initialAddress')?.value,
-          mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
-          mobileNumber2: 0, // Default mobile number
-          birthDate: '',
-          email: this.customerForm.get('email')?.value,
-        };
-      } else {
-        // For existing users, use the fetched customer object
-        customer = this.existingCustomer as Customer;
-      }
+      // Get the reservation and customer objects
+      const { reservation, customer } = this.createReservationObject();
   
       const reservationData = { reservation, customer };
   
@@ -654,11 +599,12 @@ private isBookingAvailable(
       this.customerForm.reset();
       this.paymentForm.reset();
       this.selectedRoom = null;
-      this.isConfirmDisabled = true; // Disable the confirm button until valid forms are filled
+      this.isConfirmDisabled = true; // Disable the confirm button
     } else {
       console.log('Please fill out all required fields.');
     }
   }
+  
   
   
   
@@ -826,9 +772,153 @@ private isBookingAvailable(
       this.checkFilterButtonState();
     }
   }
+generatePDF(): void {
+  const { reservation, customer } = this.createReservationObject();  // Getting the object
+
+  const doc = new jsPDF();
+
+  // Define colors
+  const paleOrange = '#FFA726';
+  const lightGray = '#F2F2F2';
+  const black = '#000000';
+  const white = '#FFFFFF';
+
+  // Define font sizes
+  const largeFontSize = 22;
+  const mediumFontSize = 16;
+  const smallFontSize = 12;
+
+  // Set background color for header
+  doc.setFillColor(paleOrange);
+  doc.rect(0, 0, 210, 50, 'F'); // Header rectangle
+
+  // Title: "Maxton"
+  doc.setFont('Helvetica', 'bold');
+  doc.setTextColor(white);
+  doc.setFontSize(largeFontSize);
+  doc.text('Maxxton', 15, 20); // Title in the center
+
+  // Subheading: "Booking Invoice"
+  doc.setFont('Helvetica', 'italic');
+  doc.setFontSize(smallFontSize);
+  doc.text('Booking Invoice', 15, 28); // Below the title
+
+  // Customer Section (adding a light background color)
+  doc.setFillColor(lightGray);
+  doc.rect(15, 35, 180, 40, 'F'); // Light gray background for customer details
+
+  doc.setFontSize(mediumFontSize);
+  doc.setFont('Helvetica', 'bold');
+  doc.setTextColor(black);
+  doc.text('Customer Details:', 20, 45);
+
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'normal');
+  doc.text(`Name: ${customer.firstName} ${customer.lastName}`, 20, 55);
+  doc.text(`Email: ${customer.email}`, 20, 60);
+  doc.text(`Mobile: ${customer.mobileNumber1}`, 20, 65);
+  doc.text(`Address: ${customer.initialAddress}`, 20, 70);
+
+  // Booking Section
+  doc.setFillColor(white);
+  doc.setFontSize(mediumFontSize);
+  doc.setFont('Helvetica', 'bold');
+  doc.text('Booking Details:', 20, 85);
+
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'normal');
+  doc.text(`Reservation ID: ${reservation.reservationId}`, 20, 95);
+  doc.text(`Room No: ${reservation.roomId}`, 20, 100);
+  doc.text(`Arrival Date: ${reservation.arrivalDate}`, 20, 105);
+  doc.text(`Departure Date: ${reservation.departureDate}`, 20, 110);
+  doc.text(`Guests: ${reservation.numberOfGuest}`, 20, 115);
+
+  // Total Price Section
+  doc.setFontSize(mediumFontSize);
+  doc.setFont('Helvetica', 'bold');
+  doc.text('Payment Summary:', 20, 130);
+
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'normal');
+  doc.text(`Total Price: $${reservation.totalPrice.toFixed(2)}`, 20, 140);
+  doc.text(`Paid Amount: $${reservation.paidAmount.toFixed(2)}`, 20, 145);
+  doc.text(`Due: $${(reservation.totalPrice - reservation.paidAmount).toFixed(2)}`, 20, 150);
+
+  // Footer
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'italic');
+  doc.text('Thank you for booking with Maxxton!', 15, 280);
+
+  // Save the PDF
+  doc.save('Maxton_Booking_Invoice.pdf');
+
+  // Log the contents (for debugging purposes)
+  console.log({
+    customer,
+    reservation
+  });
+}
+
+  
+
+  private createReservationObject(): { reservation: Reservation, customer: Customer } {
+    const customerId = this.isNewUser ? this.generateCustomerId() : this.existingCustomer?.customerId || '';
+    
+    // Construct the reservation object
+    const reservation: Reservation = {
+      reservationId: String(this.bookingForm.get('reservationId')?.value),
+      locationId: this.selectedRoom?.locationId || 0,
+      roomId: Number(this.bookingForm.get('roomNo')?.value),
+      customerId: customerId,
+      arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
+      departureDate: this.bookingForm.get('stayDateTo')?.value,
+      reservationDate: new Date().toISOString(),
+      totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
+      status: 'CONFIRM',
+      paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
+      numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
+    };
+  
+    // Construct the customer object
+    let customer: Customer;
+    if (this.isNewUser) {
+      const fullName = this.customerForm.get('name')?.value || '';
+      const { firstName, middleName, lastName } = this.parseFullName(fullName);
+  
+      customer = {
+        customerId: customerId,
+        firstName,
+        middleName,
+        lastName,
+        age: Number(this.customerForm.get('age')?.value),
+        country: this.customerForm.get('country')?.value,
+        state: this.customerForm.get('state')?.value,
+        city: this.customerForm.get('city')?.value,
+        pinCode: Number(this.customerForm.get('pincode')?.value),
+        initialAddress: this.customerForm.get('initialAddress')?.value,
+        mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
+        mobileNumber2: 0,  // Default
+        birthDate: '',
+        email: this.customerForm.get('email')?.value,
+      };
+    } else {
+      customer = this.existingCustomer as Customer;
+    }
+  
+    // Return both objects
+    return { reservation, customer };
+  }
   
   
   
   
   
+  
+  
+}
+
+
+
+function html2canvas(elementToCapture: HTMLElement) {
+  throw new Error('Function not implemented.');
 }
