@@ -15,10 +15,11 @@
           <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
             <div class="row">
               
-              <!-- Dual Calendar (Keep this as it is) --><div class="col-md-8">
+              <!-- Dual Calendar --><div class="col-md-8">
               <app-dual-calendar (selectionConfirmed)="onSelectionConfirmed($event)"></app-dual-calendar>
                 </div>
-            
+            </div>
+            <div class="row">
               <!-- Number of Guests Dropdown -->
               <div class="col-md-4">
                 <div class="form-group mb-3">
@@ -29,11 +30,12 @@
                   </select>
                 </div>
               </div>
-
+<div class="row">
               <!-- Filter Room Button -->
               <div class="col-md-4 ">
                 <button type="submit" [disabled]="isFilterButtonDisabled"  class="btn btn-custom w-100">Filter Room</button>
               </div>
+            </div>
             </div>
           </form>
         </div>
@@ -145,7 +147,7 @@
                       <div class="row">
                         <!-- Price per Day per Person and Total Price -->
                         <div class="col-md-8 mb-3">
-                          <label for="pricePerDayPerPerson" class="form-label">Price per Day per Person</label>
+                          <label for="pricePerDayPerPerson" class="form-label">Price per Day</label>
                           <input type="text" class="form-control" id="pricePerDayPerPerson" formControlName="pricePerDayPerPerson" readonly />
                         </div>
                         <div class="col-md-4 mb-3">
@@ -176,21 +178,30 @@
     <form [formGroup]="isExistingUser ? emailForm : customerForm" class="custom-form needs-validation" novalidate>
       <!-- Existing User Email Input with Search Button -->
       <div *ngIf="isExistingUser">
-        <div class="row">
-          <div class="col-md-12 mb-3 d-flex">
-            <!-- Email Input Field -->
-            <input type="email" class="form-control me-2" id="email" formControlName="email" placeholder="Enter Email" />
-            <!-- Search Button -->
-            <button type="button" class="btn btn-custom" (click)="fetchExistingCustomer()">Login</button>
-          </div>
-    
-          <!-- Validation/Error and Welcome Messages with Bootstrap Alert -->
-          <div *ngIf="emailError" class="alert alert-error mt-2">
-            {{ emailError }}
-          </div>
-          <div *ngIf="customerName" class="alert alert-success mt-2">
-            Welcome, {{ customerName }}!
-          </div>
+
+
+        <div class="input-group">
+          <!-- Email input field -->
+          <input type="email" class="form-control" id="email" formControlName="email" placeholder="Enter or select email" (input)="filterEmails()">
+        
+          <!-- Dropdown button -->
+          <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            Select Email
+          </button>
+        
+          <!-- Dropdown list -->
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+            <!-- Loop through the filtered email list -->
+            <li *ngFor="let email of filteredEmails">
+              <button class="dropdown-item" (click)="selectEmail(email)">{{ email }}</button>
+            </li>
+          </ul>
+        </div>
+        <div *ngIf="emailError" class="alert alert-error mt-2">
+          {{ emailError }}
+        </div>
+        <div *ngIf="customerName" class="alert alert-success mt-2">
+          Welcome, {{ customerName }}!
         </div>
       </div>
     
@@ -335,9 +346,14 @@
                   <input type="number" class="form-control" id="paidAmount" formControlName="paidAmount" (input)="calculateDueAmount()" />
                 </div>
                 <!-- Due (disabled) -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="due" class="form-label">Due</label>
                   <input type="number" class="form-control" id="due" formControlName="due" readonly />
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                  <label for="totalPrice" class="form-label">Total Price</label>
+                  <input type="number" class="form-control" id="totalPrice" formControlName="totalPrice" readonly />
                 </div>
               </div>
             </div>
@@ -435,3 +451,32 @@
 <button type="button" class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#reservationModal">
   Create a Reservation
 </button>
+
+
+<!-- Toast for navigation confirmation
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="navigationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+    <div class="toast-header">
+      <strong class="me-auto">Booking Confirmed</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      <p>Your booking has been confirmed! Do you want to navigate to the planner?</p>
+      <button id="confirmNavigate" class="btn btn-primary btn-sm me-2">Confirm</button>
+      <button id="cancelNavigate" class="btn btn-secondary btn-sm">Cancel</button>
+    </div>
+  </div>
+</div> -->
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="bookingToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Success</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close" (click)="navigateToPlanner()"></button>
+    </div>
+    <div class="toast-body">
+      Booking successful!
+    </div>
+  </div>
+</div>
+

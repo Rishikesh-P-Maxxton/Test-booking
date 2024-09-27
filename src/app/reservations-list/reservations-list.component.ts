@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Reservation, Customer } from '../Interfaces/reservation';
-
+import jsPDF from 'jspdf';  // Import jsPDF
+import autoTable from 'jspdf-autotable';  // Import autoTable for table generation
 
 @Component({
   selector: 'app-reservations-list',
@@ -11,6 +12,9 @@ import { Reservation, Customer } from '../Interfaces/reservation';
 export class ReservationsListComponent implements OnInit {
 
   reservations: Array<{ reservation: Reservation, customer: Customer }> = [];
+  filteredReservations: Array<{ reservation: Reservation, customer: Customer }> = [];  // Filtered reservations
+  filterTerm: string = '';  // For search functionality
+  sortDirection: boolean = true;  // Toggle sort order
 
   constructor(private reservationStorageService: ReservationStorageService) { }
 
@@ -20,30 +24,102 @@ export class ReservationsListComponent implements OnInit {
 
   loadReservations(): void {
     this.reservations = this.reservationStorageService.getReservations();
-    console.log('Fetched Reservations:', this.reservations); // Debug log
+    this.applyFilter();  // Apply filter initially to display all reservations
   }
 
+  // Apply search filter
+  applyFilter(): void {
+    const searchTerm = this.filterTerm.toLowerCase();
+    this.filteredReservations = this.reservations.filter(res => {
+      const customerName = `${res.customer.firstName} ${res.customer.middleName ?? ''} ${res.customer.lastName}`.toLowerCase();
+      const roomId = res.reservation.roomId.toString();
+      const status = res.reservation.status.toLowerCase();
+      
+      return customerName.includes(searchTerm) || roomId.includes(searchTerm) || status.includes(searchTerm);
+    });
+  }
+
+  // Sorting functionality
+  sortBy(field: keyof Reservation): void {
+    this.sortDirection = !this.sortDirection;  // Toggle sort direction
+    this.filteredReservations.sort((a, b) => {
+      const valueA = a.reservation[field];
+      const valueB = b.reservation[field];
+
+      if (valueA < valueB) return this.sortDirection ? -1 : 1;
+      if (valueA > valueB) return this.sortDirection ? 1 : -1;
+      return 0;
+    });
+  }
+
+  // Update reservation status
   updateStatus(reservationToUpdate: { reservation: Reservation, customer: Customer }): void {
     if (!reservationToUpdate || !reservationToUpdate.reservation) {
       console.error('Invalid reservation object:', reservationToUpdate);
       return;
     }
 
-    // Update status in the reservation object
     reservationToUpdate.reservation.status = reservationToUpdate.reservation.status;
-
-    // Save the updated reservation
     this.reservationStorageService.saveReservation(reservationToUpdate);
-
-    // Reload reservations to reflect the changes
     this.loadReservations();
   }
+
+  // Delete a reservation
   deleteReservation(reservationId: string): void {
     this.reservationStorageService.deleteReservation(reservationId);
-    this.loadReservations(); // Refresh the list after deletion
+    this.loadReservations();
   }
+
+  // Clear all reservations
   clearReservations(): void {
     this.reservationStorageService.clearReservations();
-    this.loadReservations(); // Reload reservations to reflect the cleared data
+    this.loadReservations();
+  }
+
+  // PDF Generation functionality
+  downloadPDF(): void {
+    const doc = new jsPDF();
+
+    // Add title and header
+    doc.setFontSize(22);
+    doc.setTextColor('#ff6600'); // Orange color for Maxxton
+    doc.text('Maxxton', 14, 22);
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);  // Black color
+    doc.text('Reservations List', 14, 30);
+
+    const currentDate = new Date().toLocaleDateString();
+    doc.setFontSize(12);
+    doc.text(`Date: ${currentDate}`, 14, 36);
+
+    // Generate table data
+    autoTable(doc, {
+      head: [['Reservation ID', 'Room ID', 'Stay From', 'Stay To', 'Total Guests', 'Total Price', 'Customer Name', 'Status', 'Paid Amount']],
+      body: this.filteredReservations.map(res => [
+        res.reservation.reservationId,
+        res.reservation.roomId,
+        res.reservation.arrivalDate,
+        res.reservation.departureDate,
+        res.reservation.numberOfGuest,
+        res.reservation.totalPrice,
+        `${res.customer.firstName} ${res.customer.middleName ?? ''} ${res.customer.lastName}`,
+        res.reservation.status,
+        res.reservation.paidAmount,
+      ]),
+      startY: 42,
+      styles: {
+        font: 'helvetica',
+        fontSize: 10,
+      },
+      headStyles: {
+        fillColor: [255, 102, 0], // Orange header color
+        textColor: [255, 255, 255],  // White text
+      },
+      margin: { top: 50 },
+    });
+
+    // Save the PDF
+    doc.save(`Reservations_List_${currentDate}.pdf`);
   }
 }

@@ -11,6 +11,7 @@ import { GeolocsService } from '../services/geolocs.service';
 import { MatDialog } from '@angular/material/dialog';
 
 import jspdf, { jsPDF } from 'jspdf';
+import { Router, RouterLink } from '@angular/router';
 interface FilteredRoom {
   roomId: number;
   locationId: number;
@@ -29,6 +30,7 @@ interface FilteredRoom {
 export class NewRoomsFilterComponent implements OnInit {
 
   emailForm: FormGroup;
+  totalPrice: FormGroup;
   existingCustomer!: Customer  | undefined ;
 
   isExistingUser = false;
@@ -68,13 +70,19 @@ export class NewRoomsFilterComponent implements OnInit {
   emittedObject: any = null;  // This will hold the emitted data from the dual calendar component
 
 
+  allEmails: string[] = [];  // List of all unique emails
+  filteredEmails: string[] = [];  // Filtered emails for dropdown
+  emailDropdownVisible: boolean = false;  // Control the dropdown visibility
+
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
     private cdr: ChangeDetectorRef, private geolocsService: GeolocsService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private router: Router,
+    
 
   ) {
     this.filterForm = this.fb.group({
@@ -84,6 +92,9 @@ export class NewRoomsFilterComponent implements OnInit {
     });
     
 
+    this.totalPrice = this.fb.group({
+      tp: [{ value: '', disabled: true }]
+    });
     this.emailForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
     });
@@ -124,8 +135,10 @@ export class NewRoomsFilterComponent implements OnInit {
       paymentMode: ['', Validators.required],
       paidAmount: [{ value: 0 }, Validators.required],
       due: [{ value: 0, disabled: true }, Validators.required],
+      totalPrice: [{ value: 0, disabled: true }]  // Add totalPrice here
     });
 
+  
     this.bookingForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
@@ -149,7 +162,11 @@ export class NewRoomsFilterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    
+
+    this.reservationStorageService.getAllCustomerEmails().subscribe((emails: string[]) => {
+      this.allEmails = emails;
+      this.filteredEmails = [...this.allEmails];  // Initially show all emails
+    });
     this.geolocsService.getData().subscribe(response => {
       this.countries = response.countries;
     });
@@ -162,6 +179,7 @@ export class NewRoomsFilterComponent implements OnInit {
     this.calculateDueAmount();
   });
 
+
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
       this.stayService.getStays().subscribe((stayData) => {
@@ -170,6 +188,8 @@ export class NewRoomsFilterComponent implements OnInit {
         this.initializeLocations();
       });
     });
+
+    
   }
 
   calculateDueAmount(): void {
@@ -600,15 +620,42 @@ private isBookingAvailable(
       this.paymentForm.reset();
       this.selectedRoom = null;
       this.isConfirmDisabled = true; // Disable the confirm button
+      
     } else {
       console.log('Please fill out all required fields.');
     }
   }
-  
-  
-  
-  
-  
+
+  // Function to show a toast with Confirm and Cancel buttons
+  showToastWithNavigationOption(): void {
+    const toastElement = document.getElementById('navigationToast'); // Your toast element
+    if (toastElement) {
+      const toast = new bootstrap.Toast(toastElement); // Initialize the toast
+      toast.show(); // Show the toast
+
+      // Attach event listeners for buttons inside the toast
+      const confirmButton = document.getElementById('confirmNavigate');
+      const cancelButton = document.getElementById('cancelNavigate');
+
+      confirmButton?.addEventListener('click', () => {
+        this.navigateToPlanner(); // Navigate on Confirm
+        toast.hide();
+        toast.dispose()  // Close the toast after navigation
+      });
+
+      cancelButton?.addEventListener('click', () => {
+        toast.hide();
+        toast.dispose() // Just close the toast on Cancel
+      });
+    }
+  }
+
+  // Function to navigate to a given route (in this case, 'planner')
+  navigateToPlanner(): void {
+    this.router.navigate(['/planner']); // Replace '/planner' with the desired route
+  }
+
+
   
   private updateTotalPrice(): void {
     const numberOfGuests =
@@ -619,6 +666,7 @@ private isBookingAvailable(
   
     const totalPrice =numberOfDays * pricePerDay;
     this.bookingForm.patchValue({ totalPrice });
+    this.paymentForm.patchValue({ totalPrice });
   }
   
   
@@ -726,10 +774,55 @@ private isBookingAvailable(
   
 
   // Function to close the booking modal (if needed)
-  closeBookingModal() {
-    // Set modal state back to default
-    this.currentModalPage = 0;  // This resets to the filter form
+  closeBookingModal(): void {
+    const reservationModalElement = document.getElementById('reservationModal');
+    const bookingElement = document.getElementById('booking');
+  
+    if (reservationModalElement) {
+      const reservationModalInstance = bootstrap.Modal.getInstance(reservationModalElement);
+      if (reservationModalInstance) {
+        reservationModalInstance.hide();
+        reservationModalInstance.dispose();  // Properly dispose of modal
+      } else {
+        console.warn('Reservation modal instance not found or already disposed.');
+      }
+    } else {
+      console.warn('Reservation modal element not found in the DOM.');
+    }
+  
+    if (bookingElement) {
+      const bookingInstance = bootstrap.Modal.getInstance(bookingElement);
+      if (bookingInstance) {
+        bookingInstance.hide();
+        bookingInstance.dispose();  // Properly dispose of booking modal
+      } else {
+        console.warn('Booking modal instance not found or already disposed.');
+      }
+    } else {
+      console.warn('Booking modal element not found in the DOM.');
+    }
+  
+    // Clean up modal backdrop
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach((backdrop) => backdrop.remove());
+  
+    // Reset the modal's fade and show classes
+    document.body.classList.remove('modal-open');
+    console.log('Modals Open?', document.querySelectorAll('.modal.show').length);
+    console.log('Backdrops Present?', document.querySelectorAll('.modal-backdrop').length);
+    this.showToast();
   }
+
+   // Method to show the toast
+   showToast(): void {
+    const toastElement = document.getElementById('bookingToast');
+    if (toastElement) {
+      const toast = new bootstrap.Toast(toastElement);
+      toast.show();
+    }
+  }
+  
+  
   goToBookingForm(room: FilteredRoom): void {
     this.selectedRoom = room;
     // Call your existing method to populate the booking form
@@ -850,7 +943,7 @@ generatePDF(): void {
   doc.text('Thank you for booking with Maxxton!', 15, 280);
 
   // Save the PDF
-  doc.save('Maxton_Booking_Invoice.pdf');
+  doc.save('Maxxton_Booking_Invoice.pdf');
 
   // Log the contents (for debugging purposes)
   console.log({
@@ -910,8 +1003,35 @@ generatePDF(): void {
   }
   
   
-  
-  
+   // Filter emails based on the input field value
+  filterEmails(): void {
+    const emailInput = this.emailForm.get('email')?.value.toLowerCase();
+    
+    if (emailInput.trim() === '') {
+      // If the input field is empty, show all emails
+      this.filteredEmails = [...this.allEmails];
+    } else {
+      // If the input is not empty, filter based on the input
+      this.filteredEmails = this.allEmails.filter(email =>
+        email.toLowerCase().includes(emailInput)
+      );
+    }
+
+    // Show the dropdown if there's anything to display
+    this.emailDropdownVisible = this.filteredEmails.length > 0;
+  }
+
+  // Select an email from the dropdown
+  selectEmail(email: string): void {
+    // Patch the selected email into the email input field
+    this.emailForm.patchValue({ email });
+
+    // Hide the dropdown after selection
+    this.emailDropdownVisible = false;
+
+    // Fetch existing customer details based on the selected email
+    this.fetchExistingCustomer();
+  }
   
   
   

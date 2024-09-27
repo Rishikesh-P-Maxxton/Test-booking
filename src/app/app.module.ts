@@ -42,9 +42,10 @@ import { ResNavComponent } from './res-nav/res-nav.component';
 import { RoomFilterButtonComponent } from './room-filter-button/room-filter-button.component';
 import { NewRoomsFilterComponent } from './new-rooms-filter/new-rooms-filter.component';
 import { DualCalendarComponent } from './dual-calendar/dual-calendar.component';
+import { MainpageComponent } from './mainpage/mainpage.component';
 @NgModule({
 
-declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent  ],
+declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent, MainpageComponent  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  

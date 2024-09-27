@@ -10,22 +10,25 @@ import { BookingHistoryComponent } from './booking-history/booking-history.compo
 import { ResNavComponent } from './res-nav/res-nav.component';
 
 import { NewRoomsFilterComponent } from './new-rooms-filter/new-rooms-filter.component';
+import { MainpageComponent } from './mainpage/mainpage.component';
 
 
 const routes: Routes = [
+  { path: '', redirectTo: 'reservations', pathMatch: 'full' },  
+  { path: 'home', component: MainpageComponent }, 
   { path: 'filter', component: RoomsFilterComponent },
   { path: 'planner', component: RoomAvailabilityGanttComponent },
   
   { path: 'matdia', component: NewRoomsFilterComponent },
-  { path: 'filterroom', component: FilterNavsComponent,
-    children:[
-      { path: '', redirectTo: 'allrooms', pathMatch: 'full', outlet: 'filternav' },
-      {path: 'allrooms', component:RoomsFilterComponent, outlet:'filternav'},
-      {path: 'reslist', component:ReservationsListComponent, outlet:'filternav'},
-      {path: 'planner', component:RoomAvailabilityGanttComponent, outlet:'filternav'}
+  // { path: 'filterroom', component: FilterNavsComponent,
+  //   children:[
+  //     { path: '', redirectTo: 'allrooms', pathMatch: 'full', outlet: 'filternav' },
+  //     {path: 'allrooms', component:RoomsFilterComponent, outlet:'filternav'},
+  //     {path: 'reslist', component:ReservationsListComponent, outlet:'filternav'},
+  //     {path: 'planner', component:RoomAvailabilityGanttComponent, outlet:'filternav'}
 
-    ]
-   },
+  //   ]
+  //  },
 
    { path: 'reservations', component: ResNavComponent,
     children:[

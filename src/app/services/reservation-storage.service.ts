@@ -185,4 +185,14 @@ export class ReservationStorageService {
   private isValidStatus(status: string): boolean {
     return ['CONFIRM', 'CHECKED-IN', 'CHECKED-OUT'].includes(status);
   }
+
+   // Method to get all unique customer emails
+   getAllCustomerEmails(): Observable<string[]> {
+    const reservations = this.getReservations();
+    
+    // Get all unique emails from the reservations
+    const uniqueEmails = [...new Set(reservations.map(res => res.customer.email))];
+    
+    return of(uniqueEmails);  // Return an observable of the unique emails array
+  }
 }

@@ -4,7 +4,6 @@ import { StayService } from '../services/stays.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
-import { Reservation } from '../Interfaces/reservation';
 import { CalendarRoom } from '../Interfaces/calendar-room';
 import { EventEmitter, Output } from '@angular/core';
 
@@ -18,6 +17,11 @@ export interface SimplifiedReservation {
 interface ValidDeparture {
   date: string;    // Departure date in "YYYY-MM-DD"
   stays: Stay[];   // Stays that enable this departure date
+}
+
+interface ValidArrival {
+  date: string;    // Arrival date in "YYYY-MM-DD"
+  stays: Stay[];   // Stays that enable this arrival date
 }
 
 @Component({
@@ -147,7 +151,7 @@ export class DualCalendarComponent implements OnInit {
   const isBookable = this.isWithinBookingWindow(today, bookDateFrom, bookDateTo);
 
   if (!isBookable) {
-    console.log(`Room ${stay.roomId} is not bookable today.`);
+    // console.log(`Room ${stay.roomId} is not bookable today.`);
     return arrivalDates; // If today's date is not within the booking window, return an empty set
   }
 
@@ -178,6 +182,7 @@ export class DualCalendarComponent implements OnInit {
 
   return arrivalDates;
 }
+
 isWithinBookingWindow(today: Date, bookDateFrom: Date | null, bookDateTo: Date | null): boolean {
   // If bookDateFrom is provided, today should not be earlier than bookDateFrom
   const validFrom = !bookDateFrom || today >= bookDateFrom;
