@@ -61,6 +61,10 @@ export class RoomAvailabilityGanttComponent implements OnInit {
   isMouseDown = false;
   selectedCells: Set<string> = new Set();
   
+  twoMonthDays: number[] = [];
+  firstMonthDays: number = 0; // To store days count for the first month of the pair
+  nextMonths: number = this.selectedMonth + 1; // To track the second month in the view
+
 
 
 
@@ -90,23 +94,28 @@ export class RoomAvailabilityGanttComponent implements OnInit {
 
   private loadReservations(): void {
     const reservationData = this.reservationStorageService.getReservations();
-    this.reservations = reservationData.map((item) => item.reservation); // Extract reservation objects
+    this.reservations = reservationData.map((item) => item.reservation);
+  
+    // Update availability logic after reservations are loaded
     this.updateRoomAvailability();
-    this.generateChart(this.selectedMonth);
+    this.generateTwoMonthChart();
+
   }
-  // Updates room availability based on stays and reservations
+  
   updateRoomAvailability(): void {
     const reservationMap: { [roomId: number]: Availability[] } = {};
   
-    // Process reservations to map them by roomId
+    // Iterate over reservations and fix date offsets
     this.reservations.forEach((reservation) => {
       const roomId = reservation.roomId;
+  
+      // Set check-in at 11:00 AM and check-out at 10:00 AM
       const startDate = new Date(reservation.arrivalDate);
       const endDate = new Date(reservation.departureDate);
   
-      // Set check-in and check-out times for reservations
-      startDate.setHours(11, 0, 0, 0); // Check-in at 11:00 AM
-      endDate.setHours(10, 0, 0, 0);   // Check-out at 10:00 AM
+      // Correct start time (11 AM check-in) and end time (10 AM checkout)
+      startDate.setHours(11, 0, 0, 0);
+      endDate.setHours(10, 0, 0, 0);
   
       if (!reservationMap[roomId]) {
         reservationMap[roomId] = [];
@@ -115,54 +124,85 @@ export class RoomAvailabilityGanttComponent implements OnInit {
       reservationMap[roomId].push({
         start: startDate,
         end: endDate,
-        status: reservation.status, // Track reservation status
+        status: reservation.status, // Keep status for reservation
       });
     });
   
-    // Create the availabilityTable by mapping rooms with their stays and reservations
+    // Create the availability table
     this.availabilityTable = this.rooms.map((room) => ({
       roomId: room.roomId,
-      stays: this.stays.filter(stay => stay.roomId === room.roomId), // Assign stays from the API filtered by roomId
-      reservations: reservationMap[room.roomId] || [] // Assign reservations from the reservationMap for this room
+      stays: this.stays.filter(stay => stay.roomId === room.roomId),
+      reservations: reservationMap[room.roomId] || []
     }));
-  
-    // Log the availabilityTable for verification
-    console.log(this.availabilityTable, "Updated availability table with stays and reservations.");
   }
   
+  
+  // Generate chart for two months at once
+generateTwoMonthChart(): void {
+  // Get days for the selected month and the next month
+  const daysInFirstMonth = new Date(this.year, this.selectedMonth, 0).getDate();
+  const daysInSecondMonth = new Date(this.year, this.nextMonths, 0).getDate();
+
+  this.firstMonthDays = daysInFirstMonth; // Store the number of days for the first month
+  this.twoMonthDays = [
+    ...Array.from({ length: daysInFirstMonth }, (_, i) => i + 1),
+    ...Array.from({ length: daysInSecondMonth }, (_, i) => i + 1),
+  ];
+}
+
+// Navigate to the previous set of two months
+previousMonthSet(): void {
+  if (this.selectedMonth === 1) {
+    this.selectedMonth = 11;
+    this.nextMonths = 12;
+    this.year--;
+  } else {
+    this.nextMonths = this.selectedMonth; // Move next month back by 1
+    this.selectedMonth--; // Move current month back by 1
+  }
+  this.generateTwoMonthChart();
+  this.clearAllSelections();
+}
+
+// Navigate to the next set of two months
+nextMonthSet(): void {
+  if (this.selectedMonth === 12) {
+    this.selectedMonth = 1;
+    this.nextMonths = 2;
+    this.year++;
+  } else {
+    this.selectedMonth++;
+    this.nextMonths = this.selectedMonth + 1;
+  }
+  this.generateTwoMonthChart();
+  this.clearAllSelections();
+}
+
+// Get the day name for either month
+getDayName(day: number, isSecondMonth: boolean = false): string {
+  const month = isSecondMonth ? this.nextMonths - 1 : this.selectedMonth - 1;
+  const date = new Date(this.year, month, day);
+  return date.toLocaleDateString('en-US', { weekday: 'short' }); // e.g., "Mon"
+}
+
+
   
   
   
   
 
-  // Utility Functions
-  isWeekend(day: number): boolean {
-    const date = new Date(this.year, this.selectedMonth - 1, day);
-    const dayOfWeek = date.getDay();
-    return dayOfWeek === 0 || dayOfWeek === 6;
-  }
+isWeekend(day: number, isSecondMonth: boolean = false): boolean {
+  // Determine the correct month based on whether it's the second month or not
+  const month = isSecondMonth ? this.nextMonths - 1 : this.selectedMonth - 1;
+  const date = new Date(this.year, month, day);
+  const dayOfWeek = date.getDay();
 
-  previousMonth(): void {
-    if (this.selectedMonth === 1) {
-      this.selectedMonth = 12;
-      this.year--;
-    } else {
-      this.selectedMonth--;
-    }
-    this.generateChart(this.selectedMonth);
-    this.clearAllSelections();
-  }
+  // Return true if it's a weekend (Saturday or Sunday)
+  return dayOfWeek === 0 || dayOfWeek === 6;
+}
 
-  nextMonth(): void {
-    if (this.selectedMonth === 12) {
-      this.selectedMonth = 1;
-      this.year++;
-    } else {
-      this.selectedMonth++;
-    }
-    this.generateChart(this.selectedMonth);
-    this.clearAllSelections();
-  }
+
+ 
 
   getMonthName(monthNumber: number): string {
     const month = this.months.find(m => m.value === monthNumber);
@@ -174,16 +214,7 @@ export class RoomAvailabilityGanttComponent implements OnInit {
   }
   
 
-  getDayName(day: number): string {
-    const year = 2024;
-    const date = new Date(year, this.selectedMonth - 1, day);
-    return date.toLocaleDateString('en-US', { weekday: 'short' }); // e.g., "Sun", "Mon"
-  }
 
-  generateChart(month: number): void {
-    const daysInMonth = new Date(this.year, month, 0).getDate();
-    this.days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  }
 
 
   onMouseDown(roomId: number, day: number, event: MouseEvent) {
@@ -322,22 +353,29 @@ export class RoomAvailabilityGanttComponent implements OnInit {
 
 
 
-private isBlockedByReservation(roomId: number, startDay: number, endDay: number): boolean {
-  const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
-  if (!roomData) return false;
-
-  const startDate = new Date(this.year, this.selectedMonth - 1, startDay);
-  const endDate = new Date(this.year, this.selectedMonth - 1, endDay);
-
-  // Check if any reservation overlaps with the selection
-  return roomData.reservations.some((reservation) => {
-    const reservStartDate = new Date(reservation.start);
-    const reservEndDate = new Date(reservation.end);
-
-    // Check for overlap: Reservation starts before selection ends and ends after selection starts
-    return reservStartDate <= endDate && reservEndDate >= startDate;
-  });
-}
+  private isBlockedByReservation(roomId: number, startDay: number, endDay: number): boolean {
+    const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
+    if (!roomData) return false;
+  
+    const startDate = new Date(this.year, this.selectedMonth - 1, startDay);
+    const endDate = new Date(this.year, this.selectedMonth - 1, endDay);
+  
+    return roomData.reservations.some((reservation, index) => {
+      const reservStartDate = new Date(reservation.start);
+      const reservEndDate = new Date(reservation.end);
+  
+      // Overlapping logic adjustment for time-based comparison
+      const nextReservation = roomData.reservations[index + 1];
+      const overlap = nextReservation && 
+                      reservEndDate.getDate() === nextReservation.start.getDate() &&
+                      reservEndDate.getHours() === 10 && 
+                      nextReservation.start.getHours() === 11;
+  
+      // Return true if there's overlap or any normal overlap condition
+      return (reservStartDate <= endDate && reservEndDate >= startDate) || overlap;
+    });
+  }
+  
 
 
 
@@ -423,60 +461,59 @@ isArrivalDay(roomId: number, day: number): boolean {
   
 
   getCellClass(roomId: number, day: number): string {
-    const date = new Date(this.year, this.selectedMonth - 1, day);
+    const date = new Date(this.year, this.selectedMonth - 1, day); // Handle month and day
     date.setHours(0, 0, 0, 0); // Normalize date to start at midnight
   
     const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
     if (!roomData) return '';
   
-    // Check if the date is an arrival day
-    const isArrivalDay = roomData.stays.some(stay => 
-      new Date(stay.stayDateFrom) <= date &&
-      new Date(stay.stayDateTo) >= date &&
-      stay.arrivalDays.includes(date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase())
-    );
+    // Check if there's an overlap between two reservations on the same day AND same month
+    const isOverlapping = roomData.reservations.some((reserv, index) => {
+      const reservEnd = new Date(reserv.end);
+      const nextReserv = roomData.reservations[index + 1];
   
-    // Check if the date falls within any available stay
-    const isAvailable = roomData.stays.some(
-      (stay) => date >= new Date(stay.stayDateFrom) && date <= new Date(stay.stayDateTo)
-    );
+      // Check for overlap on the same day and month
+      if (nextReserv) {
+        const nextReservStart = new Date(nextReserv.start);
+        return (
+          reservEnd.getDate() === day &&
+          reservEnd.getMonth() === this.selectedMonth - 1 && // Match the current month
+          reservEnd.getHours() === 10 &&
+          nextReservStart.getDate() === day &&
+          nextReservStart.getMonth() === this.selectedMonth - 1 && // Ensure same month
+          nextReservStart.getHours() === 11
+        );
+      }
+      return false;
+    });
   
-    // Check reservation status (e.g., "CONFIRM", "CHECKED-IN", or "CHECKED-OUT")
+    // Return the correct class if overlap is detected
+    if (isOverlapping) {
+      return 'overlap';
+    }
+  
+    // Add more checks for reservation status and other conditions
     const isReserved = roomData.reservations.some(
-      (reserv) => date >= reserv.start && date <= reserv.end && reserv.status === 'CONFIRM'
+      reserv => date >= reserv.start && date <= reserv.end && reserv.status === 'CONFIRM'
     );
-    
     const isCheckedIn = roomData.reservations.some(
-      (reserv) => date >= reserv.start && date <= reserv.end && reserv.status === 'CHECKED-IN'
+      reserv => date >= reserv.start && date <= reserv.end && reserv.status === 'CHECKED-IN'
     );
-    
     const isCheckedOut = roomData.reservations.some(
-      (reserv) => date >= reserv.start && date <= reserv.end && reserv.status === 'CHECKED-OUT'
+      reserv => date >= reserv.start && date <= reserv.end && reserv.status === 'CHECKED-OUT'
     );
   
     const isSelected = this.selectedCells.has(`${roomId}-${day}`);
   
-    // Determine the appropriate class based on the conditions
-    if (isArrivalDay && isAvailable && !isReserved && !isCheckedIn && !isCheckedOut) {
-      return isSelected ? 'selected-arrival-day' : 'arrival-day'; // Highlight arrival days with a specific color
-    }
-  
-    if (isReserved && isCheckedIn && isArrivalDay) {
-      return 'checkedin-arrival-day'; // Specific class for checked-in on arrival day
-    }
-    if (isReserved && isCheckedOut && isArrivalDay) {
-      return 'checkedout-arrival-day'; // Specific class for checked-out on arrival day
-    }
-  
+    // Handle the coloring based on status and selection
     if (isCheckedIn) return 'checkedin';
     if (isCheckedOut) return 'checkedout';
-    if (isReserved) return 'reserved'; // Red color for reservations
+    if (isReserved) return 'reserved';
+    if (isSelected) return 'selected';
   
-    if (isAvailable) return isSelected ? 'selected available' : 'available'; 
-    if (isSelected) return 'selected'; // Blue color for selected cells
-  
-    return 'not-available'; // Default color for cells that are not available
+    return 'available'; // Default for available rooms
   }
+  
   
 
   // Validation and Selection Finalization

@@ -1,41 +1,56 @@
 <div class="spacer"></div>
-<div class="container ">
-    <div class="month-header">
-      <div class="month-name">
-        {{ getCurrentMonthName() }} {{ year }}
-      </div>
-      <div class="month-controls">
-        <button (click)="previousMonth()" class="btn left">
-          <i class="fa fa-chevron-left"></i>
-        </button>
-        <button (click)="nextMonth()" class="btn right">
-          <i class="fa fa-chevron-right"></i>
-        </button>
-      </div>
+<div class="container">
+  <div class="month-header">
+    <div class="month-name">
+      {{ getMonthName(selectedMonth) }} - {{ getMonthName(nextMonths) }} {{ year }}
     </div>
-    <div class="chart-container">
-      <!-- Chart content remains unchanged -->
-      <div class="chart" [style.grid-template-columns]="'repeat(' + (days.length + 1) + ', 1fr)'">
-        <div class="day-header">Rooms</div>
-        <div *ngFor="let day of days" [ngClass]="{ 'day-header': true, 'weekend': isWeekend(day) }">
-          {{ day }}
-          <br>
-          <span>{{ getDayName(day) }}</span>
+    <div class="month-controls">
+      <button (click)="previousMonthSet()" class="btn left">
+        <i class="fa fa-chevron-left"></i>
+      </button>
+      <button (click)="nextMonthSet()" class="btn right">
+        <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <!-- Chart Grid: Sticky room names, scrollable months -->
+    <div class="chart" [style.grid-template-columns]="'150px repeat(' + (twoMonthDays.length + 1) + ', 1fr)'">
+      <!-- Room Column Header -->
+      <div class="day-header">Rooms</div>
+
+      <div *ngFor="let day of twoMonthDays; let idx = index" 
+      [ngClass]="{ 'day-header': true, 'weekend': isWeekend(day, idx >= firstMonthDays) }">
+   {{ day }}
+   <br>
+   <span *ngIf="idx < firstMonthDays">{{ getDayName(day, false) }} - {{ getMonthName(selectedMonth) }}</span>
+   <span *ngIf="idx >= firstMonthDays">{{ getDayName(day, true) }} - {{ getMonthName(nextMonths) }}</span>
+ </div>
+ 
+
+      <!-- Room Rows -->
+      <ng-container *ngFor="let room of rooms">
+        <!-- Sticky Room Name -->
+        <div class="room-name sticky">
+          {{ room.roomId }}
         </div>
-        <ng-container *ngFor="let room of rooms">
-          <div class="room-name "> {{ room.roomId }}</div>
-          <div *ngFor="let day of days" 
-            [ngClass]="getCellClass(room.roomId,day)"
-            (mousedown)="onMouseDown(room.roomId, day, $event)"
-            (mouseover)="onMouseOver(room.roomId, day, $event)"
-            (mouseup)="onMouseUp($event)"
-            class="cell" 
-            [class.arrival-day]="isArrivalDay(room.roomId, day)"
-            [ngStyle]="{ 'pointer-events': isCellClickable(room.roomId, day) ? 'auto' : 'none' }">
-          </div>
-        </ng-container>
-      </div>
+
+        <!-- Render Cells for Two Months -->
+        <div *ngFor="let day of twoMonthDays; let idx = index"
+             [ngClass]="getCellClass(room.roomId, day)"
+             (mousedown)="onMouseDown(room.roomId, day, $event)"
+             (mouseover)="onMouseOver(room.roomId, day, $event)"
+             (mouseup)="onMouseUp($event)"
+             class="cell"
+             [ngStyle]="{ 'pointer-events': isCellClickable(room.roomId, day) ? 'auto' : 'none' }">
+        </div>
+      </ng-container>
     </div>
+  </div>
+</div>
+
+
 
     <!-- Legend Container -->
 <div class="container">

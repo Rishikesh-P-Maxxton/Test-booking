@@ -280,3 +280,10 @@
   font-size: 1rem; /* Font size for the legend text */
   color: #495057; /* Dark gray color for text */
 }
+
+/* Overlapping reservation cell (orange) */
+.cell.overlap {
+  background-color: orange;
+  color: #fff;
+  border-radius: 0;
+}
