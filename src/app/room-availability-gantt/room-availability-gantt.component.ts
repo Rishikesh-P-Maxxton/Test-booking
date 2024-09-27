@@ -187,69 +187,118 @@ export class RoomAvailabilityGanttComponent implements OnInit {
 
 
   onMouseDown(roomId: number, day: number, event: MouseEvent) {
-    console.log(`onMouseDown triggered - Room ID: ${roomId}, Day: ${day}`);
     event.preventDefault();
     this.isMouseDown = true;
   
-    // Check if the starting day is an arrival day
+    // Check if the selected day is a valid arrival day
     if (!this.isArrivalDay(roomId, day)) {
-      console.log('Starting day is not an arrival day. Clearing selection.');
-      this.clearAllSelections(); // Clear all selections if starting day is not an arrival day
+      this.clearAllSelections(); // Clear if the start day is not a valid arrival day
       return;
     }
   
-    // Clear previous selection if any
-    if (this.selectedRoomId !== null) {
-      console.log(`Clearing previous selection for Room ID: ${this.selectedRoomId}`);
-      this.clearAllSelections();
-    }
-  
     this.selectedRoomId = roomId;
-    this.startDay = day; // Track the starting day
+    this.startDay = day;
   
-    console.log(`Check-in at 11:00 AM on day ${day}`);
-    
-    this.addSelection(day, day, roomId); // Start with a single cell selection
+    const roomData = this.availabilityTable.find(data => data.roomId === roomId);
+    if (!roomData) return;
+  
+    const startDate = new Date(this.year, this.selectedMonth - 1, day);
+    startDate.setHours(11, 0, 0, 0); // Check-in time at 11:00 AM
+  
+    // Find the stay that makes this day a valid arrival day
+    const validStay = roomData.stays.find(stay => {
+      const stayFrom = new Date(stay.stayDateFrom);
+      const stayTo = new Date(stay.stayDateTo);
+  
+      const bookFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : new Date();
+      const bookTo = stay.bookDateTo ? new Date(stay.bookDateTo) : stayTo;
+  
+      return (
+        startDate >= stayFrom &&
+        startDate <= stayTo &&
+        startDate >= bookFrom &&
+        startDate <= bookTo &&
+        stay.arrivalDays.includes(startDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase())
+      );
+    });
+  
+    if (validStay) {
+      console.log('Stay object:', validStay); // Log the stay object that makes this day a valid arrival day
+  
+      // Highlight valid departure days based on the stay's constraints
+      this.highlightValidDepartureDays(startDate, validStay);
+    }
+  }
+  highlightValidDepartureDays(arrivalDate: Date, stay: Stay): void {
+    const minStay = stay.minStay || 1;
+    const maxStay = stay.maxStay || Infinity;
+  
+    const stayFrom = new Date(stay.stayDateFrom);
+    const stayTo = new Date(stay.stayDateTo);
+  
+    // Start highlighting from the selected arrival date
+    let currentDay = new Date(arrivalDate);
+  
+    // Loop through the possible departure days, considering minStay and maxStay
+    for (let i = minStay; i <= maxStay; i++) {
+      const departureDate = new Date(currentDay);
+      departureDate.setDate(arrivalDate.getDate() + i);
+  
+      // Ensure the departure date is within the stay period
+      if (departureDate >= stayFrom && departureDate <= stayTo) {
+        const day = departureDate.getDate();
+  
+        // Add departure day highlighting
+        if (this.selectedRoomId !== null) {
+          this.addSelection(day, day, this.selectedRoomId);
+        } else {
+          console.error('Selected room ID is null');
+        }
+      }
+    }
   }
   
-
-
+  
   onMouseOver(roomId: number, day: number, event: MouseEvent) {
     event.preventDefault();
     if (this.isMouseDown && roomId === this.selectedRoomId) {
-      this.endDay = day; // Track the ending day
-      this.updateSelection(roomId); // Update the selected range of cells
+      this.endDay = day;
   
-      console.log(`Updating selection range - Start: ${this.startDay}, End: ${this.endDay}`);
+      // Highlight valid departure days dynamically
+      this.updateSelection(roomId);
+  
+      console.log(`Dragging: Start day ${this.startDay}, End day ${this.endDay}`);
     }
   }
   
-
   onMouseUp(event: MouseEvent) {
-    console.log(`onMouseUp - Selected Room ID: ${this.selectedRoomId}`);
     this.isMouseDown = false;
   
-    // Ensure startDay and endDay are defined before proceeding
     if (this.selectedRoomId !== null && this.startDay !== undefined && this.endDay !== undefined) {
-      // If startDay and endDay are the same, auto-extend the selection by 1 day
-      if (this.startDay === this.endDay) {
-        console.log('Auto-extending selection to next day for a one-night stay.');
-        this.endDay = this.startDay + 1;
-      }
+      // Calculate the number of nights
+      const startDate = new Date(this.year, this.selectedMonth - 1, this.startDay);
+      const endDate = new Date(this.year, this.selectedMonth - 1, this.endDay);
+      
+      startDate.setHours(11, 0, 0, 0); // Check-in time
+      endDate.setHours(10, 0, 0, 0); // Check-out time
   
-      // Validate the selection after possibly extending it
+      const nights = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+      console.log(`Selected stay: ${nights} nights, from ${startDate} to ${endDate}`);
+      // Validate selection and confirm booking
       this.validateSelection(this.selectedRoomId);
-  
-      // If the selection is valid, finalize it
-      if (this.isSelectionValid()) {
-        this.takeSelections();
-      } else {
-        console.log('Selection is not valid. No action taken.');
-      }
     } else {
-      console.log("startDay or endDay is undefined, cannot proceed.");
+      console.log('No valid selection made.');
     }
   }
+  
+  
+
+
+
+  
+
+
   
   
   
@@ -348,16 +397,37 @@ isArrivalDay(roomId: number, day: number): boolean {
   const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
   if (!roomData) return false;
 
+  const today = new Date();
   const date = new Date(this.year, this.selectedMonth - 1, day);
+  date.setHours(0, 0, 0, 0); // Normalize date to midnight
+
+  if (date < today) {
+    return false; // No arrival days before today's date
+  }
+
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
-  // Now we check directly from the stays array
-  return roomData.stays.some(stay =>
-    new Date(stay.stayDateFrom) <= date &&
-    new Date(stay.stayDateTo) >= date &&
-    stay.arrivalDays.includes(dayOfWeek) // Check if the day is in the list of valid arrival days
-  );
+  // Check each stay for this room to validate if it's a valid arrival day
+  return roomData.stays.some(stay => {
+    const stayFrom = new Date(stay.stayDateFrom);
+    const stayTo = new Date(stay.stayDateTo);
+
+    // Ensure the date is within the stay period
+    const isWithinStay = date >= stayFrom && date <= stayTo;
+
+    // Ensure the day is one of the valid arrival days
+    const isArrivalDay = stay.arrivalDays.includes(dayOfWeek);
+
+    // Validate the booking window
+    const bookFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : today;
+    const bookTo = stay.bookDateTo ? new Date(stay.bookDateTo) : stayTo;
+    const isValidBookingDate = date >= bookFrom && date <= bookTo;
+
+    return isWithinStay && isArrivalDay && isValidBookingDate;
+  });
 }
+
+
 
   
 
@@ -373,28 +443,55 @@ isArrivalDay(roomId: number, day: number): boolean {
     const roomData = this.availabilityTable.find((data) => data.roomId === roomId);
     if (!roomData) return;
   
-    let currentStart = start;
-    let currentEnd = end;
+    // Loop through the stays for this room
+    roomData.stays.forEach(stay => {
+      const minStay = stay.minStay || 1;
+      const maxStay = stay.maxStay || Infinity;
   
-    // Process reservations, avoid blocking selections by reservations
-    roomData.reservations.forEach((reservation) => {
-      const reservationStart = reservation.start.getDate();
-      const reservationEnd = reservation.end.getDate();
+      const startDate = new Date(this.year, this.selectedMonth - 1, start);
+      const stayFrom = new Date(stay.stayDateFrom);
+      const stayTo = new Date(stay.stayDateTo);
+      
+      // Set max possible departure date based on max stay or the end of the stay
+      const maxPossibleDepartureDate = new Date(Math.min(startDate.getTime() + (maxStay * 86400000), stayTo.getTime()));
   
-      if (currentStart <= reservationEnd && currentEnd >= reservationStart) {
-        if (currentStart < reservationStart) {
-          this.addSelection(currentStart, reservationStart - 1, roomId);
+      // Loop through potential departure days, starting from the selected arrival day
+      for (let date = new Date(startDate); date <= maxPossibleDepartureDate; date.setDate(date.getDate() + 1)) {
+        const day = date.getDate();
+        
+        // Validate the departure day
+        if (this.isValidDepartureDay(day, stay)) {
+          this.addSelection(start, day, roomId); // Highlight valid departure days
         }
-        currentStart = Math.max(currentEnd + 1, reservationEnd + 1);
       }
     });
   
-    if (currentStart <= currentEnd && !this.isBlockedByReservation(roomId, currentStart, currentEnd)) {
-      this.addSelection(currentStart, currentEnd, roomId);
-    }
-  
-    this.validateSelection(roomId);
+    this.validateSelection(roomId); // Validate the overall selection
   }
+  
+  
+  isValidDepartureDay(day: number, stay: Stay): boolean {
+    const stayFrom = new Date(stay.stayDateFrom);
+    const stayTo = new Date(stay.stayDateTo);
+    
+    const departureDate = new Date(this.year, this.selectedMonth - 1, day);
+    const dayOfWeek = this.getDayOfWeek(departureDate); // Get the day of the week (e.g., MON, TUE)
+  
+    // Check if the departure date is within the stay period
+    const isWithinStay = departureDate >= stayFrom && departureDate <= stayTo;
+  
+    // Check if the departure day is one of the allowed departure days
+    const isDepartureDay = stay.departureDays.includes(dayOfWeek);
+  
+    return isWithinStay && isDepartureDay;
+  }
+  
+  // Helper function to get the day of the week
+  getDayOfWeek(date: Date): string {
+    const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    return daysOfWeek[date.getDay()];
+  }
+  
   
 
 
