@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal Thin Pie Chart Dashboard</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .chart-container {
+      width: 100%;
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pie-chart {
+      width: 120px; /* Size of the pie chart */
+      height: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .pie-chart svg {
+      width: 100%;
+      height: 100%;
+    }
+    .pie-chart circle {
+      fill: none;
+      stroke-width: 2; /* Thin stroke width */
+    }
+    .confirmed { stroke: #a1c4fd; } /* Muted blue */
+    .checked-in { stroke: #c2c2f0; } /* Muted light blue */
+    .checked-out { stroke: #ffadad; } /* Muted pink */
+    .center-text {
+      position: absolute;
+      font-size: 2.5rem; /* Adjusted size for better visibility */
+      font-weight: bold;
+      color: #333;
+    }
+    .legend {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin-left: 20px;
+    }
+    .legend div {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .legend .color-box {
+      width: 15px;
+      height: 15px;
+      margin-right: 5px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="row">
+      <!-- 8 Columns occupied by an empty div -->
+      <div class="col-md-8">
+        <div class="empty-box" style="height: 250px; background-color: #f8f9fa;"></div>
+      </div>
+      <!-- 4 Columns with Pie Chart and Legend -->
+      <div class="col-md-4">
+        <div class="chart-container">
+          <div class="pie-chart">
+            <svg viewBox="0 0 32 32" >
+              <!-- Background Circle -->
+              <circle r="14" cx="16" cy="16" stroke="#e9ecef" stroke-width="5"></circle>
+              <!-- Pie Chart Segments -->
+              <circle class="confirmed" r="14" cx="16" cy="16" stroke-dasharray="30 70" transform="rotate(-90 16 16)" />
+              <circle class="checked-in" r="14" cx="16" cy="16" stroke-dasharray="50 50" transform="rotate(-90 16 16)" />
+              <circle class="checked-out" r="14" cx="16" cy="16" stroke-dasharray="20 80" transform="rotate(-90 16 16)" />
+            </svg>
+            <!-- Using Bootstrap display class -->
+            <div class="center-text display-4">6</div>
+          </div>
+          <div class="legend">
+            <div><span class="color-box" style="background-color: #a1c4fd;"></span> Confirmed</div>
+            <div><span class="color-box" style="background-color: #c2c2f0;"></span> Checked In</div>
+            <div><span class="color-box" style="background-color: #ffadad;"></span> Checked Out</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

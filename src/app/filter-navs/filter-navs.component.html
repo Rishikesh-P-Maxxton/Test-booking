@@ -1,54 +1,85 @@
-<div class="container  mt-4">
-    <!-- Jumbotron -->
-    <div class="row">
-      <div class="col-9">
-        <div class="jumbotron p-4">
-          <div class="display-6">Rooms </div>
-          <p class="lead">All rooms data</p>
-        </div>
-      </div>
-      <div class="col-3" routerLink="/reslist">
-        <div class="jumbotron p-4">
-          <div class="display-6">{{ reservationCount }} </div>
-          <p class="lead">Total Reservations</p>
-        </div>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-8">
+      <div class="jumbotron jumbotron-full j1">
+        <div class="display-6">Reservations</div>
+        <p class="lead">Securing stays at our destination</p>
       </div>
     </div>
-    
+    <div class="col-4" >
+      <div class="jumbotron p-4">
+        <div class="chart-container">
+          <div class="pie-chart">
+            <svg viewBox="0 0 32 32">
+              <!-- Background Circle -->
+              <circle r="14" cx="16" cy="16" stroke="#e9ecef" stroke-width="5"></circle>
+            
+              <!-- Checked-In Segment -->
+              <circle
+                class="checked-in"
+                r="14"
+                cx="16"
+                cy="16"
+                [attr.stroke-dasharray]="checkedInDashArray"
+                transform="rotate(-90 16 16)"
+                matTooltip="Checked In: {{ checkedInCount }} reservations"
+                matTooltipPosition="above"
+              ></circle>
+            
+              <!-- Confirmed Reservations Segment -->
+              <circle
+                class="confirmed"
+                r="14"
+                cx="16"
+                cy="16"
+                [attr.stroke-dasharray]="confirmedDashArray"
+                transform="rotate(-90 16 16)"
+                matTooltip="Confirmed: {{ confirmedCount }} reservations"
+                matTooltipPosition="above"
+              ></circle>
+            </svg>
+            
 
-    <!-- Navigation Tabs -->
-    <div class="row">
-      <div class="col-12">
-        <div class="nav-container mt-4">
-          <ul class="nav nav-tabs">
-            <li class="nav-item">
-              <a class="nav-link active" 
-                 [routerLink]="[{ outlets: { filternav: ['allrooms'] } }]"
-                 routerLinkActive="active"
-                 [routerLinkActiveOptions]="{ exact: true }">
-                All Rooms
-              </a>
-            </li>
-            <!-- <li class="nav-item">
-              <a class="nav-link" 
-                 [routerLink]="[{ outlets: { filternav: ['reslist'] } }]"
-                 routerLinkActive="active"
-                 [routerLinkActiveOptions]="{ exact: true }">
-                Reservations
-              </a>
-            </li> -->
-            <li class="nav-item">
-                <a class="nav-link" 
-                   [routerLink]="[{ outlets: { filternav: ['planner'] } }]"
-                   routerLinkActive="active"
-                   [routerLinkActiveOptions]="{ exact: true }">
-                  Planner
-                </a>
-              </li>
-          </ul>
+            
+
+            <!-- Number Display in Center -->
+            <div class="center-text display-4">{{ totalReservationsCount }}</div>
+          </div>
+          <!-- Text Below the Chart -->
+          <p class="this">Total <br> Active Reservations</p>
         </div>
       </div>
     </div>
   </div>
-  <router-outlet name="filternav"></router-outlet>
-  
+   <!-- Navigation Tabs -->
+   <!-- <div class="row">
+    <div class="col-12">
+      <div class="nav-container mt-4">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link btn-dark-grey active"
+               [routerLink]="[{ outlets: { filternav: ['allrooms'] } }]"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: true }">
+              All Rooms
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn-dark-grey"
+               [routerLink]="[{ outlets: { filternav: ['planner'] } }]"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: true }">
+              Planner
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+    </div>
+  </div>
+
+<router-outlet name="filternav"></router-outlet> -->
+
+</div>
+

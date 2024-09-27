@@ -1,3 +1,5 @@
+
+
 import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../services/room.service';
@@ -9,6 +11,8 @@ import { MatStepper } from '@angular/material/stepper';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { GeolocsService } from '../services/geolocs.service';
 
+
+import { MatDialog } from '@angular/material/dialog';
 interface FilteredRoom {
   roomId: number;
   locationId: number;
@@ -21,12 +25,11 @@ interface FilteredRoom {
 }
 
 @Component({
-  selector: 'app-rooms-filter',
-  templateUrl: './rooms-filter.component.html',
-  styleUrls: ['./rooms-filter.component.css'],
- 
+  selector: 'app-room-filter-button',
+  templateUrl: './room-filter-button.component.html',
+  styleUrl: './room-filter-button.component.css'
 })
-export class RoomsFilterComponent implements OnInit {
+export class RoomFilterButtonComponent implements OnInit {
 
   emailForm: FormGroup;
   existingCustomer!: Customer  | undefined ;
@@ -49,6 +52,7 @@ export class RoomsFilterComponent implements OnInit {
   numberOfGuestsOptions: number[] = [];
   isConfirmDisabled = true;
   currentStep = 0;
+  
 
 
   dateFilterApplied = false; 
@@ -63,7 +67,9 @@ export class RoomsFilterComponent implements OnInit {
   selectedStateId: string | null = null;
 
   @ViewChild('stepper') stepper!: MatStepper;
+  @ViewChild('dialogTemplate') dialogTemplate: any;
   displayedColumns: any;
+step:number =1;
   
 
   constructor(
@@ -71,7 +77,8 @@ export class RoomsFilterComponent implements OnInit {
     private stayService: StayService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
-    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService
+    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService,
+    public dialog: MatDialog
 
   ) {
     this.filterForm = this.fb.group({
@@ -144,6 +151,25 @@ export class RoomsFilterComponent implements OnInit {
     this.paymentForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
+  }
+
+
+    // Method to open the filter dialog
+    openDialog(): void {
+      this.dialog.open(this.dialogTemplate, {
+        width: '600px'
+      });
+    }
+
+     // Method to go back to the form step
+  goBack(): void {
+    this.step = 1;
+  }
+
+  // Log the selected room when the "Book" button is clicked
+  selectRoom(room: FilteredRoom): void {
+    console.log('Selected Room:', room);
+    // Here, instead of logging, you can handle the actual booking logic
   }
 
   ngOnInit(): void {

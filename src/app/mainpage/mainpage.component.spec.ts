@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RoomShowcaseComponent } from './room-showcase.component';
+import { MainpageComponent } from './mainpage.component';
 
-describe('RoomShowcaseComponent', () => {
-  let component: RoomShowcaseComponent;
-  let fixture: ComponentFixture<RoomShowcaseComponent>;
+describe('MainpageComponent', () => {
+  let component: MainpageComponent;
+  let fixture: ComponentFixture<MainpageComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [RoomShowcaseComponent]
+      declarations: [MainpageComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(RoomShowcaseComponent);
+    fixture = TestBed.createComponent(MainpageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

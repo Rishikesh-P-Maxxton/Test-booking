@@ -12,7 +12,6 @@ import { MatInputModule } from '@angular/material/input';
 import { RoomsFilterComponent } from './rooms-filter/rooms-filter.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { RoomAvailabilityChartComponent } from './room-availability-chart/room-availability-chart.component';
 import {MatStepperModule} from '@angular/material/stepper';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -27,7 +26,7 @@ import {MatListModule} from '@angular/material/list';
 
 
 import {MatButtonModule} from '@angular/material/button';
-import { RoomShowcaseComponent } from './room-showcase/room-showcase.component';
+
 
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 import { FilterNavsComponent } from './filter-navs/filter-navs.component';
@@ -36,9 +35,17 @@ import { NgxPaginationModule } from 'ngx-pagination';
 import {MatDialogModule} from '@angular/material/dialog';
 
 import { ModalComponent } from './modal/modal.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { BookingHistoryComponent } from './booking-history/booking-history.component';
+import { ResNavComponent } from './res-nav/res-nav.component';
 
+import { RoomFilterButtonComponent } from './room-filter-button/room-filter-button.component';
+import { NewRoomsFilterComponent } from './new-rooms-filter/new-rooms-filter.component';
+import { DualCalendarComponent } from './dual-calendar/dual-calendar.component';
+import { MainpageComponent } from './mainpage/mainpage.component';
 @NgModule({
-  declarations: [AppComponent, RoomsFilterComponent, RoomAvailabilityChartComponent, RoomShowcaseComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, ],
+
+declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent, MainpageComponent  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  
@@ -48,13 +55,13 @@ import { ModalComponent } from './modal/modal.component';
     MatFormFieldModule,
     MatDatepickerModule,
     MatInputModule, MatStepperModule,MatButtonModule,MatNativeDateModule,MatSelectModule,
-    MatCardModule, MatTableModule, MatListModule, MatDialogModule,   NgxPaginationModule, 
+    MatCardModule, MatTableModule, MatListModule, MatDialogModule,   NgxPaginationModule, MatTooltipModule 
     
   ],
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
-    provideNativeDateAdapter(), provideAnimationsAsync()
+    provideNativeDateAdapter(), provideAnimationsAsync(),
   ],
   bootstrap: [AppComponent],
 })

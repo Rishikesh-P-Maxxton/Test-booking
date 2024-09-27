@@ -1,0 +1,101 @@
+<div class="container">
+  <!-- Filter and Sorting Section -->
+  <div class="filter-sort-container mb-3 col-6-md">
+    <input type="text" [(ngModel)]="filterTerm" (input)="applyFilter()" class="form-control mb-2"
+           placeholder="Search by customer name, email, or room ID" />
+
+    <div class="sort-buttons">
+      <button (click)="sortBy('reservationId')" class="btn-custom-quo btn-sm">Sort by Reservation ID</button>
+      <button (click)="sortBy('totalPrice')" class="btn-custom-quo btn-sm">Sort by Total Price</button>
+      <button (click)="sortBy('arrivalDate')" class="btn-custom-quo btn-sm">Sort by Arrival Date</button>
+    </div>
+  </div>
+
+  <!-- Booking History Table -->
+  <div *ngIf="filteredReservations.length === 0">No reservations found.</div>
+  <table *ngIf="filteredReservations.length > 0" class="table">
+    <thead class="thead-light">
+      <tr>
+        <th>Reservation ID</th>
+        <th>Room ID</th>
+        <th>Stay From</th>
+        <th>Stay To</th>
+        <th>Total Guests</th>
+        <th>Total Price</th>
+        <th>Customer Name</th>
+        <th>Email</th> <!-- Added Email Column -->
+        <th>Status</th>
+        <th>Paid Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let reservation of filteredReservations; let i = index"
+          [ngClass]="{
+            'status-confirmed': reservation.reservation.status === 'CONFIRM',
+            'status-checked-in': reservation.reservation.status === 'CHECKED-IN',
+            'status-checked-out': reservation.reservation.status === 'CHECKED-OUT'
+          }"
+          class="table-row"
+          [ngStyle]="{'--animation-delay': i * 0.2 + 's'}"
+          (click)="openModal(reservation)">
+        <td>{{ reservation.reservation.reservationId }}</td>
+        <td>{{ reservation.reservation.roomId }}</td>
+        <td>{{ reservation.reservation.arrivalDate }}</td>
+        <td>{{ reservation.reservation.departureDate }}</td>
+        <td>{{ reservation.reservation.numberOfGuest }}</td>
+        <td>{{ reservation.reservation.totalPrice }}</td>
+        <td>{{ reservation.customer.firstName }} {{ reservation.customer.middleName }} {{ reservation.customer.lastName }}</td>
+        <td>{{ reservation.customer.email }}</td>
+        <td>{{ reservation.reservation.status }}</td>
+        <td>{{ reservation.reservation.paidAmount }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal for Reservation Details -->
+<div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reservationModalLabel">Reservation Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedReservation">
+        <p><strong>Reservation ID:</strong> {{ selectedReservation.reservation.reservationId }}</p>
+        <p><strong>Room ID:</strong> {{ selectedReservation.reservation.roomId }}</p>
+        <p><strong>Arrival Date:</strong> {{ selectedReservation.reservation.arrivalDate }}</p>
+        <p><strong>Departure Date:</strong> {{ selectedReservation.reservation.departureDate }}</p>
+        <p><strong>Total Guests:</strong> {{ selectedReservation.reservation.numberOfGuest }}</p>
+        <p><strong>Total Price:</strong> {{ selectedReservation.reservation.totalPrice }}</p>
+        <p><strong>Status:</strong> {{ selectedReservation.reservation.status }}</p>
+        <p><strong>Paid Amount:</strong> {{ selectedReservation.reservation.paidAmount }}</p>
+        <p><strong>Customer:</strong> {{ selectedReservation.customer.firstName }} {{ selectedReservation.customer.middleName}} {{ selectedReservation.customer.lastName }}</p>
+        <p><strong>Email:</strong> {{ selectedReservation.customer.email }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Clear All Reservations and Download Buttons -->
+<div class="container mt-4">
+  <button class="btn-custom-tri"  *ngIf="filteredReservations.length !== 0"(click)="showToast()">Archive Reservations</button>
+  <button class="btn-custom-sec ms-2" *ngIf="filteredReservations.length !== 0" (click)="downloadPDF()">Save Booking History </button>
+</div>
+
+<!-- Toast for confirmation -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+  <div id="confirmationToast" class="toast custom-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+    <div class="toast-body">
+      <span class="toast-message">Are you sure you want to archive all reservations?</span>
+      <div >
+        <button type="button" class="btn-custom " (click)="confirmClearReservations()">Confirm</button>
+        <button type="button" class="btn-custom-sec sec1" data-bs-dismiss="toast">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+

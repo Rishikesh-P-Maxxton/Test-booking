@@ -1,0 +1,68 @@
+<button mat-raised-button color="primary" (click)="openDialog()">Create Reservation</button>
+
+<!-- Dialog Template -->
+<ng-template #dialogTemplate>
+  <h2 mat-dialog-title>{{ step === 1 ? 'Filter Rooms' : 'Available Rooms' }}</h2>
+  
+  <mat-dialog-content>
+    <!-- Step 1: Filter Form -->
+    <div *ngIf="step === 1">
+      <form [formGroup]="filterForm">
+        <mat-form-field>
+          <mat-label>Arrival Date</mat-label>
+          <input matInput [matDatepicker]="arrivalPicker" formControlName="stayDateFrom">
+          <mat-datepicker-toggle matSuffix [for]="arrivalPicker"></mat-datepicker-toggle>
+          <mat-datepicker #arrivalPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Departure Date</mat-label>
+          <input matInput [matDatepicker]="departurePicker" formControlName="stayDateTo">
+          <mat-datepicker-toggle matSuffix [for]="departurePicker"></mat-datepicker-toggle>
+          <mat-datepicker #departurePicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Number of Guests</mat-label>
+          <input matInput type="number" formControlName="numberOfPersons">
+        </mat-form-field>
+      </form>
+    </div>
+
+    <!-- Step 2: Room List -->
+    <div *ngIf="step === 2">
+      <table mat-table [dataSource]="filteredRooms" class="mat-elevation-z8">
+        <ng-container matColumnDef="roomName">
+          <th mat-header-cell *matHeaderCellDef> Room Name </th>
+          <td mat-cell *matCellDef="let room"> {{ room.roomName }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="pricePerDay">
+          <th mat-header-cell *matHeaderCellDef> Price Per Day </th>
+          <td mat-cell *matCellDef="let room"> {{ room.pricePerDayPerPerson | currency }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="guestCapacity">
+          <th mat-header-cell *matHeaderCellDef> Guest Capacity </th>
+          <td mat-cell *matCellDef="let room"> {{ room.guestCapacity }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef> Action </th>
+          <td mat-cell *matCellDef="let room">
+            <button mat-button color="primary" (click)="selectRoom(room)">Book</button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['roomName', 'pricePerDay', 'guestCapacity', 'action']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['roomName', 'pricePerDay', 'guestCapacity', 'action'];"></tr>
+      </table>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Dialog Actions -->
+  <mat-dialog-actions>
+    <button mat-button *ngIf="step === 2" (click)="goBack()">Back</button>
+    <button mat-button *ngIf="step === 1" (click)="applyFilter()">Next</button>
+  </mat-dialog-actions>
+</ng-template>

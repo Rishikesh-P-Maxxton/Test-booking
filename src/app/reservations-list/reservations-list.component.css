@@ -140,4 +140,96 @@
     animation-delay: var(--animation-delay, 0s); /* Delay each row individually */
 }
 
-  
+    /* Buttons - Apply Green with Flat Design */
+    .btn-custom {
+        background-color: #4caf50; /* Muted/Brighter green */
+        color: #fff;
+        padding: 0.5rem 1rem;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        border: none; /* No border */
+        border-radius: 0; /* No border radius */
+        height: 2.5rem; /* Consistent with input fields */
+      }
+      
+      .btn-custom:hover {
+        background-color: #66bb6a; /* Lighter green on hover */
+      }
+      
+      .btn-custom-sec {
+        background-color: transparent;
+        color: #666;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0;
+        height: 2.5rem; /* Consistent with input fields */
+      }
+      .btn-custom-tri {
+        background-color: black;
+        color: #ffffff;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0;
+        height: 2.5rem; /* Consistent with input fields */
+      }
+      
+      .btn-custom-quo {
+        background-color: rgb(69, 69, 69);
+        color: #e4e4e4;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0;
+        height: 2.5rem; /* Consistent with input fields */
+      }
+      
+      .btn-custom-sec:hover {
+        color: #000;
+        background-color: #e0e0e0; /* Slightly lighter background on hover */
+      }
+      
+      .btn-custom-tri:hover {
+        color: #ffffff;
+        background-color: #757575; /* Slightly lighter background on hover */
+      }
+      .btn-custom-quo:hover {
+        color: #ffffff;
+        background-color: rgb(39, 39, 39);/* Slightly lighter background on hover */
+      }
+      /* Filter Section */
+    
+    
+      .form-control {
+        background-color: #e3e3e3;
+        border: none;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0;
+      }
+      
+      .form-control:focus {
+        background-color: #dcdcdc;
+        outline: none;
+      }
+      
+       .btn-custom {
+        margin-top: 1rem;
+        background-color: #4caf50;
+      }
+      
+      .btn-custom:hover {
+        background-color: #66bb6a;
+      }
+      
+     
+      /* Form Styling */
+      .custom-form {
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+      }
+      .this{
+        padding: .9rem 0;
+      }
+    

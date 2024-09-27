@@ -1,0 +1,124 @@
+
+<!-- Div that acts as a button/input -->
+<div class="col-md-4">
+    <div class="form-group mb-3">
+      <label for="selectDatesBtn" class="form-label">Select Dates</label>
+      <div 
+        id="selectDatesBtn" 
+        class="form-control square-input w-100 text-muted"
+        (click)="openDateModal()"
+      >
+        {{ formattedSelectedDates || 'When?' }}
+      </div>
+    </div>
+  </div>
+
+<!-- Modal for Dual Calendar -->
+<div class="modal fade" id="dualCalendarModal" tabindex="-1" aria-labelledby="dualCalendarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <p class="modal-title display-6" id="dualCalendarModalLabel">Choose arrival and departure day</p>
+                <button type="button" class="btn-close buttonclose" data-bs-dismiss="modal"(click)="resetSelection()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Month Navigation Controls -->
+                <div class="calendar-controls-right" style="width: 100%; display: flex; justify-content: flex-end;">
+                    <button (click)="previousMonthClick()" class="btn calendar-nav-btn left">
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <button (click)="nextMonthClick()" class="btn calendar-nav-btn right">
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Calendar for Current and Next Month -->
+                <div class="calendar-container" style="width: 720px; margin: 0 auto;">
+                    <div class="calendar">
+                        <div class="month-header-left">{{ getMonthName(currentMonth) }} {{ currentYear }}</div>
+                        <div class="weekdays">
+                            <div *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" class="weekday">{{ day }}</div>
+                        </div>
+                        <div class="days-grid">
+                            <div *ngFor="let dayObj of daysInCurrentMonth"
+                                [ngClass]="getCellClass(dayObj, currentMonth, currentYear)"
+                                (click)="selectDate(dayObj.day, currentMonth, currentYear)"
+                                class="day">
+                                {{ dayObj.day > 0 ? dayObj.day : '' }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar">
+                        <div class="month-header-left">{{ getMonthName(nextMonth) }} {{ nextYear }}</div>
+                        <div class="weekdays">
+                            <div *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" class="weekday">{{ day }}</div>
+                        </div>
+                        <div class="days-grid">
+                            <div *ngFor="let dayObj of daysInNextMonth"
+                                [ngClass]="getCellClass(dayObj, nextMonth, nextYear)"
+                                (click)="selectDate(dayObj.day, nextMonth, nextYear)"
+                                class="day">
+                                {{ dayObj.day > 0 ? dayObj.day : '' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Footer for displaying selected dates and nights -->
+            <div class="modal-footer footer1 d-flex justify-content-between align-items-center">
+                <div>
+                    <!-- Display the selected arrival and departure dates -->
+                    <span *ngIf="selectedArrivalDate">
+                        {{ formatDate2(selectedArrivalDate) }} 
+                        <span *ngIf="selectedDepartureDate"> 
+                          to {{ formatDate2(selectedDepartureDate) }} 
+                          ({{ calculateNightStay(selectedArrivalDate, selectedDepartureDate) }} nights)
+                        </span>
+                    </span>
+                    <a href="javascript:void(0)" (click)="resetSelection()" class="reset-link">Clear Selection</a>
+                </div>
+                <div>
+                    <button class="btn-custom"  data-bs-dismiss="modal" (click)="saveSelection()">Save Selection</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- <table *ngIf="filteredRooms.length > 0">
+    <thead>
+      <tr>
+        <th>Room Id</th>
+        <th>Location</th>
+        <th>Price per Day</th>
+        <th>Guest Capacity</th>
+        <th>Stay From</th>
+        <th>Stay To</th>
+        <th>Book From</th>
+        <th>Book To</th>
+        <th>min stay</th>
+        <th>max stay</th>
+        <th>arrivalDate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let room of filteredRooms">
+        <td>{{ room.roomId }}</td>
+        <td>{{ room.locationName }}</td>
+        <td>{{ room.pricePerDayPerPerson }}</td>
+        <td>{{ room.guestCapacity }}</td>
+        <td>{{ room.selectedStay ? formatStayDate(room.selectedStay.stayDateFrom) : 'N/A' }}</td>
+        <td>{{ room.selectedStay ? formatStayDate(room.selectedStay.stayDateTo) : 'N/A' }}</td>
+        <td>{{ room.selectedStay?.bookDateFrom}}</td>
+        <td>{{ room.selectedStay?.bookDateTo}}</td>
+        <td>{{ room.selectedStay?.minStay }}</td>
+        <td>{{ room.selectedStay?.maxStay }}</td>
+        <th>{{ room.selectedStay?.arrivalDays}}</th>
+      </tr>
+    </tbody>
+  </table> -->
+  

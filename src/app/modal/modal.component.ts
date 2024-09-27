@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RoomService } from '../room.service';
+import { RoomService } from '../services/room.service';
 
 
 import { Room } from '../Interfaces/room';
@@ -37,10 +37,9 @@ export class ModalComponent implements OnInit {
   isConfirmDisabled = true;
   
 
-  animationKey = 0;
+ 
   dateFilterApplied = false; 
-  page: number = 1; // Current page number
-  itemsPerPage: number = 9; // Number of items per page
+ 
 
   //Customer Form
   countries: any[] = [];
@@ -56,12 +55,11 @@ export class ModalComponent implements OnInit {
     private roomService: RoomService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
-    private cdr: ChangeDetectorRef,
-    private geolocsService: GeolocsService,
-   
+    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService
+
   ) {
-   
-    
+  
+
     this.bookingForm = this.fb.group({
       reservationId: [{ value: '', disabled: true }],
       roomNo: [{ value: '', disabled: true }],
@@ -72,7 +70,8 @@ export class ModalComponent implements OnInit {
       pricePerDayPerPerson: [{ value: 0, disabled: true }],
       totalPrice: [{ value: 0, disabled: true }],
     });
-  
+
+    
     this.customerForm = this.fb.group({
       customerId: [{ value: '', disabled: true }, Validators.required],
       name: ['', Validators.required],
@@ -88,17 +87,32 @@ export class ModalComponent implements OnInit {
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
-      paidAmount: [0, Validators.required],
+      paidAmount: [{ value: 0, disabled: true }, Validators.required],
       due: [0, Validators.required],
     });
-  
-    this.bookingForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
-    this.bookingForm.get('totalNumberOfGuests')?.valueChanges.subscribe(() => this.updateTotalPrice());
-    this.bookingForm.get('numberOfDays')?.valueChanges.subscribe(() => this.updateTotalPrice());
-    this.bookingForm.get('pricePerDayPerPerson')?.valueChanges.subscribe(() => this.updateTotalPrice());
-    this.customerForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
-    this.paymentForm.valueChanges.subscribe(() => this.updateConfirmButtonState());
+
+    this.bookingForm.valueChanges.subscribe(() =>
+      this.updateConfirmButtonState()
+    );
+    this.bookingForm
+      .get('totalNumberOfGuests')
+      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm
+      .get('numberOfDays')
+      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm
+      .get('pricePerDayPerPerson')
+      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+      this.paymentForm.get('due')?.valueChanges.subscribe(() => this.updateTotalPriceFromDue());
+    this.customerForm.valueChanges.subscribe(() =>
+      this.updateConfirmButtonState()
+    );
+
+    this.paymentForm.valueChanges.subscribe(() =>
+      this.updateConfirmButtonState()
+    );
   }
+
   
   ngOnInit(): void {
     console.log('hello');
@@ -116,6 +130,10 @@ export class ModalComponent implements OnInit {
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
     });
+
+    this.bookingForm.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.paymentForm.get('due')?.valueChanges.subscribe(() => this.updateTotalPriceFromDue());
+  
   }
   
 
@@ -164,53 +182,67 @@ export class ModalComponent implements OnInit {
   // }
   initializeForms(bookingDetails: BookingDetails): void {
     const room = this.rooms.find(r => r.roomId === bookingDetails.roomId) || null;
-
-    console.log(bookingDetails, 'object from parent');
-    
+  
     if (room) {
-        this.selectedRoom = room;
-        this.availabilityDetails = room.availability;
-
-        // Parse and normalize the dates
-        const stayDateFrom = new Date(bookingDetails.arrivalDate );
-        const stayDateTo = new Date(bookingDetails.departureDate);
-
-        stayDateFrom.setDate(stayDateFrom.getDate() + 1);
-        stayDateTo.setDate(stayDateTo.getDate() + 1);
-        // Reset the time part of the dates to ensure the hours, minutes, seconds, and milliseconds are set to zero
-        stayDateFrom.setHours(0, 0, 0, 0);
-        stayDateTo.setHours(0, 0, 0, 0);
-
-        // Ensure numberOfDays calculation works correctly
+      this.selectedRoom = room;
+  
+      // Parse and normalize the dates from bookingDetails
+      const stayDateFrom = new Date(bookingDetails.arrivalDate);
+      const stayDateTo = new Date(bookingDetails.departureDate);
+  
+      // Find the matching stay for the selected room
+      const matchingStay = room.stays.find(stay => {
+        const stayStart = new Date(stay.stayDateFrom);
+        const stayEnd = new Date(stay.stayDateTo);
+        return stayDateFrom >= stayStart && stayDateTo <= stayEnd;
+      });
+  
+      if (matchingStay) {
         const numberOfDays = Math.ceil((stayDateTo.getTime() - stayDateFrom.getTime()) / (1000 * 3600 * 24)) + 1;
-
-        const numberOfPersons = 0;
         const pricePerDay = room.pricePerDayPerPerson;
-
+  
         this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
-
+  
+        // Patch the booking form with the matching stay details
         this.bookingForm.patchValue({
-            reservationId: this.generateReservationId(),
-            roomNo: room.roomId,
-            stayDateFrom: stayDateFrom.toISOString().split('T')[0] , // Format as YYYY-MM-DD
-            stayDateTo: stayDateTo.toISOString().split('T')[0] , // Format as YYYY-MM-DD
-            totalNumberOfGuests: numberOfPersons,
-            pricePerDayPerPerson: pricePerDay,
-            numberOfDays: numberOfDays
+          reservationId: this.generateReservationId(),
+          roomNo: room.roomId,
+          stayDateFrom: stayDateFrom.toISOString().split('T')[0], // Format YYYY-MM-DD
+          stayDateTo: stayDateTo.toISOString().split('T')[0], // Format YYYY-MM-DD
+          totalNumberOfGuests: bookingDetails.guestCapacity,
+          pricePerDayPerPerson: pricePerDay,
+          numberOfDays: numberOfDays
         });
-
+  
+        // Patch customer and payment forms
         this.customerForm.patchValue({
-            customerId: this.generateCustomerId(),
+          customerId: this.generateCustomerId(),
         });
-
         this.paymentForm.patchValue({
-            paymentId: this.generatePaymentId(),
+          paymentId: this.generatePaymentId(),
         });
-
+  
+        // Update total price and confirm button state
         this.updateTotalPrice();
         this.updateConfirmButtonState();
+      } else {
+        console.error("No matching stay found for the selected dates.");
+      }
     }
+  }
+  
+
+private updateTotalPriceFromDue(): void {
+  const dueAmount = this.paymentForm.get('due')?.value || 0;
+  const totalPrice = this.bookingForm.get('totalPrice')?.value || 0;
+
+  if (totalPrice >= dueAmount) {
+    const newPaidAmount = totalPrice - dueAmount;
+    this.paymentForm.patchValue({ paidAmount: newPaidAmount }, { emitEvent: false });
+  }
 }
+
+
   onCountryChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     const countryId = target.value;
@@ -272,49 +304,71 @@ export class ModalComponent implements OnInit {
   }
 
   openBookingModal(room: Room): void {
-     this.selectedRoom = room;
-     this.availabilityDetails = room.availability;
+    this.selectedRoom = room;
   
+    // Get the booking details (arrival and departure dates) from the bookingDetails input
     if (this.bookingDetails) {
       const stayDateFrom = this.bookingDetails.arrivalDate;
       const stayDateTo = this.bookingDetails.departureDate;
-      const numberOfPersons = this.bookingDetails.guestCapacity; // Corrected from undefined property
+      
+      const numberOfPersons = this.bookingDetails.guestCapacity; // Assuming guestCapacity is in bookingDetails
       const pricePerDay = room.pricePerDayPerPerson;
   
-      const startDate = new Date(stayDateFrom);
-      const endDate = new Date(stayDateTo);
-      const numberOfDays =
-        Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+      // Find the matching stay period for the selected room
+      const matchingStay = room.stays.find(stay => {
+        const stayStart = new Date(stay.stayDateFrom);
+        const stayEnd = new Date(stay.stayDateTo);
   
-      this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
-  
-      this.bookingForm.patchValue({
-        reservationId: this.generateReservationId(),
-        roomNo: room.roomId,
-        stayDateFrom,
-        stayDateTo,
-        numberOfDays,
-        totalNumberOfGuests: numberOfPersons,
-        pricePerDayPerPerson: pricePerDay,
+        // Check if the stay period matches the booking date range
+        return new Date(stayDateFrom) >= stayStart && new Date(stayDateTo) <= stayEnd;
       });
   
-      this.customerForm.patchValue({
-        customerId: this.generateCustomerId(),
-      });
+      if (matchingStay) {
+        // Calculate the number of days
+        const startDate = new Date(stayDateFrom);
+        const endDate = new Date(stayDateTo);
+        const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
   
-      this.paymentForm.patchValue({
-        paymentId: this.generatePaymentId(),
-      });
+        // Populate number of guests options
+        this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
   
-      this.updateTotalPrice();
-      this.updateConfirmButtonState();
+        // Patch the booking form with stay details and booking data
+        this.bookingForm.patchValue({
+          reservationId: this.generateReservationId(),
+          roomNo: room.roomId,
+          stayDateFrom,
+          stayDateTo,
+          numberOfDays,
+          totalNumberOfGuests: numberOfPersons,
+          pricePerDayPerPerson: pricePerDay,
+        });
   
-      // Initialize forms for stepper
-      this.currentStep = 0;
-      const bookingModal = new bootstrap.Modal(document.getElementById('bookingsModal')!);
-      bookingModal.show();
+        // Populate the customer form with the customer details
+        this.customerForm.patchValue({
+          customerId: this.generateCustomerId(),
+        });
+  
+        // Populate the payment form with payment details
+        this.paymentForm.patchValue({
+          paymentId: this.generatePaymentId(),
+        });
+  
+        // Update total price and confirm button state
+        this.updateTotalPrice();
+        this.updateConfirmButtonState();
+  
+        // Initialize forms for the stepper
+        this.currentStep = 0;
+  
+        // Show the booking modal
+        const bookingModal = new bootstrap.Modal(document.getElementById('bookingsModal')!);
+        bookingModal.show();
+      } else {
+        console.error("No matching stay found for the selected dates.");
+      }
     }
   }
+  
   
 
   closeBookingModal(): void {
@@ -379,6 +433,7 @@ export class ModalComponent implements OnInit {
         mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
         mobileNumber2: 0,
         birthDate: '',
+        email: ''
       };
 
       // Combine both objects
@@ -400,19 +455,23 @@ export class ModalComponent implements OnInit {
       console.log('Please fill out all required fields.');
     }
   }
-  private updateTotalPrice(): void {
-    const numberOfGuests =
-      this.bookingForm.get('totalNumberOfGuests')?.value || 0;
-    const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
-    const pricePerDayPerPerson =
-      this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
 
-    if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
-      const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
-      this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
-      this.paymentForm.patchValue({ paidAmount: totalPrice }, { emitEvent: false });
-    }
+private updateTotalPrice(): void {
+  const numberOfGuests =
+    this.bookingForm.get('totalNumberOfGuests')?.value || 0;
+  const numberOfDays = this.bookingForm.get('numberOfDays')?.value || 0;
+  const pricePerDayPerPerson =
+    this.bookingForm.get('pricePerDayPerPerson')?.value || 0;
+
+  if (numberOfGuests > 0 && numberOfDays > 0 && pricePerDayPerPerson > 0) {
+    const totalPrice = numberOfGuests * numberOfDays * pricePerDayPerPerson;
+    this.bookingForm.patchValue({ totalPrice }, { emitEvent: false });
+
+    // Update payment form based on the new total price
+    this.updateTotalPriceFromDue();
   }
+}
+
 
   private updateConfirmButtonState(): void {
     if(this.bookingDetails){

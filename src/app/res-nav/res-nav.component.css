@@ -1,0 +1,60 @@
+/* Navigation Tabs */
+.nav-container {
+  margin-top: 0;
+}
+
+.nav-tabs {
+  border-bottom: none; /* Remove default bottom border */
+  display: flex;
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
+  list-style: none; /* Remove bullet points */
+}
+
+.nav-item {
+  margin: 0; /* Remove margin around items */
+}
+
+/* Default Inactive Tab Style */
+.nav-link {
+  font-family: 'Arial', sans-serif;
+  font-weight: 300;
+  color: #fff; /* White text */
+  background-color: #4caf50; /* Muted green background */
+  border: none; /* No border */
+  border-radius: 0; /* Sharp corners */
+  padding: 10px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease; /* Smooth transition */
+  margin-right: 0; /* No negative margins to avoid overlap */
+}
+
+/* Hover State */
+.nav-link:hover {
+  background-color: #66bb6a; /* Slightly lighter green on hover */
+  color: #fff; /* Keep white text */
+}
+
+/* Active Tab Style */
+.nav-link.active {
+  color: #fff; /* White text */
+  background-color: #2e7d32; /* Darker green background for active tab */
+  border-bottom: none; /* No border on active state */
+}
+
+/* Dark Grey/Black Button Theme (Optional) */
+.btn-dark-grey {
+  background-color: #333; /* Dark grey */
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-dark-grey:hover {
+  background-color: #4a4a4a; /* Slightly lighter grey on hover */
+  color: #fff;
+}

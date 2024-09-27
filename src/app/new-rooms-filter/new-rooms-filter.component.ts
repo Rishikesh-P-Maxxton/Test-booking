@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, TemplateRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoomService } from '../services/room.service';
 import { StayService } from '../services/stays.service';
@@ -8,7 +8,10 @@ import { Reservation, Customer } from '../Interfaces/reservation';
 import { MatStepper } from '@angular/material/stepper';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { GeolocsService } from '../services/geolocs.service';
+import { MatDialog } from '@angular/material/dialog';
 
+import jspdf, { jsPDF } from 'jspdf';
+import { Router, RouterLink } from '@angular/router';
 interface FilteredRoom {
   roomId: number;
   locationId: number;
@@ -19,16 +22,15 @@ interface FilteredRoom {
   stays: Stay[]; 
   selectedStay?: Stay; // Array of stay periods, each with its own availability and restrictions
 }
-
 @Component({
-  selector: 'app-rooms-filter',
-  templateUrl: './rooms-filter.component.html',
-  styleUrls: ['./rooms-filter.component.css'],
- 
+  selector: 'app-new-rooms-filter',
+  templateUrl: './new-rooms-filter.component.html',
+  styleUrl: './new-rooms-filter.component.css'
 })
-export class RoomsFilterComponent implements OnInit {
+export class NewRoomsFilterComponent implements OnInit {
 
   emailForm: FormGroup;
+  totalPrice: FormGroup;
   existingCustomer!: Customer  | undefined ;
 
   isExistingUser = false;
@@ -63,25 +65,36 @@ export class RoomsFilterComponent implements OnInit {
   selectedStateId: string | null = null;
 
   @ViewChild('stepper') stepper!: MatStepper;
+  @ViewChild('reservationDialog') reservationDialog!: TemplateRef<any>;
   displayedColumns: any;
-  
+  emittedObject: any = null;  // This will hold the emitted data from the dual calendar component
+
+
+  allEmails: string[] = [];  // List of all unique emails
+  filteredEmails: string[] = [];  // Filtered emails for dropdown
+  emailDropdownVisible: boolean = false;  // Control the dropdown visibility
 
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
     private fb: FormBuilder,
     private reservationStorageService: ReservationStorageService,
-    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService
+    private cdr: ChangeDetectorRef, private geolocsService: GeolocsService,
+    public dialog: MatDialog,
+    private router: Router,
+    
 
   ) {
     this.filterForm = this.fb.group({
-      location: [''],
-      stayDateFrom: [''],
-      stayDateTo: [''],
-      numberOfPersons: [0],
-      maxPrice: [0],
+      arrivalDate: [{ value: '', disabled: true }],  // Will be populated with emitted date
+      departureDate: [{ value: '', disabled: true }], // Will be populated with emitted date
+      numberOfGuests: [{ value: '', disabled: true }] // Guest capacity dropdown, initially disabled
     });
+    
 
+    this.totalPrice = this.fb.group({
+      tp: [{ value: '', disabled: true }]
+    });
     this.emailForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
     });
@@ -122,8 +135,10 @@ export class RoomsFilterComponent implements OnInit {
       paymentMode: ['', Validators.required],
       paidAmount: [{ value: 0 }, Validators.required],
       due: [{ value: 0, disabled: true }, Validators.required],
+      totalPrice: [{ value: 0, disabled: true }]  // Add totalPrice here
     });
 
+  
     this.bookingForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
@@ -147,7 +162,11 @@ export class RoomsFilterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    
+
+    this.reservationStorageService.getAllCustomerEmails().subscribe((emails: string[]) => {
+      this.allEmails = emails;
+      this.filteredEmails = [...this.allEmails];  // Initially show all emails
+    });
     this.geolocsService.getData().subscribe(response => {
       this.countries = response.countries;
     });
@@ -160,6 +179,7 @@ export class RoomsFilterComponent implements OnInit {
     this.calculateDueAmount();
   });
 
+
     this.roomService.getRooms().subscribe((roomData) => {
       this.rooms = roomData;
       this.stayService.getStays().subscribe((stayData) => {
@@ -168,6 +188,8 @@ export class RoomsFilterComponent implements OnInit {
         this.initializeLocations();
       });
     });
+
+    
   }
 
   calculateDueAmount(): void {
@@ -406,162 +428,36 @@ export class RoomsFilterComponent implements OnInit {
 
   
   applyFilter(): void {
-    const filters = this.filterForm.value;
-    console.log('Filter Values:', filters);
+    const selectedGuests = this.filterForm.get('numberOfGuests')?.value;
   
-    const arrivalDate = new Date(filters.stayDateFrom + 'T11:00:00');
-    const departureDate = new Date(filters.stayDateTo + 'T10:00:00');
-  
-    // If arrival and departure are the same, increment departureDate by 1 day
-    if (arrivalDate.toDateString() === departureDate.toDateString()) {
-      departureDate.setDate(departureDate.getDate() + 1);
-    }
-  
-    const numberOfDays = this.calculateNumberOfDays(arrivalDate, departureDate);
-    console.log('Parsed Dates:', { arrivalDate, departureDate });
-    console.log('Number of Days:', numberOfDays);
-  
-    // Start with all rooms
-    this.filteredRooms = [...this.rooms];
-    console.log('Initial Filtered Rooms:', this.filteredRooms);
-  
-    const hasLocationFilter = filters.location.trim() !== '';
-    const hasDateFilter = arrivalDate && departureDate;
-    const hasGuestFilter = filters.numberOfPersons > 0;
-    const hasPriceFilter = filters.maxPrice > 0;
-  
-    console.log('Filters Applied:', {
-      hasLocationFilter,
-      hasDateFilter,
-      hasGuestFilter,
-      hasPriceFilter,
-    });
-  
-    // Apply Location Filter
-    if (hasLocationFilter) {
-      this.filteredRooms = this.filteredRooms.filter(room =>
-        room.locationName.toLowerCase().includes(filters.location.toLowerCase())
-      );
-      console.log('After Location Filter:', this.filteredRooms);
-    }
-  
-    // Fetch reservations from local storage
-    const storedReservations = this.reservationStorageService.getReservations();
-    console.log('Stored Reservations:', storedReservations);
-  
-    // Convert storedReservations into an array of objects
-    const reservations = storedReservations.map((reservationData) => ({
-      roomId: reservationData.reservation.roomId,
-      arrivalDate: new Date(reservationData.reservation.arrivalDate),
-      departureDate: new Date(reservationData.reservation.departureDate),
-    }));
-    console.log('Converted Reservations:', reservations);
-  
-    // Apply Date Filter with minStay, maxStay, arrival day, and departure day checks
-    if (hasDateFilter) {
-      const arrivalDay: string = arrivalDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-      const departureDay: string = departureDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-  
-      this.filteredRooms = this.filteredRooms.reduce((filtered: FilteredRoom[], room) => {
-        const stays = this.stays.filter((stay) => stay.roomId === room.roomId);
-        console.log('Room Stays:', { roomId: room.roomId, stays });
-  
-        // Find a matching stay that satisfies the filter criteria, including departure day check
-        const matchingStay = stays.find((stay) => {
-          const stayFrom = new Date(stay.stayDateFrom + 'T11:00:00');
-          const stayTo = new Date(stay.stayDateTo + 'T10:00:00');
-          const stayDuration = (stayTo.getTime() - stayFrom.getTime()) / (1000 * 3600 * 24) + 1;
-  
-          console.log('Stay Dates:', { stayFrom, stayTo });
-          console.log('Requested Dates:', { arrivalDate, departureDate });
-          console.log('Stay Duration:', stayDuration);
-  
-          // Check if the requested date range is within the stay period
-          const isDateCompletelyWithin = this.isDateRangeCompletelyWithin(
-            arrivalDate,
-            departureDate,
-            stayFrom,
-            stayTo
-          );
-          console.log('Is Date Completely Within:', isDateCompletelyWithin);
-  
-          // Check if the requested arrival day matches the stay's available arrival days
-          const isArrivalDayMatch = stay.arrivalDays.includes(arrivalDay);
-          console.log('Arrival day fetched:', arrivalDay);
-          console.log('Is Arrival Day Match:', isArrivalDayMatch);
-  
-          // Check if the requested departure day matches the stay's available departure days
-          const isDepartureDayMatch = stay.departureDays.includes(departureDay);
-          console.log('Departure day fetched:', departureDay);
-          console.log('Is Departure Day Match:', isDepartureDayMatch);
-  
-          // Check if the stay duration is within the room's min and max stay requirements
-          const isDurationValid = numberOfDays >= (stay.minStay || 0) && numberOfDays <= (stay.maxStay || Infinity);
-          console.log('Is Duration Valid:', isDurationValid);
-  
-          // Return true only if all conditions (date range, arrival day, departure day, and duration) are satisfied
-          return isDateCompletelyWithin && isArrivalDayMatch && isDepartureDayMatch && isDurationValid;
-        });
-  
-        // If a matching stay is found, push room with attached stay into the filtered array
-        if (matchingStay) {
-          filtered.push({
-            ...room,
-            selectedStay: matchingStay  // Attach the matching stay
-          });
-        }
-  
-        return filtered;
-      }, []);
-  
-      console.log('After Date Filter (including arrival & departure checks):', this.filteredRooms);
-    }
-  
-    // Set dateFilterApplied to true if date filters are applied
-    if (hasDateFilter) {
-      this.dateFilterApplied = true;
-    }
-  
-    // Additional Date Overlap Check Using Stored Reservations
-    if (hasDateFilter) {
-      this.filteredRooms = this.filteredRooms.filter((room) => {
-        const roomReservations = reservations.filter(reservation => reservation.roomId === room.roomId);
-        return this.isBookingAvailable(arrivalDate, departureDate, roomReservations);
-      });
-      console.log('After Booking Availability Filter:', this.filteredRooms);
-    }
-  
-    // Apply Guest Filter
-    if (hasGuestFilter) {
-      this.filteredRooms = this.filteredRooms.filter(
-        (room) => room.guestCapacity >= filters.numberOfPersons
-      );
-      console.log('After Guest Filter:', this.filteredRooms);
-    }
-  
-    // Apply Price Filter
-    if (hasPriceFilter) {
-      this.filteredRooms = this.filteredRooms.filter(
-        (room) => room.pricePerDayPerPerson <= filters.maxPrice
-      );
-      console.log('After Price Filter:', this.filteredRooms);
+    if (selectedGuests) {
+      // Filter rooms by guest capacity if a guest number is selected
+      this.filteredRooms = this.emittedObject.filteredRooms.filter((room: { guestCapacity: number; }) => room.guestCapacity >= selectedGuests); 
+      this.goToRoomList();
+    } else {
+      // If no guest filter applied, use all rooms from the emitted object
+      this.filteredRooms = this.emittedObject.filteredRooms;
     }
   
     console.log('Filtered Rooms:', this.filteredRooms);
+  console.log('rytt')
+  
+    // Continue with any additional booking logic that was in your original applyFilter
   }
   
   
   
+  
 
 
- get isFilterButtonDisabled(): boolean {
-  const filters = this.filterForm.value;
-  const isDateIncomplete =
-    (filters.stayDateFrom && !filters.stayDateTo) ||
-    (!filters.stayDateFrom && filters.stayDateTo);
-
-  return isDateIncomplete;
-}
+  get isFilterButtonDisabled(): boolean {
+    const arrivalDate = this.filterForm.get('arrivalDate')?.value;
+    const departureDate = this.filterForm.get('departureDate')?.value;
+  
+    // Enable the button only if both dates are selected
+    return !(arrivalDate && departureDate);
+  }
+  
  isDateFilterApplied(): boolean {
   const stayDateFrom = this.filterForm.get('stayDateFrom')?.value;
   const stayDateTo = this.filterForm.get('stayDateTo')?.value;
@@ -696,7 +592,7 @@ private isBookingAvailable(
     const bookingModal = new bootstrap.Modal(
       document.getElementById('bookingModal')!
     );
-    bookingModal.show();
+    
   }
   
   
@@ -705,72 +601,12 @@ private isBookingAvailable(
   
   
 
-  closeBookingModal(): void {
-    const bookingModal = bootstrap.Modal.getInstance(
-      document.getElementById('bookingModal')!
-    );
-    bookingModal.hide();
-  }
+ 
 
   confirmBooking(): void {
     if (this.bookingForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
-      let customerId: string;
-    
-      // For new customers, generate a new ID
-      if (this.isNewUser) {
-        customerId = this.generateCustomerId();
-      } else {
-        // For existing customers, use the fetched customer ID
-        if (this.existingCustomer) {
-          customerId = this.existingCustomer.customerId;
-        } else {
-          console.error('Fetched customer is not available');
-          return;
-        }
-      }
-  
-      // Construct the reservation object
-      const reservation: Reservation = {
-        reservationId: String(this.bookingForm.get('reservationId')?.value),
-        locationId: this.selectedRoom?.locationId || 0,
-        roomId: Number(this.bookingForm.get('roomNo')?.value),
-        customerId: customerId, // Use the generated or fetched customer ID
-        arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
-        departureDate: this.bookingForm.get('stayDateTo')?.value,
-        reservationDate: new Date().toISOString(),
-        totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
-        status: 'CONFIRM',
-        paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
-        numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
-      };
-  
-      let customer: Customer;
-      
-      // If it's a new user, construct the customer object from the form
-      if (this.isNewUser) {
-        const fullName = this.customerForm.get('name')?.value || '';
-    const { firstName, middleName, lastName } = this.parseFullName(fullName);
-  
-        customer = {
-          customerId: customerId,
-          firstName,
-          middleName,
-          lastName,
-          age: Number(this.customerForm.get('age')?.value),
-          country: this.customerForm.get('country')?.value,
-          state: this.customerForm.get('state')?.value,
-          city: this.customerForm.get('city')?.value,
-          pinCode: Number(this.customerForm.get('pincode')?.value),
-          initialAddress: this.customerForm.get('initialAddress')?.value,
-          mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
-          mobileNumber2: 0, // Default mobile number
-          birthDate: '',
-          email: this.customerForm.get('email')?.value,
-        };
-      } else {
-        // For existing users, use the fetched customer object
-        customer = this.existingCustomer as Customer;
-      }
+      // Get the reservation and customer objects
+      const { reservation, customer } = this.createReservationObject();
   
       const reservationData = { reservation, customer };
   
@@ -783,15 +619,43 @@ private isBookingAvailable(
       this.customerForm.reset();
       this.paymentForm.reset();
       this.selectedRoom = null;
-      this.isConfirmDisabled = true; // Disable the confirm button until valid forms are filled
+      this.isConfirmDisabled = true; // Disable the confirm button
+      
     } else {
       console.log('Please fill out all required fields.');
     }
   }
-  
-  
-  
-  
+
+  // Function to show a toast with Confirm and Cancel buttons
+  showToastWithNavigationOption(): void {
+    const toastElement = document.getElementById('navigationToast'); // Your toast element
+    if (toastElement) {
+      const toast = new bootstrap.Toast(toastElement); // Initialize the toast
+      toast.show(); // Show the toast
+
+      // Attach event listeners for buttons inside the toast
+      const confirmButton = document.getElementById('confirmNavigate');
+      const cancelButton = document.getElementById('cancelNavigate');
+
+      confirmButton?.addEventListener('click', () => {
+        this.navigateToPlanner(); // Navigate on Confirm
+        toast.hide();
+        toast.dispose()  // Close the toast after navigation
+      });
+
+      cancelButton?.addEventListener('click', () => {
+        toast.hide();
+        toast.dispose() // Just close the toast on Cancel
+      });
+    }
+  }
+
+  // Function to navigate to a given route (in this case, 'planner')
+  navigateToPlanner(): void {
+    this.router.navigate(['/planner']); // Replace '/planner' with the desired route
+  }
+
+
   
   private updateTotalPrice(): void {
     const numberOfGuests =
@@ -802,24 +666,27 @@ private isBookingAvailable(
   
     const totalPrice =numberOfDays * pricePerDay;
     this.bookingForm.patchValue({ totalPrice });
+    this.paymentForm.patchValue({ totalPrice });
   }
   
   
 
   private updateConfirmButtonState(): void {
-    const filterFormValid = this.filterForm.get('stayDateFrom')?.value && this.filterForm.get('stayDateTo')?.value;
+    const filterFormValid = this.filterForm.valid;
     
-    // For new users, validate the customer form
     const isCustomerFormValid = this.isNewUser ? this.customerForm.valid : true;
-    
-    // For existing users, ensure a customer is fetched
     const isExistingCustomerValid = !this.isNewUser ? !!this.existingCustomer : true;
-  
-    // Payment and booking forms must always be valid
     const isBookingFormValid = this.bookingForm.valid;
     const isPaymentFormValid = this.paymentForm.valid;
-    
-    // Enable confirmation only if all required forms are valid
+  
+    console.log('Confirm Button State: ', {
+      filterFormValid,
+      isCustomerFormValid,
+      isExistingCustomerValid,
+      isBookingFormValid,
+      isPaymentFormValid
+    });
+  
     this.isConfirmDisabled = !(filterFormValid && (isCustomerFormValid || isExistingCustomerValid) && isBookingFormValid && isPaymentFormValid);
   }
   
@@ -860,4 +727,318 @@ private isBookingAvailable(
       this.currentStep--;
     }
   }
+
+  openReservationDialog(): void {
+    this.filteredRooms = [];
+    this.dialog.open(this.reservationDialog, {
+      width: '60vw',
+      maxWidth: 'none',
+      height: '80vh',
+      panelClass: 'custom-dialog-container',
+      disableClose: true,
+    });
+  }
+
+  //edits that replaced modal
+    // Variable to track current modal page (0: Filter, 1: Room List, 2: Booking Form)
+    currentModalPage: number = 0;
+  
+      // Function to move to the room list view
+  goToRoomList() {
+    this.currentModalPage = 1;
+  }
+
+   // Function to move back to the filter form view
+   goToFilterForm() {
+    this.currentModalPage = 0;
+  }
+
+  populateBookingForm(room: FilteredRoom): void {
+    const numberOfDays = this.calculateNumberOfDays(new Date(this.filterForm.get('arrivalDate')?.value), new Date(this.filterForm.get('departureDate')?.value));
+    const totalPrice = numberOfDays * room.pricePerDayPerPerson;
+  
+    this.bookingForm.patchValue({
+      reservationId: this.generateReservationId(),
+      roomNo: room.roomId,
+      stayDateFrom: this.filterForm.get('arrivalDate')?.value,
+      stayDateTo: this.filterForm.get('departureDate')?.value,
+      numberOfDays,
+      totalNumberOfGuests: this.filterForm.get('numberOfGuests')?.value,
+      pricePerDayPerPerson: room.pricePerDayPerPerson,
+      totalPrice,
+    });
+  
+    // Populate guest options based on room capacity
+    this.numberOfGuestsOptions = Array.from({ length: room.guestCapacity }, (_, i) => i + 1);
+  }
+  
+
+  // Function to close the booking modal (if needed)
+  closeBookingModal(): void {
+    const reservationModalElement = document.getElementById('reservationModal');
+    const bookingElement = document.getElementById('booking');
+  
+    if (reservationModalElement) {
+      const reservationModalInstance = bootstrap.Modal.getInstance(reservationModalElement);
+      if (reservationModalInstance) {
+        reservationModalInstance.hide();
+        reservationModalInstance.dispose();  // Properly dispose of modal
+      } else {
+        console.warn('Reservation modal instance not found or already disposed.');
+      }
+    } else {
+      console.warn('Reservation modal element not found in the DOM.');
+    }
+  
+    if (bookingElement) {
+      const bookingInstance = bootstrap.Modal.getInstance(bookingElement);
+      if (bookingInstance) {
+        bookingInstance.hide();
+        bookingInstance.dispose();  // Properly dispose of booking modal
+      } else {
+        console.warn('Booking modal instance not found or already disposed.');
+      }
+    } else {
+      console.warn('Booking modal element not found in the DOM.');
+    }
+  
+    // Clean up modal backdrop
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach((backdrop) => backdrop.remove());
+  
+    // Reset the modal's fade and show classes
+    document.body.classList.remove('modal-open');
+    console.log('Modals Open?', document.querySelectorAll('.modal.show').length);
+    console.log('Backdrops Present?', document.querySelectorAll('.modal-backdrop').length);
+    this.showToast();
+  }
+
+   // Method to show the toast
+   showToast(): void {
+    const toastElement = document.getElementById('bookingToast');
+    if (toastElement) {
+      const toast = new bootstrap.Toast(toastElement);
+      toast.show();
+    }
+  }
+  
+  
+  goToBookingForm(room: FilteredRoom): void {
+    this.selectedRoom = room;
+    // Call your existing method to populate the booking form
+    this.populateBookingForm(room);
+    // Switch to the booking form view
+    this.currentModalPage = 2;
+  }
+
+  checkFilterButtonState(): void {
+    const arrivalDate = this.filterForm.get('arrivalDate')?.value;
+    const departureDate = this.filterForm.get('departureDate')?.value;
+  
+    // No direct assignment needed for `isFilterButtonDisabled`.
+    // The form state will automatically enable/disable based on the getter.
+  }
+  
+  
+  onSelectionConfirmed(emittedObject: any): void {
+    if (emittedObject) {
+      // Store the emitted object in the component property
+      this.emittedObject = emittedObject;
+  
+      // Populate form with received dates
+      this.filterForm.patchValue({
+        arrivalDate: emittedObject.selectedArrivalDate,
+        departureDate: emittedObject.selectedDepartureDate,
+      });
+  
+      // Enable the number of guests field
+      this.filterForm.get('numberOfGuests')?.enable();
+  
+      // Extract guest capacities and populate the dropdown
+      const guestCapacities = emittedObject.filteredRooms.map((room: { guestCapacity: any; }) => room.guestCapacity);
+      const minGuests = Math.min(...guestCapacities);
+      const maxGuests = Math.max(...guestCapacities);
+  
+      this.numberOfGuestsOptions = Array.from({ length: maxGuests - minGuests + 1 }, (_, i) => i + minGuests);
+  
+      // Call this to update the filter button state
+      this.checkFilterButtonState();
+    }
+  }
+generatePDF(): void {
+  const { reservation, customer } = this.createReservationObject();  // Getting the object
+
+  const doc = new jsPDF();
+
+  // Define colors
+  const paleOrange = '#FFA726';
+  const lightGray = '#F2F2F2';
+  const black = '#000000';
+  const white = '#FFFFFF';
+
+  // Define font sizes
+  const largeFontSize = 22;
+  const mediumFontSize = 16;
+  const smallFontSize = 12;
+
+  // Set background color for header
+  doc.setFillColor(paleOrange);
+  doc.rect(0, 0, 210, 50, 'F'); // Header rectangle
+
+  // Title: "Maxton"
+  doc.setFont('Helvetica', 'bold');
+  doc.setTextColor(white);
+  doc.setFontSize(largeFontSize);
+  doc.text('Maxxton', 15, 20); // Title in the center
+
+  // Subheading: "Booking Invoice"
+  doc.setFont('Helvetica', 'italic');
+  doc.setFontSize(smallFontSize);
+  doc.text('Booking Invoice', 15, 28); // Below the title
+
+  // Customer Section (adding a light background color)
+  doc.setFillColor(lightGray);
+  doc.rect(15, 35, 180, 40, 'F'); // Light gray background for customer details
+
+  doc.setFontSize(mediumFontSize);
+  doc.setFont('Helvetica', 'bold');
+  doc.setTextColor(black);
+  doc.text('Customer Details:', 20, 45);
+
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'normal');
+  doc.text(`Name: ${customer.firstName} ${customer.lastName}`, 20, 55);
+  doc.text(`Email: ${customer.email}`, 20, 60);
+  doc.text(`Mobile: ${customer.mobileNumber1}`, 20, 65);
+  doc.text(`Address: ${customer.initialAddress}`, 20, 70);
+
+  // Booking Section
+  doc.setFillColor(white);
+  doc.setFontSize(mediumFontSize);
+  doc.setFont('Helvetica', 'bold');
+  doc.text('Booking Details:', 20, 85);
+
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'normal');
+  doc.text(`Reservation ID: ${reservation.reservationId}`, 20, 95);
+  doc.text(`Room No: ${reservation.roomId}`, 20, 100);
+  doc.text(`Arrival Date: ${reservation.arrivalDate}`, 20, 105);
+  doc.text(`Departure Date: ${reservation.departureDate}`, 20, 110);
+  doc.text(`Guests: ${reservation.numberOfGuest}`, 20, 115);
+
+  // Total Price Section
+  doc.setFontSize(mediumFontSize);
+  doc.setFont('Helvetica', 'bold');
+  doc.text('Payment Summary:', 20, 130);
+
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'normal');
+  doc.text(`Total Price: $${reservation.totalPrice.toFixed(2)}`, 20, 140);
+  doc.text(`Paid Amount: $${reservation.paidAmount.toFixed(2)}`, 20, 145);
+  doc.text(`Due: $${(reservation.totalPrice - reservation.paidAmount).toFixed(2)}`, 20, 150);
+
+  // Footer
+  doc.setFontSize(smallFontSize);
+  doc.setFont('Helvetica', 'italic');
+  doc.text('Thank you for booking with Maxxton!', 15, 280);
+
+  // Save the PDF
+  doc.save('Maxxton_Booking_Invoice.pdf');
+
+  // Log the contents (for debugging purposes)
+  console.log({
+    customer,
+    reservation
+  });
+}
+
+  
+
+  private createReservationObject(): { reservation: Reservation, customer: Customer } {
+    const customerId = this.isNewUser ? this.generateCustomerId() : this.existingCustomer?.customerId || '';
+    
+    // Construct the reservation object
+    const reservation: Reservation = {
+      reservationId: String(this.bookingForm.get('reservationId')?.value),
+      locationId: this.selectedRoom?.locationId || 0,
+      roomId: Number(this.bookingForm.get('roomNo')?.value),
+      customerId: customerId,
+      arrivalDate: this.bookingForm.get('stayDateFrom')?.value,
+      departureDate: this.bookingForm.get('stayDateTo')?.value,
+      reservationDate: new Date().toISOString(),
+      totalPrice: Number(this.bookingForm.get('totalPrice')?.value),
+      status: 'CONFIRM',
+      paidAmount: Number(this.paymentForm.get('paidAmount')?.value),
+      numberOfGuest: Number(this.bookingForm.get('totalNumberOfGuests')?.value),
+    };
+  
+    // Construct the customer object
+    let customer: Customer;
+    if (this.isNewUser) {
+      const fullName = this.customerForm.get('name')?.value || '';
+      const { firstName, middleName, lastName } = this.parseFullName(fullName);
+  
+      customer = {
+        customerId: customerId,
+        firstName,
+        middleName,
+        lastName,
+        age: Number(this.customerForm.get('age')?.value),
+        country: this.customerForm.get('country')?.value,
+        state: this.customerForm.get('state')?.value,
+        city: this.customerForm.get('city')?.value,
+        pinCode: Number(this.customerForm.get('pincode')?.value),
+        initialAddress: this.customerForm.get('initialAddress')?.value,
+        mobileNumber1: Number(this.customerForm.get('mobileNumber')?.value),
+        mobileNumber2: 0,  // Default
+        birthDate: '',
+        email: this.customerForm.get('email')?.value,
+      };
+    } else {
+      customer = this.existingCustomer as Customer;
+    }
+  
+    // Return both objects
+    return { reservation, customer };
+  }
+  
+  
+   // Filter emails based on the input field value
+  filterEmails(): void {
+    const emailInput = this.emailForm.get('email')?.value.toLowerCase();
+    
+    if (emailInput.trim() === '') {
+      // If the input field is empty, show all emails
+      this.filteredEmails = [...this.allEmails];
+    } else {
+      // If the input is not empty, filter based on the input
+      this.filteredEmails = this.allEmails.filter(email =>
+        email.toLowerCase().includes(emailInput)
+      );
+    }
+
+    // Show the dropdown if there's anything to display
+    this.emailDropdownVisible = this.filteredEmails.length > 0;
+  }
+
+  // Select an email from the dropdown
+  selectEmail(email: string): void {
+    // Patch the selected email into the email input field
+    this.emailForm.patchValue({ email });
+
+    // Hide the dropdown after selection
+    this.emailDropdownVisible = false;
+
+    // Fetch existing customer details based on the selected email
+    this.fetchExistingCustomer();
+  }
+  
+  
+  
+}
+
+
+
+function html2canvas(elementToCapture: HTMLElement) {
+  throw new Error('Function not implemented.');
 }
