@@ -11,47 +11,69 @@
     </div>
   </div>
 
-  <!-- Booking History Table -->
-  <div *ngIf="filteredReservations.length === 0">No reservations found.</div>
-  <table *ngIf="filteredReservations.length > 0" class="table">
-    <thead class="thead-light">
-      <tr>
-        <th>Reservation ID</th>
-        <th>Room ID</th>
-        <th>Stay From</th>
-        <th>Stay To</th>
-        <th>Total Guests</th>
-        <th>Total Price</th>
-        <th>Customer Name</th>
-        <th>Email</th> <!-- Added Email Column -->
-        <th>Status</th>
-        <th>Paid Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let reservation of filteredReservations; let i = index"
-          [ngClass]="{
-            'status-confirmed': reservation.reservation.status === 'CONFIRM',
-            'status-checked-in': reservation.reservation.status === 'CHECKED-IN',
-            'status-checked-out': reservation.reservation.status === 'CHECKED-OUT'
-          }"
-          class="table-row"
-          [ngStyle]="{'--animation-delay': i * 0.2 + 's'}"
-          (click)="openModal(reservation)">
-        <td>{{ reservation.reservation.reservationId }}</td>
-        <td>{{ reservation.reservation.roomId }}</td>
-        <td>{{ reservation.reservation.arrivalDate }}</td>
-        <td>{{ reservation.reservation.departureDate }}</td>
-        <td>{{ reservation.reservation.numberOfGuest }}</td>
-        <td>{{ reservation.reservation.totalPrice }}</td>
-        <td>{{ reservation.customer.firstName }} {{ reservation.customer.middleName }} {{ reservation.customer.lastName }}</td>
-        <td>{{ reservation.customer.email }}</td>
-        <td>{{ reservation.reservation.status }}</td>
-        <td>{{ reservation.reservation.paidAmount }}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+ <!-- Booking History Table -->
+<div *ngIf="paginatedReservations.length === 0">No reservations found.</div>
+<table *ngIf="paginatedReservations.length > 0" class="table">
+  <thead class="thead-light">
+    <tr>
+      <th>Reservation ID</th>
+      <th>Room ID</th>
+      <th>Stay From</th>
+      <th>Stay To</th>
+      <th>Total Guests</th>
+      <th>Total Price</th>
+      <th>Customer Name</th>
+      <th>Email</th> <!-- Added Email Column -->
+      <th>Status</th>
+      <th>Paid Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let reservation of paginatedReservations; let i = index"
+        [ngClass]="{
+          'status-confirmed': reservation.reservation.status === 'CONFIRM',
+          'status-checked-in': reservation.reservation.status === 'CHECKED-IN',
+          'status-checked-out': reservation.reservation.status === 'CHECKED-OUT'
+        }"
+        class="table-row"
+        [ngStyle]="{'--animation-delay': i * 0.2 + 's'}"
+        (click)="openModal(reservation)">
+      <td>{{ reservation.reservation.reservationId }}</td>
+      <td>{{ reservation.reservation.roomId }}</td>
+      <td>{{ reservation.reservation.arrivalDate }}</td>
+      <td>{{ reservation.reservation.departureDate }}</td>
+      <td>{{ reservation.reservation.numberOfGuest }}</td>
+      <td>{{ reservation.reservation.totalPrice }}</td>
+      <td>{{ reservation.customer.firstName }} {{ reservation.customer.middleName  }} {{ reservation.customer.lastName }}</td>
+      <td>{{ reservation.customer.email }}</td>
+      <td>{{ reservation.reservation.status }}</td>
+      <td>{{ reservation.reservation.paidAmount }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Bootstrap Pagination Controls -->
+<nav *ngIf="totalPages > 1">
+  <ul class="pagination justify-content-center">
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <a class="page-link" (click)="goToPage(currentPage - 1)" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+
+    <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index"
+        [class.active]="i + 1 === currentPage">
+      <a class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</a>
+    </li>
+
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <a class="page-link" (click)="goToPage(currentPage + 1)" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
 
 <!-- Modal for Reservation Details -->
 <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
@@ -84,6 +106,7 @@
 <div class="container mt-4">
   <button class="btn-custom-tri"  *ngIf="filteredReservations.length !== 0"(click)="showToast()">Archive Reservations</button>
   <button class="btn-custom-sec ms-2" *ngIf="filteredReservations.length !== 0" (click)="downloadPDF()">Save Booking History </button>
+  <button class="btn-custom-sec ms-2" *ngIf="filteredReservations.length !== 0" (click)="downloadExcel()">Download Excel</button>
 </div>
 
 <!-- Toast for confirmation -->

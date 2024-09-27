@@ -3,6 +3,8 @@ import { ReservationStorageService } from '../services/reservation-storage.servi
 import { Reservation, Customer } from '../Interfaces/reservation';
 import jsPDF from 'jspdf';  // Import jsPDF
 import autoTable from 'jspdf-autotable';  // Import autoTable for table generation
+import * as XLSX from 'xlsx';  // Import xlsx library
+
 
 @Component({
   selector: 'app-booking-history',
@@ -17,6 +19,8 @@ export class BookingHistoryComponent implements OnInit {
   selectedReservation: { reservation: Reservation, customer: Customer } | null = null; // For modal
   sortDirection: boolean = true; // Toggle sort order
 
+  currentPage: number = 1; // Current page number
+  itemsPerPage: number = 7; // Number of items per page
   constructor(private reservationStorageService: ReservationStorageService) {}
 
   ngOnInit(): void {
@@ -37,6 +41,25 @@ export class BookingHistoryComponent implements OnInit {
       
       return customerName.includes(searchTerm) || roomId.includes(searchTerm) || email.includes(searchTerm);
     });
+
+    this.currentPage = 1; // Reset to the first page after filtering
+  }
+
+  // Calculate the paginated data
+  get paginatedReservations(): Array<{ reservation: Reservation, customer: Customer }> {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredReservations.slice(startIndex, endIndex);
+  }
+
+  // Total number of pages
+  get totalPages(): number {
+    return Math.ceil(this.filteredReservations.length / this.itemsPerPage);
+  }
+
+  // Navigate to a specific page
+  goToPage(page: number): void {
+    this.currentPage = page;
   }
 
   sortBy(field: keyof Reservation): void {
@@ -126,5 +149,30 @@ export class BookingHistoryComponent implements OnInit {
 
     // Save the PDF
     doc.save(`Booking_History_${currentDate}.pdf`);
+  }
+  downloadExcel(): void {
+    const currentDate = new Date().toLocaleDateString().replace(/\//g, '-'); // Format date as 'MM-DD-YYYY'
+
+    // Prepare the table data for Excel
+    const excelData = this.filteredReservations.map(res => ({
+      'Reservation ID': res.reservation.reservationId,
+      'Room ID': res.reservation.roomId,
+      'Stay From': res.reservation.arrivalDate,
+      'Stay To': res.reservation.departureDate,
+      'Total Guests': res.reservation.numberOfGuest,
+      'Total Price': res.reservation.totalPrice,
+      'Customer Name': `${res.customer.firstName} ${res.customer.middleName ?? ''} ${res.customer.lastName}`,
+      'Status': res.reservation.status,
+      'Paid Amount': res.reservation.paidAmount,
+    }));
+
+    // Create a new workbook and add the data to it
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(excelData);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Booking History');
+
+    // Generate the Excel file and download it
+    const excelFileName = `Booking_History_${currentDate}.xlsx`;
+    XLSX.writeFile(wb, excelFileName);
   }
 }
