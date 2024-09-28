@@ -229,6 +229,20 @@
     box-sizing: border-box; /* Ensure padding is within the width */
   }
   
+  .alert-error1{
+    padding: 0.5rem 1rem; /* Reduce padding for a compact look */
+    font-size: 0.875rem; /* Smaller font size for consistency */
+    background-color: #ffffff; /* Light red background for error */
+    color: #242424; /* White text */
+    padding-left: 7rem;
+    border: none; /* No border */
+    border-radius: 0; /* No border radius */
+    width: 100%; /* Take full width inside the column */
+    max-width: 95%; /* Ensure it matches the input width */
+    margin-top: 0.5rem; /* Add spacing above the alert */
+    box-sizing: border-box; /* Ensure padding is within the width */
+  }
+  
   
 
   .custom-dialog-container {
@@ -239,6 +253,9 @@
     padding: 0; /* Remove padding around the dialog content */
   }
   
+  .dropdown-menu{
+    z-index: 3000;
+  }
 
   
   
