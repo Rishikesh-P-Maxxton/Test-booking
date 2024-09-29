@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef, TemplateRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { RoomService } from '../services/room.service';
 import { StayService } from '../services/stays.service';
 import { Room } from '../Interfaces/room';
@@ -10,7 +10,7 @@ import { ReservationStorageService } from '../services/reservation-storage.servi
 import { GeolocsService } from '../services/geolocs.service';
 import { MatDialog } from '@angular/material/dialog';
 
-import jspdf, { jsPDF } from 'jspdf';
+import  { jsPDF } from 'jspdf';
 import { Router, RouterLink } from '@angular/router';
 interface FilteredRoom {
   roomId: number;
@@ -111,33 +111,44 @@ export class NewRoomsFilterComponent implements OnInit {
 
     
     this.customerForm = this.fb.group({
-      customerId: [{ value: '' }, Validators.required],
-      name: ['', Validators.required],
+      customerId: [{ value: '', disabled: true }, Validators.required],
+      name: ['', [Validators.required, Validators.minLength(3), Validators.pattern(/^[a-zA-Z.\s]+$/)]],
       age: [
         '', 
         [
           Validators.required,
-          Validators.min(0), // Ensure age is at least 0
-          Validators.max(99) // Ensure age is less than 100
+          Validators.min(1), // Minimum age is 1
+          Validators.max(100) // Maximum age is 100
         ]
       ],
-      initialAddress: ['', Validators.required],
-      mobileNumber: ['', Validators.required],
-      pincode: ['', Validators.required],
+      initialAddress: ['', [Validators.required, Validators.minLength(10)]],
+      mobileNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]], // Must be 10 digits
+      pincode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]], // Validating pincode (6 digits)
       country: ['', Validators.required],
       state: [{ value: '', disabled: true }, Validators.required],
       city: [{ value: '', disabled: true }, Validators.required],
-      email: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
     });
     
     this.paymentForm = this.fb.group({
       paymentId: [{ value: '', disabled: true }],
       paymentMode: ['', Validators.required],
-      paidAmount: [{ value: 0 }, Validators.required],
-      due: [{ value: 0, disabled: true }, Validators.required],
-      totalPrice: [{ value: 0, disabled: true }]  // Add totalPrice here
+      paidAmount: [
+        { value: 0 },
+        [
+          Validators.required,
+          Validators.min(1),  // Ensure paid amount must be greater than 0
+          this.paidAmountValidator()  // Custom validator for `paidAmount`
+        ]
+      ],
+      due: [{ value: 0, disabled: true }],
+      totalPrice: [{ value: 0, disabled: true }]
     });
+    
 
+    this.paymentForm.get('paidAmount')?.valueChanges.subscribe(() => {
+      this.calculateDueAmount();
+    });
   
     this.bookingForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
@@ -192,16 +203,33 @@ export class NewRoomsFilterComponent implements OnInit {
     
   }
 
+  private paidAmountValidator() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const totalPrice = this.paymentForm?.get('totalPrice')?.value || 0;
+      const paidAmount = control.value || 0;
+  
+      if (paidAmount > totalPrice) {
+        return { amountExceedsTotal: true };
+      }
+  
+      return null;
+    };
+  }
+  
+  
+
   calculateDueAmount(): void {
     const totalPrice = this.bookingForm.get('totalPrice')?.value || 0;
     const paidAmount = this.paymentForm.get('paidAmount')?.value || 0;
   
-    // Calculate the due amount as totalPrice - paidAmount
-    const dueAmount = totalPrice - paidAmount;
+    if (paidAmount > totalPrice) {
+      this.paymentForm.get('paidAmount')?.setErrors({ amountExceedsTotal: true });
+    }
   
-    // Update the due field in the form
+    const dueAmount = Math.max(totalPrice - paidAmount, 0);
     this.paymentForm.patchValue({ due: dueAmount }, { emitEvent: false });
   }
+  
 
   mergeData(): void {
     this.filteredRooms = this.rooms.map((room) => {
@@ -603,28 +631,113 @@ private isBookingAvailable(
 
  
 
-  confirmBooking(): void {
-    if (this.bookingForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
-      // Get the reservation and customer objects
-      const { reservation, customer } = this.createReservationObject();
-  
-      const reservationData = { reservation, customer };
-  
-      // Save the reservation
-      this.reservationStorageService.saveReservation(reservationData);
-  
-      // Reset the forms and close the modal
-      this.closeBookingModal();
-      this.bookingForm.reset();
-      this.customerForm.reset();
-      this.paymentForm.reset();
-      this.selectedRoom = null;
-      this.isConfirmDisabled = true; // Disable the confirm button
-      
+ // Confirm Booking Method
+
+confirmBooking(): void {
+  if (this.bookingForm.valid && this.paymentForm.valid && !this.isConfirmDisabled) {
+    // Create reservation and customer objects
+    const { reservation, customer } = this.createReservationObject();
+    const reservationData = { reservation, customer };
+
+    // Save the reservation using the service
+    this.reservationStorageService.saveReservation(reservationData);
+
+    // Verify if the reservation was saved successfully
+    const savedReservation = this.reservationStorageService.getReservations().find(
+      res => res.reservation.reservationId === reservation.reservationId
+    );
+
+    if (savedReservation) {
+      // Set the booking confirmed flag to true upon successful response
+      this.isBookingConfirmed = true;
+
+      // Set the booking success flag to true (will be used when the modal is closed)
+      this.isBookingSuccessful = true;
+
+      // Hide the "Confirm Booking" button and show the "Download Invoice" button
+      this.isConfirmDisabled = true;
     } else {
-      console.log('Please fill out all required fields.');
+      // Set booking success flag to false if reservation failed
+      this.isBookingSuccessful = false;
+    }
+  } else {
+    // If the booking form or payment form is not valid
+    this.showToast('Please fill out all required fields to confirm the booking.');
+  }
+}
+
+
+
+
+
+ // Method to handle manual exit of the modal
+ closeBookingModalManually(): void {
+  const reservationModalElement = document.getElementById('reservationModal');
+  if (reservationModalElement) {
+    const reservationModalInstance = bootstrap.Modal.getInstance(reservationModalElement);
+    if (reservationModalInstance) {
+      reservationModalInstance.hide();
+      reservationModalInstance.dispose();  // Properly dispose of the modal
     }
   }
+
+  // Clean up modal backdrop
+  const backdrops = document.querySelectorAll('.modal-backdrop');
+  backdrops.forEach((backdrop) => backdrop.remove());
+
+  // Reset modal-related body classes
+  document.body.classList.remove('modal-open');
+}
+
+
+// Method to handle exit and show the appropriate toast
+exitModal(): void {
+  // Close the modal manually
+  this.closeBookingModalManually();
+
+  // Determine which toast to show
+  if (this.isBookingSuccessful) {
+    // Show booking success message
+    this.showToast('Booking successful!');
+
+    // Wait for the toast to disappear (assuming toast duration is 5 seconds)
+    setTimeout(() => {
+      window.location.reload();
+
+      console.log('homeccalled')
+    }, 3000);
+  } else {
+    // Show booking unsuccessful message
+    this.showToast('Booking unsuccessful. Please try again.');
+
+    // Wait for the toast to disappear (assuming toast duration is 5 seconds)
+    setTimeout(() => {
+      window.location.reload();
+
+    }, 3000);
+  }
+}
+
+testCall():void{
+  window.location.reload();
+
+      console.log('homeccalled')
+
+}
+
+
+// Toast method with customizable message
+showToast(message: string): void {
+  const toastElement = document.getElementById('bookingToast');
+  if (toastElement) {
+    const toastBody = toastElement.querySelector('.toast-body');
+    if (toastBody) {
+      toastBody.textContent = message; // Update the toast message
+    }
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+  }
+}
 
   // Function to show a toast with Confirm and Cancel buttons
   showToastWithNavigationOption(): void {
@@ -775,32 +888,24 @@ private isBookingAvailable(
 
   // Function to close the booking modal (if needed)
   closeBookingModal(): void {
-    const reservationModalElement = document.getElementById('reservationModal');
-    const bookingElement = document.getElementById('booking');
+    // List of modal element IDs to be closed
+    const modalIds = ['reservationModal', 'booking'];
   
-    if (reservationModalElement) {
-      const reservationModalInstance = bootstrap.Modal.getInstance(reservationModalElement);
-      if (reservationModalInstance) {
-        reservationModalInstance.hide();
-        reservationModalInstance.dispose();  // Properly dispose of modal
-      } else {
-        console.warn('Reservation modal instance not found or already disposed.');
-      }
-    } else {
-      console.warn('Reservation modal element not found in the DOM.');
-    }
+    modalIds.forEach((modalId) => {
+      const modalElement = document.getElementById(modalId);
   
-    if (bookingElement) {
-      const bookingInstance = bootstrap.Modal.getInstance(bookingElement);
-      if (bookingInstance) {
-        bookingInstance.hide();
-        bookingInstance.dispose();  // Properly dispose of booking modal
+      if (modalElement) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+          modalInstance.dispose(); // Properly dispose of modal
+        } else {
+          console.warn(`Modal instance with ID ${modalId} not found or already disposed.`);
+        }
       } else {
-        console.warn('Booking modal instance not found or already disposed.');
+        console.warn(`Modal element with ID ${modalId} not found in the DOM.`);
       }
-    } else {
-      console.warn('Booking modal element not found in the DOM.');
-    }
+    });
   
     // Clean up modal backdrop
     const backdrops = document.querySelectorAll('.modal-backdrop');
@@ -808,19 +913,17 @@ private isBookingAvailable(
   
     // Reset the modal's fade and show classes
     document.body.classList.remove('modal-open');
+  
+    // Log modal status (for debugging purposes)
     console.log('Modals Open?', document.querySelectorAll('.modal.show').length);
     console.log('Backdrops Present?', document.querySelectorAll('.modal-backdrop').length);
-    this.showToast();
+  
+    // Show the appropriate toast
+    this.showToast('Booking closed successfully!');
   }
+  
+  
 
-   // Method to show the toast
-   showToast(): void {
-    const toastElement = document.getElementById('bookingToast');
-    if (toastElement) {
-      const toast = new bootstrap.Toast(toastElement);
-      toast.show();
-    }
-  }
   
   
   goToBookingForm(room: FilteredRoom): void {
@@ -1033,7 +1136,12 @@ generatePDF(): void {
     this.fetchExistingCustomer();
   }
   
-  
+   // Flags to manage booking status
+   isBookingConfirmed = false; // Tracks if booking is confirmed
+   isBookingSuccessful = false; // Tracks if the booking was successfully completed
+
+
+
   
 }
 
