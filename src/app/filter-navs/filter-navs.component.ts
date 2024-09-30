@@ -24,6 +24,7 @@ export class FilterNavsComponent implements OnInit, OnDestroy {
   checkedInDashArray!: string;
   confirmedDashArray!: string;
   checkedOutDashArray!: string;
+  confirmedDashOffset!: string;
 
   constructor(private reservationStorageService: ReservationStorageService) { }
 
@@ -57,14 +58,21 @@ export class FilterNavsComponent implements OnInit, OnDestroy {
     const totalReservations = this.checkedInCount + this.confirmedCount;
 
     if (totalReservations > 0) {
-      // Calculate the circumference of the pie (using the circle radius 14 for your SVG)
-      const circumference = 2 * Math.PI * 14;
+      const circumference = 2 * Math.PI * 14; // Calculate circumference with radius 14
 
-      // Calculate the stroke-dasharray for each segment based on the counts
-      this.checkedInDashArray = `${(this.checkedInCount / totalReservations) * circumference} ${(totalReservations - this.checkedInCount) / totalReservations * circumference}`;
-      this.confirmedDashArray = `${(this.confirmedCount / totalReservations) * circumference} ${(totalReservations - this.confirmedCount) / totalReservations * circumference}`;
+      // Checked-In Segment
+      const checkedInStroke = (this.checkedInCount / totalReservations) * circumference;
+      const confirmedStroke = (this.confirmedCount / totalReservations) * circumference;
+
+      // Set stroke-dasharray for each segment
+      this.checkedInDashArray = `${checkedInStroke} ${circumference - checkedInStroke}`;
+      this.confirmedDashArray = `${confirmedStroke} ${circumference - confirmedStroke}`;
+
+      // Set stroke-dashoffset for the confirmed segment so it starts after the checked-in segment
+      this.confirmedDashOffset = `${circumference - checkedInStroke}`;
     }
-}
+  }
+  
 
 
 

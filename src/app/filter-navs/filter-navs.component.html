@@ -15,29 +15,31 @@
               <!-- Background Circle -->
               <circle r="14" cx="16" cy="16" stroke="#e9ecef" stroke-width="5"></circle>
             
-              <!-- Checked-In Segment -->
-              <circle
-                class="checked-in"
-                r="14"
-                cx="16"
-                cy="16"
-                [attr.stroke-dasharray]="checkedInDashArray"
-                transform="rotate(-90 16 16)"
-                matTooltip="Checked In: {{ checkedInCount }} reservations"
-                matTooltipPosition="above"
-              ></circle>
-            
-              <!-- Confirmed Reservations Segment -->
-              <circle
-                class="confirmed"
-                r="14"
-                cx="16"
-                cy="16"
-                [attr.stroke-dasharray]="confirmedDashArray"
-                transform="rotate(-90 16 16)"
-                matTooltip="Confirmed: {{ confirmedCount }} reservations"
-                matTooltipPosition="above"
-              ></circle>
+<!-- Checked-In Segment -->
+<circle
+  class="checked-in"
+  r="14"
+  cx="16"
+  cy="16"
+  [attr.stroke-dasharray]="checkedInDashArray"
+  transform="rotate(-90 16 16)"
+  matTooltip="Checked In: {{ checkedInCount }} reservations"
+  matTooltipPosition="above"
+></circle>
+
+<!-- Confirmed Reservations Segment -->
+<circle
+  class="confirmed"
+  r="14"
+  cx="16"
+  cy="16"
+  [attr.stroke-dasharray]="confirmedDashArray"
+  [attr.stroke-dashoffset]="confirmedDashOffset" 
+  transform="rotate(-90 16 16)"
+  matTooltip="Confirmed: {{ confirmedCount }} reservations"
+  matTooltipPosition="above"
+></circle>
+
             </svg>
             
 
