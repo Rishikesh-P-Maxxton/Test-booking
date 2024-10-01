@@ -6,16 +6,15 @@
   }
   
   .month-name {
-    font-weight: 400; /* Set font weight to 400 */
+    font-weight: 400;
     background-color: #f1f1f1;
     height: 50px;
     display: flex;
     align-items: center; /* Vertically center the text */
     justify-content: center; /* Horizontally center the text */
     border-bottom: 1px solid #FEFEFE;
-    font-size: 14px; /* Adjust font size to make it slightly smaller */
-    padding: 0; /* Ensure there is no extra padding */
-    line-height: 50px; /* Ensures the content is vertically centered */
+    font-size: 14px;
+    line-height: 50px;
   }
   
   .chart {
@@ -62,15 +61,15 @@
   }
   
   .month-header {
-    font-weight: 400; /* Reduced font weight */
+    font-weight: 400;
     text-align: center;
     background-color: #f1f1f1;
     height: 50px;
     display: flex;
-    align-items: center; /* Vertically centered */
+    align-items: center;
     justify-content: center;
     border: 1px solid #FEFEFE;
-    font-size: 12px; /* Reduced font size for a smaller appearance */
+    font-size: 12px;
     z-index: 15;
   }
   

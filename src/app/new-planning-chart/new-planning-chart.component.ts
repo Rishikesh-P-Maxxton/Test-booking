@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { RoomService } from '../services/room.service';
-
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Reservation } from '../Interfaces/reservation';
 import { Stay } from '../Interfaces/stay';
@@ -28,6 +27,7 @@ export class NewPlanningChartComponent implements OnInit {
   rooms: Room[] = [];
   stays: Stay[] = [];
   reservations: Reservation[] = [];
+  customers: any[] = []; // Added customers array
   days: DayObj[] = [];
   selectedMonth: number;
   year: number;
@@ -47,10 +47,16 @@ export class NewPlanningChartComponent implements OnInit {
       this.rooms = rooms;
       this.stayService.getStays().subscribe((stays) => {
         this.stays = stays;
-        this.reservations = this.reservationStorageService.getReservations().map(item => item.reservation);
+
+        // Retrieve both reservations and customers from the local storage
+        const reservationData = this.reservationStorageService.getReservations();
+        this.reservations = reservationData.map(item => item.reservation);
+        this.customers = reservationData.map(item => item.customer); // Assuming each reservation has a customer
+
         this.generateChart();
         setTimeout(() => {
           this.scrollToToday(); // Smooth scroll to today's date after rendering
+          this.initializeTooltips(); // Initialize tooltips after rendering the chart
         }, 0);
       });
     });
@@ -79,15 +85,23 @@ export class NewPlanningChartComponent implements OnInit {
     if (!roomData) return 'not-available';
 
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
-    currentDay.setHours(0, 0, 0, 0);
+    currentDay.setHours(12, 0, 0, 0); // Set to midday to avoid midnight comparison issues
 
     // Check if the current day falls within any reservation period
-    const reservation = this.reservations.find(
-      (res) =>
+    const reservation = this.reservations.find((res) => {
+      const reservationStartDate = new Date(res.arrivalDate);
+      const reservationEndDate = new Date(res.departureDate);
+
+      // Adjust times to reflect industry standards
+      reservationStartDate.setHours(11, 0, 0, 0); // Arrival at 11 AM
+      reservationEndDate.setHours(10, 0, 0, 0); // Departure at 10 AM
+
+      return (
         res.roomId === roomId &&
-        new Date(res.arrivalDate) <= currentDay &&
-        new Date(res.departureDate) >= currentDay
-    );
+        currentDay >= reservationStartDate &&
+        currentDay < reservationEndDate // The end date is exclusive for night stays
+      );
+    });
 
     if (reservation) {
       if (reservation.status === 'CHECKED-IN') {
@@ -98,6 +112,32 @@ export class NewPlanningChartComponent implements OnInit {
     }
 
     return 'available';
+  }
+
+  getTooltipForCell(roomId: number, dayObj: DayObj): string {
+    const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    currentDay.setHours(12, 0, 0, 0);
+
+    // Find if there's a reservation starting on the current day
+    const reservation = this.reservations.find((res) => {
+      const reservationStartDate = new Date(res.arrivalDate);
+      reservationStartDate.setHours(11, 0, 0, 0); // Arrival at 11 AM
+
+      return (
+        res.roomId === roomId &&
+        reservationStartDate.toDateString() === currentDay.toDateString()
+      );
+    });
+
+    // If a reservation is found, get the customer name using the customerId
+    if (reservation) {
+      const customer = this.customers.find(cust => cust.customerId === reservation.customerId);
+      if (customer) {
+        return `Customer: ${customer.firstName} ${customer.lastName} \nArrival: ${reservation.arrivalDate}\nDeparture: ${reservation.departureDate}\nAmount Paid: ${reservation.paidAmount}`;
+      }
+    }
+
+    return '';
   }
 
   getDayName(dayObj: DayObj): string {
@@ -118,5 +158,13 @@ export class NewPlanningChartComponent implements OnInit {
     if (todayElement) {
       todayElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
     }
+  }
+
+  initializeTooltips(): void {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach((tooltipTriggerEl) => {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
   }
 }
