@@ -122,4 +122,47 @@ export class ReservationsListComponent implements OnInit {
     // Save the PDF
     doc.save(`Reservations_List_${currentDate}.pdf`);
   }
+
+  currentPage: number = 1; // Current page number
+itemsPerPage: number = 7; // Items per page (can be adjusted based on preference)
+
+// Calculated getter to determine total pages based on the filtered data length
+get totalPages(): number {
+  return Math.ceil(this.filteredReservations.length / this.itemsPerPage);
+}
+// Method to get the paginated data
+get paginatedReservations(): Array<{ reservation: Reservation, customer: Customer }> {
+  const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+  const endIndex = startIndex + this.itemsPerPage;
+  return this.filteredReservations.slice(startIndex, endIndex);
+}
+
+// Method to navigate to a specific page
+goToPage(page: number): void {
+  if (page >= 1 && page <= this.totalPages) {
+    this.currentPage = page;
+  }
+}
+
+selectedReservation: { reservation: Reservation, customer: Customer } | null = null; // For modal
+
+openModal(reservation: { reservation: Reservation, customer: Customer } | null): void {
+  if (reservation) {
+    this.selectedReservation = reservation;
+    console.log('Opening modal for reservation:', reservation);
+
+    const modalElement = document.getElementById('reservationDetailsModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+      console.log('Modal is shown');
+    } else {
+      console.error('Modal element not found');
+    }
+  } else {
+    console.error('Reservation not provided');
+  }
+}
+
+
 }

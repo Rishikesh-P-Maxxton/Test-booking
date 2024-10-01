@@ -9,7 +9,32 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-body">
-        <!-- Filter Rooms View -->
+        
+  <!-- Booking Confirmation View -->
+<div *ngIf="currentModalPage === 3">
+  <div class="container cont1 mt-4 text-left">
+    <p class="display-5">Thank you for your booking!</p>
+    
+    <p class="lead  l1 text-left mt-3">
+      You can now download your booking invoice for your records.
+    </p>
+
+    <!-- Buttons aligned to the right with spacing -->
+    <div class="text-end mt-4">
+      <button
+        *ngIf="isBookingConfirmed"
+        class="btn btn-custom me-2"
+        (click)="generatePDF()"
+      >
+        Download Invoice PDF
+      </button>
+    
+      <!-- Exit Button (Always Visible) -->
+      <button class="btn btn-custom-quo" (click)="exitModal()">Exit</button>
+    </div>
+  </div>
+</div>
+
         <!-- Filter Rooms View -->
         <div *ngIf="currentModalPage === 0">
           <div class="container mt-4">
@@ -234,7 +259,7 @@
                           >
                           <select
                             id="totalNumberOfGuests"
-                            class="form-select"
+                            class="form-select form-control"
                             formControlName="totalNumberOfGuests"
                           >
                             <option
@@ -311,81 +336,77 @@
                       class="custom-form needs-validation"
                       novalidate
                     >
-                      <!-- Existing User Email Input with Search Button -->
-                      <div *ngIf="isExistingUser">
-                        <div class="input-group mb-3">
-                          <!-- Email input field -->
-                          <input
-                            type="email"
-                            class="form-control"
-                            id="email"
-                            formControlName="email"
-                            placeholder="Enter or select email"
-                            (input)="filterEmails()"
-                          />
+                     <!-- Existing User Email Input with Search Button -->
+<!-- Existing User Email Input with Search Button -->
+<div *ngIf="isExistingUser">
+  <div class="mb-3 col-md-12 position-relative">
+    <!-- Input group for email input field and Search button -->
+    <div class="input-group">
+      <!-- Email input field -->
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        formControlName="email"
+        placeholder="Enter or select email"
+        (input)="filterEmails()"
+        (focus)="emailDropdownVisible = true"
+        (blur)="hideDropdownAfterDelay()"
+      />
 
-                          <!-- Dropdown button -->
-                          <button
-                            class="btn btn-outline-secondary dropdown-toggle"
-                            type="button"
-                            id="dropdownMenuButton"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                          >
-                            Select Email
-                          </button>
+      <!-- Search Email Button next to the input field -->
+      <button
+        type="button"
+        class="btn-custom-quo"
+        (click)="fetchExistingCustomer()"
+        [disabled]="!emailForm.valid">
+        Select Customer
+      </button>
+    </div>
 
-                          <!-- Dropdown list -->
-                          <ul
-                            class="dropdown-menu dropdown-menu-end"
-                            aria-labelledby="dropdownMenuButton"
-                          >
-                            <li *ngFor="let email of filteredEmails">
-                              <button
-                                class="dropdown-item"
-                                (click)="selectEmail(email)"
-                              >
-                                {{ email }}
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
+    <!-- Filtered emails dropdown -->
+    <div
+      *ngIf="emailDropdownVisible && filteredEmails.length > 0"
+      class="list-group position-absolute"
+      style="top: 100%; left: 0; z-index: 1; width: 100%;">
+      <button
+        *ngFor="let email of filteredEmails"
+        type="button"
+        class="list-group-item list-group-item-action"
+        (mousedown)="selectEmail(email)">
+        {{ email }}
+      </button>
+    </div>
 
-                        <!-- Existing Customer Messages -->
-                        <!-- Error alert for email validation -->
-                        <div
-                          *ngIf="
-                            emailForm.get('email')?.touched &&
-                            emailForm.get('email')?.invalid
-                          "
-                          class="alert alert-error mt-2"
-                        >
-                          <div
-                            *ngIf="emailForm.get('email')?.errors?.['required']"
-                          >
-                            Email is required.
-                          </div>
-                          <div
-                            *ngIf="emailForm.get('email')?.errors?.['email']"
-                          >
-                            Invalid email format. Please enter a valid email
-                            address.
-                          </div>
-                        </div>
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="spinner-border text-primary mt-2 ms-2" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
 
-                        <!-- Alert for customer not found -->
-                        <div *ngIf="emailError" class="alert alert-error mt-2">
-                          {{ emailError }}
-                        </div>
+  <!-- Error alert for customer not found -->
+  <div *ngIf="emailError" class="alert alert-danger mt-2">
+    {{ emailError }}
+  </div>
 
-                        <!-- Success alert for valid existing customer -->
-                        <div
-                          *ngIf="customerName && emailForm.get('email')?.valid"
-                          class="alert alert-success mt-2"
-                        >
-                          Welcome, {{ customerName }}!
-                        </div>
-                      </div>
+  <!-- Spacer -->
+  <div *ngIf="!emailError && emailDropdownVisible && filteredEmails.length " class="alert alert-danger1 mt-2">
+    <br>
+    <br>
+    <br>
+  </div>
+
+  <!-- Success alert for valid existing customer -->
+  <div *ngIf="customerName && emailForm.get('email')?.valid" class="alert alert-success mt-2">
+    Welcome, {{ customerName }}!
+  </div>
+</div>
+
+
+
+
+                        
+                      
 
                       <!-- New Customer Form Fields -->
                       <div *ngIf="isNewUser">
@@ -897,7 +918,13 @@
                   </div>
                 </mat-step>
               </mat-vertical-stepper>
+
             </div>
+
+
+
+
+
             <div class="modal-footer">
               <!-- Confirm Booking Button -->
               <button
@@ -928,6 +955,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- Trigger Modal Button -->
 <button

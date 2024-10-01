@@ -6,6 +6,8 @@ import { Room } from '../Interfaces/room';
 import { Stay } from '../Interfaces/stay';
 import { CalendarRoom } from '../Interfaces/calendar-room';
 import { EventEmitter, Output } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { FilterStateService } from '../services/filter-state-service.service';
 
 
 export interface SimplifiedReservation {
@@ -43,10 +45,12 @@ export class DualCalendarComponent implements OnInit {
   validDepartureDates: Date[] = []; // Combined valid departure dates after arrival selection
   filteredRooms: CalendarRoom[] = []; // Store the filtered rooms here
 
+  private resetSubscription!: Subscription;
   @Output() selectionConfirmed: EventEmitter<any> = new EventEmitter();
 
   constructor(
     private roomService: RoomService,
+    private filterStateService: FilterStateService,
     private stayService: StayService,
     private reservationStorageService: ReservationStorageService
   ) {
@@ -62,6 +66,12 @@ export class DualCalendarComponent implements OnInit {
   ngOnInit(): void {
     this.generateCalendarDays();
     this.initializeRoomsAndStays();
+     // Subscribe to reset action from the service
+     this.resetSubscription = this.filterStateService.resetFilterAction$.subscribe(reset => {
+      if (reset) {
+        this.resetSelection(); // Call your method to reset the component state
+      }
+    });
   }
 
   // Fetch and initialize rooms and stays

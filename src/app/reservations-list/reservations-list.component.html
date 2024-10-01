@@ -33,14 +33,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let reservation of filteredReservations; let i = index"
+        <tr *ngFor="let reservation of paginatedReservations; let i = index"
             [ngClass]="{
               'status-confirmed': reservation.reservation.status === 'CONFIRM',
               'status-checked-in': reservation.reservation.status === 'CHECKED-IN',
               'status-checked-out': reservation.reservation.status === 'CHECKED-OUT'
             }"
             class="table-row"
-            [ngStyle]="{'--animation-delay': i * 0.2 + 's'}">
+            [ngStyle]="{'--animation-delay': i * 0.2 + 's'}"
+            (click)="openModal(reservation)">
           <td>{{ reservation.reservation.reservationId }}</td>
           <td>{{ reservation.reservation.roomId }}</td>
           <td>{{ reservation.reservation.arrivalDate }}</td>
@@ -58,7 +59,33 @@
           <td>{{ reservation.reservation.paidAmount }}</td>
         </tr>
       </tbody>
+      
     </table>
+    <!-- Bootstrap Pagination Controls -->
+<nav *ngIf="totalPages > 1">
+  <ul class="pagination justify-content-center">
+    <!-- Previous Page Button -->
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <a class="page-link" (click)="goToPage(currentPage - 1)" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+
+    <!-- Page Number Buttons -->
+    <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index"
+        [class.active]="i + 1 === currentPage">
+      <a class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</a>
+    </li>
+
+    <!-- Next Page Button -->
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <a class="page-link" (click)="goToPage(currentPage + 1)" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
   
     <!-- Clear Reservations and Download Buttons -->
     <div class="container mt-4">
@@ -66,4 +93,65 @@
       <button class="btn-custom-sec ms-2" *ngIf="filteredReservations.length !== 0" (click)="downloadPDF()">Download as PDF</button>
     </div>
   </div>
-  
+
+<!-- Minimal Modal for Reservation Details -->
+<div class="modal fade" id="reservationDetailsModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content modal-content-custom">
+      <div class="modal-header modal-header-custom">
+        <div class=" display-6" id="reservationModalLabel">Booking Information</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body modal-body-custom" *ngIf="selectedReservation">
+        
+          
+          <table class="modal-table">
+            <tr>
+              <th>Reservation ID</th>
+              <td>{{ selectedReservation.reservation.reservationId }}</td>
+            </tr>
+            <tr>
+              <th>Room ID</th>
+              <td>{{ selectedReservation.reservation.roomId }}</td>
+            </tr>
+            <tr>
+              <th>Arrival Date</th>
+              <td>{{ selectedReservation.reservation.arrivalDate }}</td>
+            </tr>
+            <tr>
+              <th>Departure Date</th>
+              <td>{{ selectedReservation.reservation.departureDate }}</td>
+            </tr>
+            <tr>
+              <th>Total Guests</th>
+              <td>{{ selectedReservation.reservation.numberOfGuest }}</td>
+            </tr>
+            <tr>
+              <th>Total Price</th>
+              <td>$ {{ selectedReservation.reservation.totalPrice }}</td>
+            </tr>
+            <tr>
+              <th>Status</th>
+              <td>{{ selectedReservation.reservation.status }}</td>
+            </tr>
+            <tr>
+              <th>Paid Amount</th>
+              <td>$ {{ selectedReservation.reservation.paidAmount }}</td>
+            </tr>
+            <tr>
+              <th>Customer Name</th>
+              <td>{{ selectedReservation.customer.firstName }} {{ selectedReservation.customer.middleName }} {{ selectedReservation.customer.lastName }}</td>
+            </tr>
+            <tr>
+              <th>Email</th>
+              <td>{{ selectedReservation.customer.email }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+     
+    </div>
+  </div>
+
+
+

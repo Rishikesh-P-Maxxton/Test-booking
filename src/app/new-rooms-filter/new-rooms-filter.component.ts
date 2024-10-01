@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import  { jsPDF } from 'jspdf';
 import { Router, RouterLink } from '@angular/router';
+import { FilterStateService } from '../services/filter-state-service.service';
 interface FilteredRoom {
   roomId: number;
   locationId: number;
@@ -73,6 +74,7 @@ export class NewRoomsFilterComponent implements OnInit {
   allEmails: string[] = [];  // List of all unique emails
   filteredEmails: string[] = [];  // Filtered emails for dropdown
   emailDropdownVisible: boolean = false;  // Control the dropdown visibility
+  isLoading: boolean = false;
 
   constructor(
     private roomService: RoomService,
@@ -82,6 +84,7 @@ export class NewRoomsFilterComponent implements OnInit {
     private cdr: ChangeDetectorRef, private geolocsService: GeolocsService,
     public dialog: MatDialog,
     private router: Router,
+    private filterStateService: FilterStateService
     
 
   ) {
@@ -153,9 +156,8 @@ export class NewRoomsFilterComponent implements OnInit {
     this.bookingForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
-    this.bookingForm
-      .get('totalNumberOfGuests')
-      ?.valueChanges.subscribe(() => this.updateTotalPrice());
+    this.bookingForm.get('totalNumberOfGuests')?.disable();
+
     this.bookingForm
       .get('numberOfDays')
       ?.valueChanges.subscribe(() => this.updateTotalPrice());
@@ -176,7 +178,7 @@ export class NewRoomsFilterComponent implements OnInit {
 
     this.reservationStorageService.getAllCustomerEmails().subscribe((emails: string[]) => {
       this.allEmails = emails;
-      this.filteredEmails = [...this.allEmails];  // Initially show all emails
+      this.filteredEmails = [];  
     });
     this.geolocsService.getData().subscribe(response => {
       this.countries = response.countries;
@@ -347,36 +349,49 @@ export class NewRoomsFilterComponent implements OnInit {
     }
   }
   fetchExistingCustomer(): void {
+    this.isLoading = true;  // Show spinner during search
     const email = this.emailForm.get('email')?.value;
   
     if (email) {
       this.reservationStorageService.getCustomerByEmail(email).subscribe({
         next: (customer: Customer | undefined) => {
+          this.isLoading = false; // Hide spinner once complete
           if (customer) {
             this.existingCustomer = customer;
             this.customerName = `${customer.firstName} ${customer.lastName}`;
             this.emailError = null;
-            
-            // Directly set the fetched customer in the booking object
-            this.isConfirmDisabled = false; // Enable the stepper when customer is fetched
+            this.emailDropdownVisible = false; // Prevent dropdown from reappearing after a customer is selected
           } else {
             this.emailError = 'Customer not found.';
             this.existingCustomer = undefined;
             this.customerName = null;
-            this.isConfirmDisabled = true; // Disable the stepper if customer not found
           }
         },
         error: (err) => {
+          this.isLoading = false; // Hide spinner on error
           console.error('Error fetching customer by email', err);
           this.emailError = 'An error occurred while fetching customer details.';
           this.existingCustomer = undefined;
           this.customerName = null;
-          this.isConfirmDisabled = true;
         }
       });
     }
   }
   
+  
+  
+  
+  onFocusInput(): void {
+    const emailInput = this.emailForm.get('email')?.value?.toLowerCase() || '';
+  
+    // Only show the dropdown if no customer is selected and there are matches
+    if (!this.customerName && emailInput.trim() !== '') {
+      this.filteredEmails = this.allEmails.filter(email =>
+        email.toLowerCase().includes(emailInput)
+      );
+      this.emailDropdownVisible = this.filteredEmails.length > 0;
+    }
+  }
   
 
   onCountryChange(event: Event): void {
@@ -654,6 +669,7 @@ confirmBooking(): void {
       // Set the booking success flag to true (will be used when the modal is closed)
       this.isBookingSuccessful = true;
 
+      this.currentModalPage = 3;
       // Hide the "Confirm Booking" button and show the "Download Invoice" button
       this.isConfirmDisabled = true;
     } else {
@@ -862,9 +878,28 @@ showToast(message: string): void {
   }
 
    // Function to move back to the filter form view
-   goToFilterForm() {
-    this.currentModalPage = 0;
-  }
+  // Function to move back to the filter form view
+goToFilterForm() {
+  this.currentModalPage = 0; // Set the current page to the filter form
+  this.resetFilterForm(); // Reset the filter form to clear any previous selections
+}
+
+// Function to reset the filter form
+resetFilterForm(): void {
+  this.filterForm.reset(); // Reset all the form fields to their initial state
+
+  // Reset other properties related to filter form
+  this.filteredRooms = [...this.rooms]; // Reset the filtered rooms to include all available rooms
+  this.numberOfGuestsOptions = []; // Reset the guest options
+  this.filterForm.get('numberOfGuests')?.disable(); // Disable the guest capacity dropdown initially
+
+  // If the `dual-calendar` component was using any state, make sure it is also reset via the shared service or an internal function.
+  this.dateFilterApplied = false; // Reset date filter flag
+  this.emittedObject = null; // Clear any emitted data
+
+  // Optionally notify the dual calendar or related components to reset their states
+  this.filterStateService.triggerFilterReset(); // Notify that filter has been reset if needed
+}
 
   populateBookingForm(room: FilteredRoom): void {
     const numberOfDays = this.calculateNumberOfDays(new Date(this.filterForm.get('arrivalDate')?.value), new Date(this.filterForm.get('departureDate')?.value));
@@ -1107,34 +1142,49 @@ generatePDF(): void {
   
   
    // Filter emails based on the input field value
-  filterEmails(): void {
-    const emailInput = this.emailForm.get('email')?.value.toLowerCase();
-    
+   filterEmails(): void {
+    const emailInput = this.emailForm.get('email')?.value?.toLowerCase() || '';
+  
     if (emailInput.trim() === '') {
-      // If the input field is empty, show all emails
-      this.filteredEmails = [...this.allEmails];
+      // If the input is empty, hide the dropdown and reset suggestions
+      this.filteredEmails = [];
+      this.emailDropdownVisible = false;
     } else {
-      // If the input is not empty, filter based on the input
+      // Filter emails to show only those matching the input
       this.filteredEmails = this.allEmails.filter(email =>
         email.toLowerCase().includes(emailInput)
       );
+  
+      // Only show dropdown if there are matches and no customer is already selected
+      this.emailDropdownVisible = this.filteredEmails.length > 0 && !this.customerName;
     }
-
-    // Show the dropdown if there's anything to display
-    this.emailDropdownVisible = this.filteredEmails.length > 0;
+  
+    // Clear previous customer data when the input changes
+    this.existingCustomer = undefined;
+    this.customerName = null;
+    this.emailError = null;
   }
+  
+  
+  
 
-  // Select an email from the dropdown
+  hideDropdownAfterDelay(): void {
+    setTimeout(() => {
+      this.emailDropdownVisible = false;
+    }, 200); // Short delay to prevent the dropdown from disappearing immediately
+  }
+  
+  
+
   selectEmail(email: string): void {
-    // Patch the selected email into the email input field
     this.emailForm.patchValue({ email });
-
-    // Hide the dropdown after selection
-    this.emailDropdownVisible = false;
-
-    // Fetch existing customer details based on the selected email
-    this.fetchExistingCustomer();
+    this.emailDropdownVisible = false; // Hide dropdown after selection
+    this.existingCustomer = undefined;
+    this.customerName = null;
+    this.emailError = null;
   }
+  
+  
   
    // Flags to manage booking status
    isBookingConfirmed = false; // Tracks if booking is confirmed

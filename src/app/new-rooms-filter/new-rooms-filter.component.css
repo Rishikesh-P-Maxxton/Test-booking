@@ -35,11 +35,26 @@
     border-radius: 0;
     height: 2.5rem; /* Consistent with input fields */
   }
+
+  .btn-custom-quo {
+    background-color: black;
+    color: #f6f6f6;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0;
+    height: 2.5rem; /* Consistent with input fields */
+  }
+
+  .btn-custom-quo:hover {
+    color: #dddddd;
+    background-color: #4d4d4d; /* Slightly lighter background on hover */
+  }
   
   .btn-custom-sec:hover {
     color: #000;
     background-color: #e0e0e0; /* Slightly lighter background on hover */
   }
+
   
   /* Filter Section */
   .filter-section {
@@ -91,6 +106,14 @@
   
   .custom-form .form-control {
     background-color: #e3e3e3;
+    border-radius: 0;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    border: none;
+
+  }
+  .form-select{
+        background-color: #e3e3e3;
     border-radius: 0;
     padding: 0.5rem;
     font-size: 0.875rem;
@@ -243,6 +266,9 @@
     box-sizing: border-box; /* Ensure padding is within the width */
   }
   
+  .dropdown-menu{
+    z-index: 3000;
+  }
   
 
   .custom-dialog-container {
@@ -257,5 +283,10 @@
     z-index: 3000;
   }
 
-  
-  
+  .cont1{
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  .l1{
+    padding-bottom: 3rem;
+  }

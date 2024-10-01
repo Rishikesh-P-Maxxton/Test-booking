@@ -75,32 +75,63 @@
 </nav>
 
 
-<!-- Modal for Reservation Details -->
+<!-- Minimal Modal for Reservation Details -->
 <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xs">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="reservationModalLabel">Reservation Details</h5>
+  <div class="modal-dialog modal-md">
+    <div class="modal-content modal-content-custom">
+      <div class="modal-header modal-header-custom">
+        <div class="display-6" id="reservationModalLabel">Booking Information</div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" *ngIf="selectedReservation">
-        <p><strong>Reservation ID:</strong> {{ selectedReservation.reservation.reservationId }}</p>
-        <p><strong>Room ID:</strong> {{ selectedReservation.reservation.roomId }}</p>
-        <p><strong>Arrival Date:</strong> {{ selectedReservation.reservation.arrivalDate }}</p>
-        <p><strong>Departure Date:</strong> {{ selectedReservation.reservation.departureDate }}</p>
-        <p><strong>Total Guests:</strong> {{ selectedReservation.reservation.numberOfGuest }}</p>
-        <p><strong>Total Price:</strong> {{ selectedReservation.reservation.totalPrice }}</p>
-        <p><strong>Status:</strong> {{ selectedReservation.reservation.status }}</p>
-        <p><strong>Paid Amount:</strong> {{ selectedReservation.reservation.paidAmount }}</p>
-        <p><strong>Customer:</strong> {{ selectedReservation.customer.firstName }} {{ selectedReservation.customer.middleName}} {{ selectedReservation.customer.lastName }}</p>
-        <p><strong>Email:</strong> {{ selectedReservation.customer.email }}</p>
+      <div class="modal-body modal-body-custom" *ngIf="selectedReservation">
+        <table class="modal-table">
+          <tr>
+            <th>Reservation ID</th>
+            <td>{{ selectedReservation.reservation.reservationId }}</td>
+          </tr>
+          <tr>
+            <th>Room ID</th>
+            <td>{{ selectedReservation.reservation.roomId }}</td>
+          </tr>
+          <tr>
+            <th>Arrival Date</th>
+            <td>{{ selectedReservation.reservation.arrivalDate }}</td>
+          </tr>
+          <tr>
+            <th>Departure Date</th>
+            <td>{{ selectedReservation.reservation.departureDate }}</td>
+          </tr>
+          <tr>
+            <th>Total Guests</th>
+            <td>{{ selectedReservation.reservation.numberOfGuest }}</td>
+          </tr>
+          <tr>
+            <th>Total Price</th>
+            <td>$ {{ selectedReservation.reservation.totalPrice }}</td>
+          </tr>
+          <tr>
+            <th>Status</th>
+            <td>{{ selectedReservation.reservation.status }}</td>
+          </tr>
+          <tr>
+            <th>Paid Amount</th>
+            <td>$ {{ selectedReservation.reservation.paidAmount }}</td>
+          </tr>
+          <tr>
+            <th>Customer Name</th>
+            <td>{{ selectedReservation.customer.firstName }} {{ selectedReservation.customer.middleName }} {{ selectedReservation.customer.lastName }}</td>
+          </tr>
+          <tr>
+            <th>Email</th>
+            <td>{{ selectedReservation.customer.email }}</td>
+          </tr>
+        </table>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
+      
     </div>
   </div>
 </div>
+
 
 <!-- Clear All Reservations and Download Buttons -->
 <div class="container mt-4">
