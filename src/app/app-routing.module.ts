@@ -11,11 +11,13 @@ import { ResNavComponent } from './res-nav/res-nav.component';
 
 import { NewRoomsFilterComponent } from './new-rooms-filter/new-rooms-filter.component';
 import { MainpageComponent } from './mainpage/mainpage.component';
+import { NewPlanningChartComponent } from './new-planning-chart/new-planning-chart.component';
 
 
 const routes: Routes = [
   { path: '', redirectTo: 'reservations', pathMatch: 'full' },  
   { path: 'home', component: MainpageComponent }, 
+  { path: 'newplanner', component: NewPlanningChartComponent},
   { path: 'filter', component: RoomsFilterComponent },
   { path: 'planner', component: RoomAvailabilityGanttComponent },
   

@@ -1,0 +1,113 @@
+.chart-container {
+    overflow-x: auto;
+    margin: 20px 0;
+    white-space: nowrap;
+    border: 1px solid #ccc;
+  }
+  
+  .month-name {
+    font-weight: 400; /* Set font weight to 400 */
+    background-color: #f1f1f1;
+    height: 50px;
+    display: flex;
+    align-items: center; /* Vertically center the text */
+    justify-content: center; /* Horizontally center the text */
+    border-bottom: 1px solid #FEFEFE;
+    font-size: 14px; /* Adjust font size to make it slightly smaller */
+    padding: 0; /* Ensure there is no extra padding */
+    line-height: 50px; /* Ensures the content is vertically centered */
+  }
+  
+  .chart {
+    display: grid;
+    background-color: #f8f9fa;
+    width: max-content;
+  }
+  
+  .sticky {
+    position: sticky;
+    z-index: 10;
+    background-color: #f1f1f1;
+    top: 0;
+    left: 0;
+  }
+  
+  .room-name {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 1px solid #EAEAEA;
+    height: 35px;
+    padding: 0 5px;
+    white-space: nowrap;
+    font-weight: 400;
+    position: sticky;
+    left: 0;
+    z-index: 15;
+  }
+  
+  .day-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f1f1f1;
+    border: 1px solid #FEFEFE;
+    height: 50px;
+    padding: 5px;
+    font-weight: 400;
+    font-size: 12px;
+  }
+  
+  .month-header {
+    font-weight: 400; /* Reduced font weight */
+    text-align: center;
+    background-color: #f1f1f1;
+    height: 50px;
+    display: flex;
+    align-items: center; /* Vertically centered */
+    justify-content: center;
+    border: 1px solid #FEFEFE;
+    font-size: 12px; /* Reduced font size for a smaller appearance */
+    z-index: 15;
+  }
+  
+  .cell {
+    height: 35px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #EAEAEA;
+  }
+  
+  .available {
+    background-color: #ffffff;
+  }
+  
+  .not-available {
+    background-color: #e0e0e0;
+  }
+  
+  .weekend {
+    background-color: #fff3cd;
+  }
+  
+  .checked-in {
+    background-color: #ffad33;
+    color: white;
+    border: none;
+    border-bottom: 1px solid #FEFEFE;
+  }
+  
+  .confirmed {
+    background-color: #5a5acf;
+    color: white;
+    border: none;
+    border-bottom: 1px solid #FEFEFE;
+  }
+  
+  .cell + .cell {
+    border-left: none;
+  }
+  
