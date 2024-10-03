@@ -45,6 +45,9 @@ export class DualCalendarComponent implements OnInit {
   validDepartureDates: Date[] = []; // Combined valid departure dates after arrival selection
   filteredRooms: CalendarRoom[] = []; // Store the filtered rooms here
 
+  roomArrivalDatesMap: { [roomId: number]: string[] } = {};
+  private isRoomsAndStaysInitialized = false;
+
   private resetSubscription!: Subscription;
   @Output() selectionConfirmed: EventEmitter<any> = new EventEmitter();
 
@@ -211,25 +214,38 @@ isWithinBookingWindow(today: Date, bookDateFrom: Date | null, bookDateTo: Date |
 // Combine arrival dates from all rooms and stays
 generateCombinedArrivalDates(): Set<string> {
   const combinedDates = new Set<string>();
+  this.roomArrivalDatesMap = {}; // Reset the map before starting
 
   console.log(`\n\n=== Generating Combined Arrival Dates for All Rooms ===`);
 
   this.rooms.forEach(room => {
+    const roomArrivalDates = new Set<string>(); // Use a set to avoid duplicates for each room
+
     room.stays.forEach(stay => {
-      
       const stayDates = this.generateArrivalDates(stay);
+
+      // Add these dates to the combined set and the room-specific set
       stayDates.forEach(date => {
         combinedDates.add(date);
+        roomArrivalDates.add(date);
       });
     });
+
+    // Store the unique arrival dates for this room in roomArrivalDatesMap
+    this.roomArrivalDatesMap[room.roomId] = Array.from(roomArrivalDates);
   });
 
   console.log('\n=== Final Combined Arrival Dates ===');
   console.log(Array.from(combinedDates));
   console.log('====================================\n');
 
+  console.log('\n=== Room boomba Arrival Dates Map ===');
+  console.log(this.roomArrivalDatesMap);
+  console.log('==============================\n');
+
   return combinedDates;
 }
+
 
 
   departureDateFilter = (date: Date | null): boolean => {
