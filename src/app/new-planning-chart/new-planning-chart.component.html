@@ -1,34 +1,36 @@
 <div class="chart-container">
     <div class="chart" [style.grid-template-columns]="'repeat(' + (days.length + 1) + ', 1fr)'">
-  
-      <!-- Month Header -->
-      <div class="month-header sticky">Month</div>
-      <div *ngFor="let section of days | slice:0:days.length; let i = index" class="month-name sticky">
-        <div *ngIf="i === 0 || days[i].month !== days[i - 1].month">
-          {{ months[days[i].month] }}
+
+        <!-- Month Header -->
+        <div class="month-header sticky">Month</div>
+        <div *ngFor="let section of days | slice:0:days.length; let i = index" class="month-name sticky">
+            <div *ngIf="i === 0 || days[i].month !== days[i - 1].month">
+                {{ months[days[i].month] }}
+            </div>
         </div>
-      </div>
-  
-      <!-- Days Header -->
-      <div class="day-header sticky">Room</div>
-      <div *ngFor="let dayObj of days" 
-           [id]="'day-' + dayObj.year + '-' + dayObj.month + '-' + dayObj.day" 
-           [ngClass]="{ 'day-header': true, 'weekend': isWeekend(dayObj) }">
-        <div>{{ dayObj.day }}</div>
-        <div>{{ getDayName(dayObj) }}</div>
-      </div>
-      
-      <!-- Room Rows -->
-      <ng-container *ngFor="let room of rooms">
-        <div class="room-name sticky">Room {{ room.roomId }}</div>
+
+        <!-- Days Header -->
+        <div class="day-header sticky">Room</div>
         <div *ngFor="let dayObj of days" 
-             [ngClass]="getCellClass(room.roomId, dayObj)" 
-             class="cell"
-             [attr.data-bs-toggle]="getTooltipForCell(room.roomId, dayObj) ? 'tooltip' : null"
-             [attr.title]="getTooltipForCell(room.roomId, dayObj)">
+             [id]="'day-' + dayObj.year + '-' + dayObj.month + '-' + dayObj.day" 
+             [ngClass]="{ 'day-header': true, 'weekend': isWeekend(dayObj) }">
+            <div>{{ dayObj.day }}</div>
+            <div>{{ getDayName(dayObj) }}</div>
         </div>
-      </ng-container>
-  
+
+        <!-- Room Rows -->
+        <ng-container *ngFor="let room of rooms">
+            <div class="room-name sticky">Room {{ room.roomId }}</div>
+            <div *ngFor="let dayObj of days" 
+                 [ngClass]="getCellClass(room.roomId, dayObj)" 
+                 class="cell"
+                 [attr.data-bs-toggle]="getTooltipForCell(room.roomId, dayObj) ? 'tooltip' : null"
+                 [attr.title]="getTooltipForCell(room.roomId, dayObj)"
+                 (mousedown)="startDragging(room.roomId, dayObj)" 
+                 (mousemove)="onDragging(room.roomId, dayObj)"
+                 (mouseup)="endDragging()">
+            </div>
+        </ng-container>
+
     </div>
-  </div>
-  
+</div>

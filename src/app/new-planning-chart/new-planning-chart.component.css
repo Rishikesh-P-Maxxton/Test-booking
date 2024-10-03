@@ -110,3 +110,65 @@
     border-left: none;
   }
   
+
+  /* Styling for drag-to-select functionality */
+
+/* Highlight the start of the selection (arrival date) */
+.cell.dragging-start {
+    background-color: #007bff; /* Blue color for arrival date */
+    color: white;
+    border-radius: 8px 0 0 8px; /* Rounded left corners for start cell */
+    border: none;
+}
+
+/* Highlight the current end of the selection (departure date) */
+.cell.dragging-end {
+    background-color: #28a745; /* Green color for potential departure date */
+    color: white;
+    border-radius: 0 8px 8px 0; /* Rounded right corners for end cell */
+    border: none;
+}
+
+/* Highlight the cells between the arrival and departure during dragging */
+.cell.dragging-range {
+    background-color: rgba(0, 123, 255, 0.2); /* Light blue for intermediate cells */
+    color: black;
+    border: none;
+}
+
+/* Not-allowed cursor to indicate invalid drag operation (cross-room dragging) */
+.cell.invalid-drag {
+    cursor: not-allowed;
+}
+
+/* Reset cell border during selection to merge the look of consecutive cells */
+.cell.dragging-start,
+.cell.dragging-end,
+.cell.dragging-range {
+    border-left: none;
+    border-right: none;
+    border-top: .5px solid #ffffff;
+    border-bottom: .5px solid #ffffff;
+}
+
+/* Reset cell styles when dragging ends */
+.cell.selected-range {
+    background-color: rgba(40, 167, 69, 0.3); /* Light green color to indicate the selected range */
+    color: black;
+    border: 1px solid #EAEAEA;
+    cursor: pointer;
+}
+
+/* Style for invalid selection when mouse moves out of valid bounds */
+.cell.invalid-selection {
+    background-color: #f8d7da; /* Light red to indicate an invalid selection */
+    border: 1px solid #f5c6cb;
+    cursor: not-allowed;
+}
+
+/* For any other cell during drag, revert to the available state */
+.cell.dragging-cancel {
+    background-color: #ffffff;
+    color: #000;
+    border: 1px solid #EAEAEA;
+}
