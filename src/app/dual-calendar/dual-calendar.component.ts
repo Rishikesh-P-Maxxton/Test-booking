@@ -15,10 +15,21 @@ export interface SimplifiedReservation {
   arrivalDate: string; // "YYYY-MM-DD"
   departureDate: string; // "YYYY-MM-DD"
 }
+interface RoomDepartureMap {
+  [roomId: number]: {
+    [arrivalDate: string]: {
+      [validDeparture: string]: Stay; // Key: valid departure date, Value: specific Stay
+    };
+  };
+}
 
 interface ValidDeparture {
   date: string;    // Departure date in "YYYY-MM-DD"
   stays: Stay[];   // Stays that enable this departure date
+}
+
+interface ArrivalDateMap {
+  [date: string]: Stay[];
 }
 
 interface ValidArrival {
@@ -47,6 +58,10 @@ export class DualCalendarComponent implements OnInit {
 
   roomArrivalDatesMap: { [roomId: number]: string[] } = {};
   private isRoomsAndStaysInitialized = false;
+  combinedArrivalDates: Set<string> = new Set();
+
+  roomDepartureMap: RoomDepartureMap = {}; 
+  combinedArrivalMap: ArrivalDateMap = {};
 
   private resetSubscription!: Subscription;
   @Output() selectionConfirmed: EventEmitter<any> = new EventEmitter();
@@ -72,27 +87,137 @@ export class DualCalendarComponent implements OnInit {
      // Subscribe to reset action from the service
      this.resetSubscription = this.filterStateService.resetFilterAction$.subscribe(reset => {
       if (reset) {
-        this.resetSelection(); // Call your method to reset the component state
+        this.resetSelection();
+         // Call your method to reset the component state
       }
     });
   }
 
-  // Fetch and initialize rooms and stays
-  initializeRoomsAndStays(): void {
-    this.roomService.getRooms().subscribe(rooms => {
-      this.stayService.getStays().subscribe(stays => {
-        this.rooms = rooms.map(room => ({
-          ...room,
-          stays: stays.filter(stay => stay.roomId === room.roomId).map(stay => ({
-            ...stay,
-            stayDateFrom: new Date(stay.stayDateFrom), // Convert string to Date
-            stayDateTo: new Date(stay.stayDateTo) // Convert string to Date
-          }))
-        }));
-        console.log('Rooms and Stays Initialized:', this.rooms);
+// Fetch and initialize rooms and stays
+initializeRoomsAndStays(): void {
+  if (this.isRoomsAndStaysInitialized) {
+    return; // Prevent redundant initialization
+  }
+
+  this.roomService.getRooms().subscribe(rooms => {
+    this.stayService.getStays().subscribe(stays => {
+      this.rooms = rooms.map(room => ({
+        ...room,
+        stays: stays.filter(stay => stay.roomId === room.roomId).map(stay => ({
+          ...stay,
+          stayDateFrom: new Date(stay.stayDateFrom), // Convert string to Date
+          stayDateTo: new Date(stay.stayDateTo) // Convert string to Date
+        }))
+      }));
+      
+      console.log('Rooms and Stays Initialized:', this.rooms);
+
+      // Get both combinedArrivalDates and roomArrivalDatesMap
+      const { combinedDates, roomArrivalDatesMap } = this.generateCombinedArrivalDates();
+      
+      this.combinedArrivalDates = combinedDates;
+      this.roomArrivalDatesMap = roomArrivalDatesMap;
+
+// Generate the Room Arrival Dates Map (New Function)
+this.generateRoomArrivalDates();
+
+ 
+      // Generate the Room Departure Map (New Function)
+      this.generateRoomDepartureMap();
+
+      // Set the flag to true to prevent redundant calls in the future
+      this.isRoomsAndStaysInitialized = true;
+    });
+  });
+}
+generateRoomArrivalDates(): void {
+  const roomArrivalDatesMap: { [roomId: number]: string[] } = {};
+
+  // Iterate over each room
+  this.rooms.forEach(room => {
+    const roomArrivalDates = new Set<string>(); // Store unique arrival dates per room
+
+    // Iterate over each stay associated with the room
+    room.stays.forEach(stay => {
+      const arrivalDatesForStay = this.generateArrivalDates(stay);
+
+      // Add each arrival date from this stay to the room's set of arrival dates
+      arrivalDatesForStay.forEach(date => {
+        roomArrivalDates.add(date);
+      });
+    });
+
+    // Convert the set to an array and store it in the map
+    roomArrivalDatesMap[room.roomId] = Array.from(roomArrivalDates);
+  });
+
+  // Store the computed roomArrivalDatesMap in the component
+  this.roomArrivalDatesMap = roomArrivalDatesMap;
+
+  // Log the roomArrivalDatesMap for debugging
+  console.log('\n=== Room Arrival Dates Map (Refined) ===');
+  console.log(this.roomArrivalDatesMap);
+  console.log('=======================================\n');
+}
+
+
+generateRoomDepartureMap(): void {
+  // Create a new departure map to store the results
+  const roomDepartureMap: RoomDepartureMap = {};
+
+  // Iterate over each room in roomArrivalDatesMap
+  for (const roomId in this.roomArrivalDatesMap) {
+    if (!this.roomArrivalDatesMap.hasOwnProperty(roomId)) continue;
+
+    const arrivalDates = this.roomArrivalDatesMap[roomId];
+    roomDepartureMap[roomId] = {};
+
+    // Find the room from the list of rooms
+    const room = this.rooms.find(room => room.roomId === parseInt(roomId));
+    if (!room) continue;
+
+    // Iterate over each arrival date for the room
+    arrivalDates.forEach(arrivalDate => {
+      const formattedArrivalDate = arrivalDate; // Arrival date in "YYYY-MM-DD" format
+      roomDepartureMap[roomId][formattedArrivalDate] = {};
+
+      // Iterate over each stay for the current room to find valid departures
+      room.stays.forEach(stay => {
+        // Validate the arrival date against the stay's booking window and arrival days
+        const arrivalDateObj = new Date(formattedArrivalDate);
+        if (!this.isValidArrivalDate(arrivalDateObj, stay)) {
+          return; // Skip if the arrival date is not valid for the stay
+        }
+
+        // Calculate valid departure dates for the given arrival date and stay using existing function
+        const validDepartureDates = this.calculateValidDepartureDates(arrivalDateObj, stay);
+
+        // Apply filtering for reservations that conflict with the valid departure dates using existing function
+        const filteredDepartureDates = this.filterOutReservedDates(validDepartureDates, parseInt(roomId));
+
+        // Populate roomDepartureMap with each valid departure date and the corresponding stay
+        filteredDepartureDates.forEach(departureDate => {
+          roomDepartureMap[roomId][formattedArrivalDate][departureDate.toISOString().split('T')[0]] = stay;
+        });
       });
     });
   }
+
+
+      // Generate the Room Arrival Dates Map (new function)
+      this.roomArrivalDatesMap = this.generateRoomArrivalDatesMap();
+
+
+  // Store the calculated roomDepartureMap in the component
+  this.roomDepartureMap = roomDepartureMap;
+
+  // Log the roomDepartureMap for debugging purposes
+  console.log('\n=== Room Departure Map ===');
+  console.log(this.roomDepartureMap);
+  console.log('==============================\n');
+}
+
+
 
   // Generate calendar days for both months
   generateCalendarDays(): void {
@@ -146,55 +271,138 @@ export class DualCalendarComponent implements OnInit {
     this.generateCalendarDays();
   }
 
- // Generate valid arrival dates for a specific stay
- generateArrivalDates(stay: Stay): Set<string> {
-  const arrivalDates = new Set<string>();
 
-  // If arrivalDays are missing, allow all days as valid arrival days
-  if (!stay.arrivalDays || stay.arrivalDays.length === 0) {
-    console.log(`Room ${stay.roomId}: No valid arrival days defined, allowing all days as valid.`);
-    stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
-  }
-
-  const today = new Date();
-  const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
-  const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
-
-  // Ensure today's date falls within the booking window (before considering deviations)
-  const isBookable = this.isWithinBookingWindow(today, bookDateFrom, bookDateTo);
-
-  if (!isBookable) {
-    // console.log(`Room ${stay.roomId} is not bookable today.`);
-    return arrivalDates; // If today's date is not within the booking window, return an empty set
-  }
-
-  // Handle deviation rules (minDeviation and maxDeviation)
-  const minDeviation = stay.minDeviation ?? 0;
-  const maxDeviation = stay.maxDeviation ?? Infinity;
-
-  // Calculate min/max dates with deviation
-  const minDate = new Date(today.getTime() + minDeviation * 24 * 60 * 60 * 1000);
-  const maxDate = new Date(today.getTime() + maxDeviation * 24 * 60 * 60 * 1000);
-
-  // Clamp the dates within the booking window
-  const effectiveMinDate = bookDateFrom && minDate < bookDateFrom ? bookDateFrom : minDate;
-  const effectiveMaxDate = bookDateTo && maxDate > bookDateTo ? bookDateTo : maxDate;
-
-  if (effectiveMaxDate < effectiveMinDate) {
-    return arrivalDates; // No valid dates available if the range is invalid
-  }
-
-  // Generate valid arrival dates within the effective date range
-  for (let date = new Date(effectiveMinDate); date <= effectiveMaxDate; date.setDate(date.getDate() + 1)) {
-    const dayOfWeek = this.getDayOfWeek(date);
-    if (stay.arrivalDays.includes(dayOfWeek)) {
-      const formattedDate = date.toISOString().split('T')[0];
-      arrivalDates.add(formattedDate);
+  generateRoomArrivalDatesMap(): { [roomId: number]: string[] } {
+    const roomArrivalDatesMap: { [roomId: number]: Set<string> } = {};
+  
+    // Iterate through each room and generate arrival dates for each stay
+    this.rooms.forEach(room => {
+      room.stays.forEach(stay => {
+        // Extract the room ID from the stay object
+        const roomId = stay.roomId;
+  
+        // Ensure that the room has an entry in the map
+        if (!roomArrivalDatesMap[roomId]) {
+          roomArrivalDatesMap[roomId] = new Set<string>();
+        }
+  
+        // If arrivalDays are missing, allow all days as valid arrival days
+        if (!stay.arrivalDays || stay.arrivalDays.length === 0) {
+          console.log(`Room ${roomId}: No valid arrival days defined, allowing all days as valid.`);
+          stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
+        }
+  
+        const today = new Date();
+        const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
+        const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
+  
+        // Ensure today's date falls within the booking window (before considering deviations)
+        const isBookable = this.isWithinBookingWindow(today, bookDateFrom, bookDateTo);
+  
+        if (!isBookable) {
+          return; // If today's date is not within the booking window, return without adding dates
+        }
+  
+        // Handle deviation rules (minDeviation and maxDeviation)
+        const minDeviation = stay.minDeviation ?? 0;
+        const maxDeviation = stay.maxDeviation ?? Infinity;
+  
+        // Calculate min/max dates with deviation
+        const minDate = new Date(today.getTime() + minDeviation * 24 * 60 * 60 * 1000);
+        const maxDate = new Date(today.getTime() + maxDeviation * 24 * 60 * 60 * 1000);
+  
+        // Clamp the dates within the booking window
+        const effectiveMinDate = bookDateFrom && minDate < bookDateFrom ? bookDateFrom : minDate;
+        const effectiveMaxDate = bookDateTo && maxDate > bookDateTo ? bookDateTo : maxDate;
+  
+        if (effectiveMaxDate < effectiveMinDate) {
+          return; // No valid dates available if the range is invalid
+        }
+  
+        // Generate valid arrival dates within the effective date range
+        for (let date = new Date(effectiveMinDate); date <= effectiveMaxDate; date.setDate(date.getDate() + 1)) {
+          const dayOfWeek = this.getDayOfWeek(date);
+          if (stay.arrivalDays.includes(dayOfWeek)) {
+            const formattedDate = date.toISOString().split('T')[0];
+            // Add the arrival date to the set for the room in the map
+            roomArrivalDatesMap[roomId].add(formattedDate);
+          }
+        }
+      });
+    });
+  
+    // Convert the map values from Set<string> to string[] for easier usage
+    const resultMap: { [roomId: number]: string[] } = {};
+    for (const roomId in roomArrivalDatesMap) {
+      if (roomArrivalDatesMap.hasOwnProperty(roomId)) {
+        resultMap[roomId] = Array.from(roomArrivalDatesMap[roomId]);
+      }
     }
+  
+    console.log('\n=== Generated rm Room Arrival Dates Map ===');
+    console.log(resultMap);
+    console.log('=======================================\n');
+  
+    return resultMap;
   }
-
-  return arrivalDates;
-}
+  
+  generateArrivalDates(stay: Stay): Set<string> {
+    const arrivalDates = new Set<string>();
+  
+    console.log('Processing Room ID:', stay.roomId);
+    console.log('Stay details:', stay);
+  
+    // Ensure `arrivalDays` are correctly defined
+    if (!stay.arrivalDays || stay.arrivalDays.length === 0) {
+      console.log(`Room ${stay.roomId}: No valid arrival days defined, allowing all days as valid.`);
+      stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
+    }
+  
+    const today = new Date();
+    const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
+    const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
+  
+    // Ensure today's date falls within the booking window (before considering deviations)
+    const isBookable = this.isWithinBookingWindow(today, bookDateFrom, bookDateTo);
+  
+    if (!isBookable) {
+      console.log(`Room ${stay.roomId}: Stay is not bookable today based on booking window.`);
+      return arrivalDates; // If today's date is not within the booking window, return an empty set
+    }
+  
+    // Handle deviation rules (`minDeviation` and `maxDeviation`)
+    const minDeviation = stay.minDeviation ?? 0;
+    const maxDeviation = stay.maxDeviation ?? Infinity;
+  
+    // Calculate `minDate` and `maxDate` using deviations from today's date
+    const minDate = new Date(today.getTime() + minDeviation * 24 * 60 * 60 * 1000);
+    const maxDate = new Date(today.getTime() + maxDeviation * 24 * 60 * 60 * 1000);
+  
+    // Clamp the dates within the booking window
+    const effectiveMinDate = bookDateFrom && minDate < bookDateFrom ? bookDateFrom : minDate;
+    const effectiveMaxDate = bookDateTo && maxDate > bookDateTo ? bookDateTo : maxDate;
+  
+    if (effectiveMaxDate < effectiveMinDate) {
+      console.log(`Room ${stay.roomId}: No valid dates available as the effective date range is invalid.`);
+      return arrivalDates; // No valid dates available if the range is invalid
+    }
+  
+    // Generate valid arrival dates within the effective date range
+    for (let date = new Date(effectiveMinDate); date <= effectiveMaxDate; date.setDate(date.getDate() + 1)) {
+      const dayOfWeek = this.getDayOfWeek(date);
+      if (stay.arrivalDays.includes(dayOfWeek)) {
+        const formattedDate = date.toISOString().split('T')[0];
+        arrivalDates.add(formattedDate);
+        console.log(`Room ${stay.roomId}: Added valid arrival date ${formattedDate} for day ${dayOfWeek}`);
+      } else {
+        console.log(`Room ${stay.roomId}: Skipped date ${date.toISOString().split('T')[0]} - Invalid arrival day (${dayOfWeek})`);
+      }
+    }
+  
+    console.log(`Final valid arrival dates for Room ${stay.roomId}:`, arrivalDates);
+    return arrivalDates;
+  }
+  
 
 isWithinBookingWindow(today: Date, bookDateFrom: Date | null, bookDateTo: Date | null): boolean {
   // If bookDateFrom is provided, today should not be earlier than bookDateFrom
@@ -212,39 +420,112 @@ isWithinBookingWindow(today: Date, bookDateFrom: Date | null, bookDateTo: Date |
 
 
 // Combine arrival dates from all rooms and stays
-generateCombinedArrivalDates(): Set<string> {
+generateCombinedArrivalDates(): {
+  combinedDates: Set<string>,
+  roomArrivalDatesMap: { [roomId: number]: string[] },
+  combinedArrivalMap: ArrivalDateMap
+} {
   const combinedDates = new Set<string>();
-  this.roomArrivalDatesMap = {}; // Reset the map before starting
-
-  console.log(`\n\n=== Generating Combined Arrival Dates for All Rooms ===`);
+  const combinedArrivalMap: ArrivalDateMap = {};
+  const roomArrivalDatesMap: { [roomId: number]: Set<string> } = {};
 
   this.rooms.forEach(room => {
-    const roomArrivalDates = new Set<string>(); // Use a set to avoid duplicates for each room
+    const roomArrivalDates = new Set<string>(); // Store unique arrival dates per room
 
     room.stays.forEach(stay => {
-      const stayDates = this.generateArrivalDates(stay);
+      console.log('Processing Room ID:', stay.roomId);
+      console.log('Stay details:', stay);
 
-      // Add these dates to the combined set and the room-specific set
-      stayDates.forEach(date => {
-        combinedDates.add(date);
-        roomArrivalDates.add(date);
-      });
+      // Ensure `arrivalDays` are correctly defined
+      if (!stay.arrivalDays || stay.arrivalDays.length === 0) {
+        console.log(`Room ${stay.roomId}: No valid arrival days defined, allowing all days as valid.`);
+        stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
+      }
+
+      const today = new Date();
+      const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
+      const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
+
+      // Ensure today's date falls within the booking window (before considering deviations)
+      const isBookable = this.isWithinBookingWindow(today, bookDateFrom, bookDateTo);
+
+      if (!isBookable) {
+        console.log(`Room ${stay.roomId}: Stay is not bookable today based on booking window.`);
+        return; // Skip to the next stay if today's date is not within the booking window
+      }
+
+      // Handle deviation rules (`minDeviation` and `maxDeviation`)
+      const minDeviation = stay.minDeviation ?? 0;
+      const maxDeviation = stay.maxDeviation ?? Infinity;
+
+      // Calculate `minDate` and `maxDate` using deviations from today's date
+      const minDate = new Date(today.getTime() + minDeviation * 24 * 60 * 60 * 1000);
+      const maxDate = new Date(today.getTime() + maxDeviation * 24 * 60 * 60 * 1000);
+
+      // Clamp the dates within the booking window
+      const effectiveMinDate = bookDateFrom && minDate < bookDateFrom ? bookDateFrom : minDate;
+      const effectiveMaxDate = bookDateTo && maxDate > bookDateTo ? bookDateTo : maxDate;
+
+      if (effectiveMaxDate < effectiveMinDate) {
+        console.log(`Room ${stay.roomId}: No valid dates available as the effective date range is invalid.`);
+        return; // No valid dates available if the range is invalid
+      }
+
+      // Generate valid arrival dates within the effective date range
+      for (let date = new Date(effectiveMinDate); date <= effectiveMaxDate; date.setDate(date.getDate() + 1)) {
+        const dayOfWeek = this.getDayOfWeek(date);
+        if (stay.arrivalDays.includes(dayOfWeek)) {
+          const formattedDate = date.toISOString().split('T')[0];
+          combinedDates.add(formattedDate); // Add to the combined set
+          roomArrivalDates.add(formattedDate); // Add to the room-specific set
+
+          // Add the stay to the `combinedArrivalMap`
+          if (!combinedArrivalMap[formattedDate]) {
+            combinedArrivalMap[formattedDate] = [];
+          }
+          combinedArrivalMap[formattedDate].push(stay);
+
+          console.log(`Room ${stay.roomId}: Added valid arrival date ${formattedDate} for day ${dayOfWeek}`);
+        } else {
+          console.log(`Room ${stay.roomId}: Skipped date ${date.toISOString().split('T')[0]} - Invalid arrival day (${dayOfWeek})`);
+        }
+      }
+
+      console.log(`Final valid arrival dates for Room ${stay.roomId}:`, roomArrivalDates);
     });
 
-    // Store the unique arrival dates for this room in roomArrivalDatesMap
-    this.roomArrivalDatesMap[room.roomId] = Array.from(roomArrivalDates);
+    // Store the set as an array in the map
+    roomArrivalDatesMap[room.roomId] = roomArrivalDates;
   });
 
-  console.log('\n=== Final Combined Arrival Dates ===');
-  console.log(Array.from(combinedDates));
-  console.log('====================================\n');
+  // Convert the values from Set<string> to string[] for easier usage
+  const resultMap: { [roomId: number]: string[] } = {};
+  for (const roomId in roomArrivalDatesMap) {
+    if (roomArrivalDatesMap.hasOwnProperty(roomId)) {
+      resultMap[roomId] = Array.from(roomArrivalDatesMap[roomId]);
+    }
+  }
 
-  console.log('\n=== Room boomba Arrival Dates Map ===');
-  console.log(this.roomArrivalDatesMap);
+  // Log the combinedArrivalMap for debugging
+  console.log('\n=== Combined Arrival Map ===');
+  console.log(combinedArrivalMap);
   console.log('==============================\n');
+   // Log the combinedArrivalMap for debugging
+   console.log('\n=== CombinedDates ===');
+   console.log(combinedDates);
+   console.log('==============================\n');
 
-  return combinedDates;
+  return {
+    combinedDates,
+    roomArrivalDatesMap: resultMap, // Returning as `string[]` instead of `Set<string>`
+    combinedArrivalMap,
+  };
 }
+
+
+
+
+
 
 
 
@@ -390,9 +671,9 @@ generateCombinedArrivalDates(): Set<string> {
     return {
       validDepartureDates: uniqueDepartureDates,
       validDepartureMap: validDepartures
+
     };
   }
-  
 
   
   
@@ -605,47 +886,47 @@ getCellClass(dayObj: { day: number, fromPreviousMonth: boolean }, month: number,
 
   // Skip empty cells
   if (dayObj.fromPreviousMonth || dayObj.day === 0) {
-      return 'empty-cell';
+    return 'empty-cell';
   }
 
   // Disable past dates
   if (date < this.today) {
-      return 'disabled';
+    return 'disabled';
   }
 
   // Check if the date is the selected arrival date
   if (this.selectedArrivalDate && formattedDate === this.formatDateToYYYYMMDD(this.selectedArrivalDate)) {
-      return 'selected-arrival';
+    return 'selected-arrival';
   }
 
   // Check if the date is the selected departure date
   if (this.selectedDepartureDate && formattedDate === this.formatDateToYYYYMMDD(this.selectedDepartureDate)) {
-      return 'selected-departure';
+    return 'selected-departure';
   }
 
   // If the date is between the selected arrival and departure dates, highlight the range
   if (this.selectedArrivalDate && this.selectedDepartureDate && date > this.selectedArrivalDate && date < this.selectedDepartureDate) {
-      return 'selected-range';
+    return 'selected-range';
   }
 
- // If no arrival date is selected, show valid arrival dates only
-if (!this.selectedArrivalDate) {
-  const validArrivalDates = this.generateCombinedArrivalDates();
-  if (validArrivalDates.has(formattedDate)) {
+  // If no arrival date is selected, use the precomputed combined arrival dates
+  if (!this.selectedArrivalDate) {
+    if (this.combinedArrivalDates.has(formattedDate)) {
       return 'valid-date';  // Dates are valid even if there are no arrivalDays
+    }
+    return 'disabled';
   }
-  return 'disabled';
-}
 
   // Check if the date is a valid departure date (only after selecting the arrival date)
   const isValidDeparture = this.isValidDateInRange(date);
   if (isValidDeparture) {
-      return 'valid-date';
+    return 'valid-date';
   }
 
   // If it's none of the above, disable the date
   return 'disabled';
 }
+
 
 
   
@@ -826,5 +1107,12 @@ onDatesSelected(selectionData: any): void {
     }
   }
 }
+
+
+//Departure room map
+
+
+
+
 
 }

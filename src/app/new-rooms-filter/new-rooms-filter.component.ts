@@ -619,6 +619,8 @@ private isBookingAvailable(
       totalNumberOfGuests: numberOfPersons,
       pricePerDayPerPerson: pricePerDay,
     });
+    console.log('Booking form test', this.bookingForm, this.bookingForm.valid);
+    
   
     this.customerForm.patchValue({
       customerId: this.generateCustomerId(),
