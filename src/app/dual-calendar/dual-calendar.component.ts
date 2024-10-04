@@ -51,7 +51,7 @@ export class DualCalendarComponent implements OnInit {
   daysInNextMonth: { day: number, fromPreviousMonth: boolean }[] = [];
   selectedArrivalDate: Date | null = null;
   selectedDepartureDate: Date | null = null;
-  today: Date = new Date();
+  today: Date = new Date( );
   rooms: Room[] = []; // Array of rooms with stays
   validDepartureDates: Date[] = []; // Combined valid departure dates after arrival selection
   filteredRooms: CalendarRoom[] = []; // Store the filtered rooms here
@@ -72,6 +72,9 @@ export class DualCalendarComponent implements OnInit {
     private stayService: StayService,
     private reservationStorageService: ReservationStorageService
   ) {
+    this.today.setDate(this.today.getDate() - 1);
+    console.log('today' , this.today);
+    
     this.currentYear = this.today.getFullYear();
     this.nextYear = this.today.getFullYear();
     this.currentMonth = this.today.getMonth() + 1; // Current month (1-12)

@@ -1,0 +1,84 @@
+<div class="container mt-4">
+    <!-- Display today's date -->
+    <div class="row">
+      <div class="col-12">
+        <h4 class="text-start display-6">Today's Date: {{ today | date: 'fullDate' }}</h4>
+      </div>
+    </div>
+  
+    <!-- If roomDepartureMap is null, show a message -->
+    <div *ngIf="!roomDepartureMap" class="row mt-5">
+      <div class="col-12 text-center">
+        <p class="text-muted">Room departure map has not been generated yet.</p>
+      </div>
+    </div>
+  
+    <!-- If roomDepartureMap is available, display the table -->
+    <div *ngIf="roomDepartureMap" class="row mt-5">
+      <div class="col-12">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+            <!-- Header -->
+            <thead class="table-light">
+              <tr>
+                <th class="text-center">Room ID</th>
+                <th class="text-center">Arrival Date</th>
+                <th class="text-center">Departure Dates</th>
+                <th class="text-center">Min Stay</th>
+                <th class="text-center">Max Stay</th>
+                <th class="text-center">Arrival Days</th>
+                <th class="text-center">Departure Days</th>
+                <th class="text-center">Booking From</th>
+                <th class="text-center">Booking To</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let roomId of getRoomIds()">
+                <ng-container *ngFor="let arrivalDate of getArrivalDates(roomId)">
+                  <tr>
+                    <td
+                      class="text-center align-middle"
+                      [attr.rowspan]="getDepartureDates(roomId, arrivalDate).length || 1"
+                    >
+                      {{ roomId }}
+                    </td>
+                    <td
+                      class="text-center align-middle"
+                      [attr.rowspan]="getDepartureDates(roomId, arrivalDate).length || 1"
+                    >
+                      {{ arrivalDate }}
+                    </td>
+                    <ng-container *ngIf="getDepartureDates(roomId, arrivalDate).length > 0; else noDepartures">
+                      <ng-container *ngFor="let departureDate of getDepartureDates(roomId, arrivalDate); let i = index">
+                        <tr *ngIf="i > 0"></tr> <!-- Render additional rows for each departure date -->
+                        <td class="text-center align-middle">{{ departureDate }}</td>
+                        <td class="text-center align-middle">{{ getStay(roomId, arrivalDate)?.minStay }}</td>
+                        <td class="text-center align-middle">{{ getStay(roomId, arrivalDate)?.maxStay }}</td>
+                       
+<td class="text-center align-middle">
+  {{ getStay(roomId, arrivalDate)?.arrivalDays?.join(', ') || 'N/A' }}
+</td>
+<td class="text-center align-middle">
+  {{ getStay(roomId, arrivalDate)?.departureDays?.join(', ') || 'N/A' }}
+</td>
+<td class="text-center align-middle">{{ getStay(roomId, arrivalDate)?.bookDateFrom || 'N/A' }}</td>
+<td class="text-center align-middle">{{ getStay(roomId, arrivalDate)?.bookDateTo || 'N/A' }}</td>
+
+                     
+                        <td class="text-center align-middle text-success">Available</td>
+                      </ng-container>
+                    </ng-container>
+                    <ng-template #noDepartures>
+                      <td colspan="8" class="text-center align-middle text-danger">Booked or Unavailable</td>
+                    </ng-template>
+                  </tr>
+                </ng-container>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  

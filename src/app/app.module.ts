@@ -44,9 +44,10 @@ import { NewRoomsFilterComponent } from './new-rooms-filter/new-rooms-filter.com
 import { DualCalendarComponent } from './dual-calendar/dual-calendar.component';
 import { MainpageComponent } from './mainpage/mainpage.component';
 import { NewPlanningChartComponent } from './new-planning-chart/new-planning-chart.component';
+import { ArrivalDepartureDashboardComponent } from './arrival-departure-dashboard/arrival-departure-dashboard.component';
 @NgModule({
 
-declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent, MainpageComponent, NewPlanningChartComponent  ],
+declarations: [AppComponent, RoomsFilterComponent,  ReservationsListComponent, FilterNavsComponent, RoomAvailabilityGanttComponent,   ModalComponent, BookingHistoryComponent, ResNavComponent, RoomFilterButtonComponent, NewRoomsFilterComponent, DualCalendarComponent, MainpageComponent, NewPlanningChartComponent, ArrivalDepartureDashboardComponent  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,  
