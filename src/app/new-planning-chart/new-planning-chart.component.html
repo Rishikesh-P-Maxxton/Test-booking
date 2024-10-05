@@ -22,17 +22,8 @@
       <ng-container *ngFor="let room of rooms">
         <div class="room-name sticky">Room {{ room.roomId }}</div>
         <div *ngFor="let dayObj of days" 
-        [ngClass]="{
-          'cell': true, 
-          'split-reservation': isOverlappingReservation(room.roomId, dayObj)
-        }"
-        [class]="getCellClass(room.roomId, dayObj)"
-        [attr.data-bs-toggle]="getTooltipForCell(room.roomId, dayObj) ? 'tooltip' : null"
-        [attr.title]="getTooltipForCell(room.roomId, dayObj)">
-   </div>
-   
-   
-   
+             [class]="getCellClass(room.roomId, dayObj)">
+        </div>
       </ng-container>
   
     </div>
