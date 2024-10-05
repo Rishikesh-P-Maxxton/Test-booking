@@ -109,4 +109,36 @@
   .cell + .cell {
     border-left: none;
   }
+  .split-reservation {
+    position: relative;
+    border-radius: 0; /* Remove rounded edges to match other reservations */
+    border-top: none; /* Remove the top border to ensure it's flush */
+    border-right: none; /* Ensure no right border to blend with adjacent reservations */
+    border-bottom: 1px solid #ffffff; /* Consistent bottom border */
+    border-left: none; /* Ensure no left border to blend with adjacent cells */
+  }
+  
+  .split-reservation::before,
+  .split-reservation::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 49.5%; /* Increase width to make it flush without any visible gap */
+  }
+  
+  /* The first half of the reservation, covering the left side of the cell */
+  .split-reservation::before {
+    left: 0;
+    background-color: #ffad33; /* Color for the first reservation */
+    border-right: 1px solid #ffffff; /* White line between the two halves for separation */
+  }
+  
+  /* The second half of the reservation, covering the right side of the cell */
+  .split-reservation::after {
+    right: 0;
+    background-color: #5a5acf; /* Color for the second reservation */
+    border-left: 1px solid #ffffff; /* White line between the two halves for separation */
+    border-right: none; /* Ensure no right border to blend seamlessly with the next cell */
+  }
   

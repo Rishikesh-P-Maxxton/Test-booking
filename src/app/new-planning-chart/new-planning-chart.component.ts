@@ -83,26 +83,30 @@ export class NewPlanningChartComponent implements OnInit {
   getCellClass(roomId: number, dayObj: DayObj): string {
     const roomData = this.rooms.find(room => room.roomId === roomId);
     if (!roomData) return 'not-available';
-
+  
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
-    currentDay.setHours(12, 0, 0, 0); // Set to midday to avoid midnight comparison issues
-
+    currentDay.setHours(12, 0, 0, 0);
+  
     // Check if the current day falls within any reservation period
     const reservation = this.reservations.find((res) => {
       const reservationStartDate = new Date(res.arrivalDate);
       const reservationEndDate = new Date(res.departureDate);
-
+  
       // Adjust times to reflect industry standards
-      reservationStartDate.setHours(11, 0, 0, 0); // Arrival at 11 AM
-      reservationEndDate.setHours(10, 0, 0, 0); // Departure at 10 AM
-
+      reservationStartDate.setHours(11, 0, 0, 0);
+      reservationEndDate.setHours(10, 0, 0, 0);
+  
       return (
         res.roomId === roomId &&
         currentDay >= reservationStartDate &&
-        currentDay < reservationEndDate // The end date is exclusive for night stays
+        currentDay < reservationEndDate
       );
     });
-
+  
+    if (this.isOverlappingReservation(roomId, dayObj)) {
+      return 'split-reservation';
+    }
+  
     if (reservation) {
       if (reservation.status === 'CHECKED-IN') {
         return 'checked-in';
@@ -110,10 +114,47 @@ export class NewPlanningChartComponent implements OnInit {
         return 'confirmed';
       }
     }
-
+  
     return 'available';
   }
+  
 
+  isOverlappingReservation(roomId: number, dayObj: DayObj): boolean {
+    const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    currentDay.setHours(12, 0, 0, 0);
+  
+    const reservationsForRoom = this.reservations.filter(res => res.roomId === roomId);
+  
+    let hasOverlappingReservations = false;
+  
+    // Sort reservations by arrival date
+    reservationsForRoom.sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
+  
+    // Iterate over sorted reservations to check for overlap
+    for (let i = 0; i < reservationsForRoom.length - 1; i++) {
+      const currentReservation = reservationsForRoom[i];
+      const nextReservation = reservationsForRoom[i + 1];
+  
+      const currentReservationEnd = new Date(currentReservation.departureDate);
+      currentReservationEnd.setHours(10, 0, 0, 0);
+  
+      const nextReservationStart = new Date(nextReservation.arrivalDate);
+      nextReservationStart.setHours(11, 0, 0, 0);
+  
+      // Check if current reservation ends and the next starts on the same day
+      if (
+        currentReservationEnd.toDateString() === nextReservationStart.toDateString() &&
+        currentReservationEnd.toDateString() === currentDay.toDateString()
+      ) {
+        hasOverlappingReservations = true;
+        break;
+      }
+    }
+  
+    return hasOverlappingReservations;
+  }
+  
+  
   getTooltipForCell(roomId: number, dayObj: DayObj): string {
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
     currentDay.setHours(12, 0, 0, 0);
