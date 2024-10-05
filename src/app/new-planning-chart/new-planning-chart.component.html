@@ -21,11 +21,14 @@
       <!-- Room Rows -->
       <ng-container *ngFor="let room of rooms">
         <div class="room-name sticky">Room {{ room.roomId }}</div>
-        <div *ngFor="let dayObj of days" 
-             [class]="getCellClass(room.roomId, dayObj)">
+        <div *ngFor="let dayObj of days"
+             [class]="getCombinedCellClass(room.roomId, dayObj)"
+             [attr.data-statuses]="getStatusesString(room.roomId, dayObj)"
+             [attr.data-bs-toggle]="getTooltipForCell(room.roomId, dayObj) ? 'tooltip' : null"
+             [attr.title]="getTooltipForCell(room.roomId, dayObj)">
         </div>
       </ng-container>
+      
   
     </div>
   </div>
-  

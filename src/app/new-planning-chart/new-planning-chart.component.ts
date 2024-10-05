@@ -27,7 +27,7 @@ export class NewPlanningChartComponent implements OnInit {
   rooms: Room[] = [];
   stays: Stay[] = [];
   reservations: Reservation[] = [];
-  customers: any[] = [];
+  customers: any[] = []; // Added customers array
   days: DayObj[] = [];
   selectedMonth: number;
   year: number;
@@ -48,22 +48,23 @@ export class NewPlanningChartComponent implements OnInit {
       this.stayService.getStays().subscribe((stays) => {
         this.stays = stays;
 
+        // Retrieve both reservations and customers from the local storage
         const reservationData = this.reservationStorageService.getReservations();
         this.reservations = reservationData.map(item => item.reservation);
-        this.customers = reservationData.map(item => item.customer);
+        this.customers = reservationData.map(item => item.customer); // Assuming each reservation has a customer
 
         this.generateChart();
         setTimeout(() => {
-          this.scrollToToday();
-          this.initializeTooltips();
+          this.scrollToToday(); // Smooth scroll to today's date after rendering
+          this.initializeTooltips(); // Initialize tooltips after rendering the chart
         }, 0);
       });
     });
   }
 
   generateChart(): void {
-    const totalMonths = 3;
-    const startMonth = new Date().getMonth() - 1;
+    const totalMonths = 3; // Load three months at a time
+    const startMonth = new Date().getMonth() - 1; // Start from the previous month
     const startYear = this.year;
 
     this.days = [];
@@ -79,31 +80,48 @@ export class NewPlanningChartComponent implements OnInit {
     }
   }
 
+  getStatusesString(roomId: number, dayObj: DayObj): string | null {
+    const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
+  
+    // If overlapInfo is null or statuses is null, return null, otherwise join the statuses array
+    if (overlapInfo && overlapInfo.statuses) {
+      return overlapInfo.statuses.join(',');
+    }
+    
+    return null;
+  }
+  
+
   getCellClass(roomId: number, dayObj: DayObj): string {
     const roomData = this.rooms.find(room => room.roomId === roomId);
     if (!roomData) return 'not-available';
-
+    
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
     currentDay.setHours(12, 0, 0, 0);
-
-    const overlappingClass = this.getSplitReservationClass(roomId, dayObj);
-    if (overlappingClass) {
-      return overlappingClass;
-    }
-
+  
+    // Check if the current day falls within any reservation period
     const reservation = this.reservations.find((res) => {
       const reservationStartDate = new Date(res.arrivalDate);
       const reservationEndDate = new Date(res.departureDate);
+  
+      // Adjust times to reflect industry standards
       reservationStartDate.setHours(11, 0, 0, 0);
       reservationEndDate.setHours(10, 0, 0, 0);
-
+  
       return (
         res.roomId === roomId &&
         currentDay >= reservationStartDate &&
         currentDay < reservationEndDate
       );
     });
-
+  
+    // Check for overlapping reservation first
+    const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
+    if (overlapInfo.hasOverlap) {
+      return 'split-reservation';
+    }
+  
+    // If a reservation is found, return its class
     if (reservation) {
       if (reservation.status === 'CHECKED-IN') {
         return 'checked-in';
@@ -111,49 +129,92 @@ export class NewPlanningChartComponent implements OnInit {
         return 'confirmed';
       }
     }
-
+  
     return 'available';
   }
+  
+  
 
-  getSplitReservationClass(roomId: number, dayObj: DayObj): string | null {
+  isOverlappingReservation(roomId: number, dayObj: DayObj): { hasOverlap: boolean, statuses: [string, string] | null } {
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
     currentDay.setHours(12, 0, 0, 0);
   
     const reservationsForRoom = this.reservations.filter(res => res.roomId === roomId);
+  
+    // Sort reservations by arrival date
     reservationsForRoom.sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
   
+    // Iterate over sorted reservations to check for overlap
     for (let i = 0; i < reservationsForRoom.length - 1; i++) {
       const currentReservation = reservationsForRoom[i];
       const nextReservation = reservationsForRoom[i + 1];
   
       const currentReservationEnd = new Date(currentReservation.departureDate);
       currentReservationEnd.setHours(10, 0, 0, 0);
+  
       const nextReservationStart = new Date(nextReservation.arrivalDate);
       nextReservationStart.setHours(11, 0, 0, 0);
   
-      // Check if current reservation ends and the next starts on the same day
-      if (
-        currentReservationEnd.toDateString() === nextReservationStart.toDateString() &&
-        currentReservationEnd.toDateString() === currentDay.toDateString()
-      ) {
-        // Logging the statuses of overlapping reservations
-        console.log(`Current Reservation Status: ${currentReservation.status}`);
-        console.log(`Next Reservation Status: ${nextReservation.status}`);
-  
-        if (currentReservation.status === 'CHECKED-IN' && nextReservation.status === 'CONFIRM') {
-          return 'split-checkedin-confirmed';
-        } else if (currentReservation.status === 'CONFIRM' && nextReservation.status === 'CHECKED-IN') {
-          return 'split-confirmed-checkedin';
-        } else if (currentReservation.status === 'CHECKED-IN' && nextReservation.status === 'CHECKED-IN') {
-          return 'split-checkedin-checkedin';
-        } else if (currentReservation.status === 'CONFIRM' && nextReservation.status === 'CONFIRM') {
-          return 'split-confirmed-confirmed';
-        }
+      if (currentReservationEnd.toDateString() === nextReservationStart.toDateString() &&
+          currentReservationEnd.toDateString() === currentDay.toDateString()) {
+        return {
+          hasOverlap: true,
+          statuses: [currentReservation.status, nextReservation.status]
+        };
       }
     }
-    return null;
+  
+    return {
+      hasOverlap: false,
+      statuses: null
+    };
   }
   
+  getCombinedCellClass(roomId: number, dayObj: DayObj): string {
+    let classes = 'cell';
+  
+    const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
+  
+    // Add split-reservation if there is an overlap
+    if (overlapInfo.hasOverlap) {
+      classes += ' split-reservation';
+    }
+  
+    // Append the reservation status class
+    const statusClass = this.getCellClass(roomId, dayObj);
+    if (statusClass && statusClass !== 'split-reservation') {
+      classes += ` ${statusClass}`;
+    }
+  
+    return classes;
+  }
+  
+  
+  getTooltipForCell(roomId: number, dayObj: DayObj): string {
+    const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    currentDay.setHours(12, 0, 0, 0);
+
+    // Find if there's a reservation starting on the current day
+    const reservation = this.reservations.find((res) => {
+      const reservationStartDate = new Date(res.arrivalDate);
+      reservationStartDate.setHours(11, 0, 0, 0); // Arrival at 11 AM
+
+      return (
+        res.roomId === roomId &&
+        reservationStartDate.toDateString() === currentDay.toDateString()
+      );
+    });
+
+    // If a reservation is found, get the customer name using the customerId
+    if (reservation) {
+      const customer = this.customers.find(cust => cust.customerId === reservation.customerId);
+      if (customer) {
+        return `Customer: ${customer.firstName} ${customer.lastName} \nArrival: ${reservation.arrivalDate}\nDeparture: ${reservation.departureDate}\nAmount Paid: ${reservation.paidAmount}`;
+      }
+    }
+
+    return '';
+  }
 
   getDayName(dayObj: DayObj): string {
     const date = new Date(dayObj.year, dayObj.month, dayObj.day);
@@ -176,6 +237,7 @@ export class NewPlanningChartComponent implements OnInit {
   }
 
   initializeTooltips(): void {
+    // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.forEach((tooltipTriggerEl) => {
       new bootstrap.Tooltip(tooltipTriggerEl);
