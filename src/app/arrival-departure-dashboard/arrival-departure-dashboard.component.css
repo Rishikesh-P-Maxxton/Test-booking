@@ -1,35 +1,37 @@
 .table {
-    border-collapse: collapse;
-    width: 100%;
-    font-family: Arial, sans-serif;
-    font-weight: 400;
-  }
-  
-  .table th,
-  .table td {
-    border: 1.2px solid #ccc;
-    padding: 10px;
-    text-align: center;
-  }
-  
-  .table thead th {
-    background-color: #f8f9fa;
-  }
-  
-  .table td {
-    background-color: #fefefe;
-  }
-  
-  .table .text-success {
-    color: #28a745;
-  }
-  
-  .table .text-danger {
-    color: #dc3545;
-  }
-  
-  h4 {
-    font-weight: 400;
-    margin-bottom: 20px;
-  }
-  
+  border-collapse: collapse;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  font-weight: 400;
+  font-size: 14px; /* Smaller font size for readability */
+}
+
+.table th,
+.table td {
+  border: 1.2px solid #ccc;
+  padding: 8px; /* Reduced padding for a more compact look */
+  text-align: center;
+  vertical-align: middle; /* Align content vertically in the middle */
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+}
+
+.table td {
+  background-color: #fefefe;
+}
+
+.table .text-success {
+  color: #28a745;
+}
+
+.table .text-danger {
+  color: #dc3545;
+}
+
+h4 {
+  font-weight: 400;
+  margin-bottom: 20px;
+}

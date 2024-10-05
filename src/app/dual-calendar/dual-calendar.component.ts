@@ -8,7 +8,7 @@ import { CalendarRoom } from '../Interfaces/calendar-room';
 import { EventEmitter, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FilterStateService } from '../services/filter-state-service.service';
-
+import { ArrivalDepartureService } from '../services/arrival-departure.service';
 
 export interface SimplifiedReservation {
   roomId: number;
@@ -67,6 +67,7 @@ export class DualCalendarComponent implements OnInit {
   @Output() selectionConfirmed: EventEmitter<any> = new EventEmitter();
 
   constructor(
+    private arrivalDepartureService: ArrivalDepartureService,
     private roomService: RoomService,
     private filterStateService: FilterStateService,
     private stayService: StayService,
@@ -213,6 +214,8 @@ generateRoomDepartureMap(): void {
 
   // Store the calculated roomDepartureMap in the component
   this.roomDepartureMap = roomDepartureMap;
+
+  this.arrivalDepartureService.setRoomDepartureMap(roomDepartureMap);
 
   // Log the roomDepartureMap for debugging purposes
   console.log('\n=== Room Departure Map ===');
