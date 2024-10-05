@@ -156,7 +156,7 @@ export class NewRoomsFilterComponent implements OnInit {
     this.bookingForm.valueChanges.subscribe(() =>
       this.updateConfirmButtonState()
     );
-    this.bookingForm.get('totalNumberOfGuests')?.disable();
+    
 
     this.bookingForm
       .get('numberOfDays')

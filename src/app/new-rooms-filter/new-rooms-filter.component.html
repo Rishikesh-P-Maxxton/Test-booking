@@ -52,26 +52,26 @@
                       </div>
                     </div>
                     <div class="row">
-                      <!-- Number of Guests Dropdown -->
-                      <div class="col-md-4">
-                        <div class="form-group mb-3">
-                          <label for="numberOfGuests">Number of Guests</label>
-                          <select
-                            id="numberOfGuests"
-                            formControlName="numberOfGuests"
-                            class="form-control square-input w-100"
-                            [disabled]="!numberOfGuestsOptions.length"
-                          >
-                            <option value="">Select Guests</option>
-                            <option
-                              *ngFor="let option of numberOfGuestsOptions"
-                              [value]="option"
-                            >
-                              {{ option }}
-                            </option>
-                          </select>
-                        </div>
-                      </div>
+                     <!-- Number of Guests Dropdown -->
+<div class="col-md-4">
+  <div class="form-group mb-3">
+    <label for="numberOfGuests">Number of Guests</label>
+    <select
+      id="numberOfGuests"
+      formControlName="numberOfGuests"
+      class="form-control square-input w-100"
+    >
+      <option value="">Select Guests</option>
+      <option
+        *ngFor="let option of numberOfGuestsOptions"
+        [value]="option"
+      >
+        {{ option }}
+      </option>
+    </select>
+  </div>
+</div>
+
                       <div class="row">
                         <!-- Filter Room Button -->
                         <div class="col-md-4">
