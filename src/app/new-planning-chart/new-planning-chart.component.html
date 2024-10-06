@@ -27,10 +27,11 @@
         (mouseover)="onMouseOver(room.roomId, dayObj, $event)"
         (mouseup)="onMouseUp()"
         [attr.data-statuses]="getStatusesString(room.roomId, dayObj)"
-        [attr.data-bs-toggle]="getTooltipForCell(room.roomId, dayObj) ? 'tooltip' : null"
+        [attr.data-bs-toggle]="isSecondDayOfReservation(room.roomId, dayObj) ? 'tooltip' : null"
         [attr.title]="getTooltipForCell(room.roomId, dayObj)"
         [attr.aria-selected]="selectedCells.has(room.roomId + '-' + dayObj.year + '-' + dayObj.month + '-' + dayObj.day)">
    </div>
+   
    
       </ng-container>
       

@@ -173,3 +173,13 @@
     transition: background-color 0.3s ease, border 0.3s ease;
   }
   
+  .tooltip-container {
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px;
+    background-color: #f8f9fa;
+    color: #333;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  }
+  

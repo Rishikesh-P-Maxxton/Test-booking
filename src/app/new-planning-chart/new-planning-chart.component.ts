@@ -284,32 +284,47 @@ export class NewPlanningChartComponent implements OnInit {
   
   
   
+  getTooltipForCell(roomId: number, dayObj: DayObj): string | null {
+    if (!this.isSecondDayOfReservation(roomId, dayObj)) {
+      return null; // Tooltip should only be generated for the second day
+    }
   
-  getTooltipForCell(roomId: number, dayObj: DayObj): string {
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
     currentDay.setHours(12, 0, 0, 0);
-
-    // Find if there's a reservation starting on the current day
+  
+    // Find the reservation that includes the current day
     const reservation = this.reservations.find((res) => {
       const reservationStartDate = new Date(res.arrivalDate);
-      reservationStartDate.setHours(11, 0, 0, 0); // Arrival at 11 AM
-
+      const reservationEndDate = new Date(res.departureDate);
+  
+      reservationStartDate.setHours(11, 0, 0, 0);
+      reservationEndDate.setHours(10, 0, 0, 0);
+  
       return (
         res.roomId === roomId &&
-        reservationStartDate.toDateString() === currentDay.toDateString()
+        currentDay >= reservationStartDate &&
+        currentDay < reservationEndDate
       );
     });
-
-    // If a reservation is found, get the customer name using the customerId
+  
     if (reservation) {
       const customer = this.customers.find(cust => cust.customerId === reservation.customerId);
       if (customer) {
-        return `Customer: ${customer.firstName} ${customer.lastName} \nArrival: ${reservation.arrivalDate}\nDeparture: ${reservation.departureDate}\nAmount Paid: ${reservation.paidAmount}`;
+        return `
+          <div class="tooltip-container">
+            <strong>Customer:</strong> ${customer.firstName} ${customer.lastName}<br>
+            <strong>Arrival:</strong> ${new Date(reservation.arrivalDate).toLocaleDateString()}<br>
+            <strong>Departure:</strong> ${new Date(reservation.departureDate).toLocaleDateString()}<br>
+            <strong>Amount Paid:</strong> $${reservation.paidAmount}
+          </div>
+        `;
       }
     }
-
-    return '';
+  
+    return null;
   }
+  
+  
 
   getDayName(dayObj: DayObj): string {
     const date = new Date(dayObj.year, dayObj.month, dayObj.day);
@@ -332,10 +347,49 @@ export class NewPlanningChartComponent implements OnInit {
   }
 
   initializeTooltips(): void {
-    // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.forEach((tooltipTriggerEl) => {
-      new bootstrap.Tooltip(tooltipTriggerEl);
+      new bootstrap.Tooltip(tooltipTriggerEl, {
+        html: true // Allow HTML content in the tooltip
+      });
     });
   }
+  
+  
+  isSecondDayOfReservation(roomId: number, dayObj: DayObj): boolean {
+    const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    currentDay.setHours(12, 0, 0, 0);
+  
+    // Find the reservation that overlaps with the current day
+    const reservation = this.reservations.find((res) => {
+      const reservationStartDate = new Date(res.arrivalDate);
+      const reservationEndDate = new Date(res.departureDate);
+  
+      reservationStartDate.setHours(11, 0, 0, 0);
+      reservationEndDate.setHours(10, 0, 0, 0);
+  
+      return (
+        res.roomId === roomId &&
+        currentDay >= reservationStartDate &&
+        currentDay < reservationEndDate
+      );
+    });
+  
+    if (reservation) {
+      // Calculate the second day of the reservation
+      const reservationStartDate = new Date(reservation.arrivalDate);
+      reservationStartDate.setHours(11, 0, 0, 0);
+      
+      const secondDay = new Date(reservationStartDate);
+      secondDay.setDate(secondDay.getDate() + 1);
+      secondDay.setHours(12, 0, 0, 0);
+  
+      // Return true if currentDay matches the secondDay of the reservation
+      return currentDay.getTime() === secondDay.getTime();
+    }
+  
+    return false;
+  }
+  
+  
 }
