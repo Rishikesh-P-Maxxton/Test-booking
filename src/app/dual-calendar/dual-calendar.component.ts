@@ -51,7 +51,8 @@ export class DualCalendarComponent implements OnInit {
   daysInNextMonth: { day: number, fromPreviousMonth: boolean }[] = [];
   selectedArrivalDate: Date | null = null;
   selectedDepartureDate: Date | null = null;
-  today: Date = new Date( );
+  today:Date = this.getFixedToday();
+
   rooms: Room[] = []; // Array of rooms with stays
   validDepartureDates: Date[] = []; // Combined valid departure dates after arrival selection
   filteredRooms: CalendarRoom[] = []; // Store the filtered rooms here
@@ -85,6 +86,14 @@ export class DualCalendarComponent implements OnInit {
     }
   }
 
+
+// Helper function to set today to a fixed time (7:00 PM)
+getFixedToday(): Date {
+  const now = new Date(); // Current date and time
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 19, 0, 0, 0); // Set time to 7:00 PM
+}
+
+
   ngOnInit(): void {
     this.generateCalendarDays();
     this.initializeRoomsAndStays();
@@ -95,6 +104,8 @@ export class DualCalendarComponent implements OnInit {
          // Call your method to reset the component state
       }
     });
+
+    
   }
 
 // Fetch and initialize rooms and stays
@@ -300,8 +311,9 @@ normalizeDate(date: Date): Date {
           stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
         }
   
-        const today = new Date();
-today.setHours(0, 0, 0, 0);
+        const today = this.getFixedToday();
+
+
         const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
         const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
   
@@ -367,7 +379,8 @@ today.setHours(0, 0, 0, 0);
       stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
     }
   
-    const today = new Date();
+    const today = this.getFixedToday();
+
     const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
     const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
   
@@ -451,7 +464,8 @@ generateCombinedArrivalDates(): {
         stay.arrivalDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]; // Default to all days
       }
 
-      const today = new Date();
+      const today = this.getFixedToday();
+
       const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
       const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
 
@@ -635,7 +649,8 @@ generateCombinedArrivalDates(): {
         // Ensure the stay allows the selected arrival date
         if (this.isValidArrivalDate(arrivalDate, stay)) {
           // First, check if the stay is within the booking window before proceeding
-          const today = new Date();
+          const today = this.getFixedToday();
+
           const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
           const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
   
@@ -751,7 +766,8 @@ generateCombinedArrivalDates(): {
     }
   
     // Apply the booking window constraints before calculating valid departure dates
-    const today = new Date();
+    const today = this.getFixedToday();
+
     const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
     const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
   
@@ -1078,6 +1094,7 @@ formatStayDate(stayDateFrom?: string): string {
   const date = new Date(stayDateFrom);
   return this.formatDate(date);  // Assuming formatDate is the helper for formatting
 }
+
 
 
 formattedSelectedDates: string | null = null;  // Holds the selected dates

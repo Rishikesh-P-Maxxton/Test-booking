@@ -183,3 +183,27 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
   
+/* Highlight arrival days to show where reservations can start */
+.valid-arrival-day  {
+    background-color: #d4ffe1; /* Bright yellow to stand out */
+    border-bottom: 1px solid #ffffff; /* Consistent bottom border */
+  }
+  
+  /* Highlight valid departure days when an arrival day is selected */
+  .valid-departure-day {
+    background-color: #c8e6c9; /* Light green for indicating availability */
+    border: 1px solid #66bb6a; /* Green border for highlighting */
+    z-index: 15; /* Ensure this is above other styles */
+  }
+  
+  /* Highlight the selected state style with higher visibility */
+  .cell.selected {
+    background-color: #007bff; /* Blue color for selected cells */
+    color: #fff; /* Ensure text color contrasts well with the background */
+    border: none; /* Make the selection more visually distinct */
+    z-index: 25; /* Ensure selected cells appear above other elements */
+    transition: background-color 0.3s ease, border 0.3s ease;
+  }
+  
+  
+  

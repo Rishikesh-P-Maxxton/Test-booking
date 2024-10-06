@@ -26,6 +26,7 @@
         (mousedown)="onMouseDown(room.roomId, dayObj, $event)"
         (mouseover)="onMouseOver(room.roomId, dayObj, $event)"
         (mouseup)="onMouseUp()"
+        (click)="onCellClick(room.roomId, dayObj)"
         [attr.data-statuses]="getStatusesString(room.roomId, dayObj)"
         [attr.data-bs-toggle]="isSecondDayOfReservation(room.roomId, dayObj) ? 'tooltip' : null"
         [attr.title]="getTooltipForCell(room.roomId, dayObj)"

@@ -25,6 +25,17 @@ export class ArrivalDepartureDashboardComponent implements OnInit, OnDestroy {
         console.log('Dashboard received Room Departure Map:', this.roomDepartureMap);
       })
     );
+    this.subscription.add(
+      this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
+        (optimizedMap: RoomDepartureMap | null) => {
+          if (optimizedMap) {
+            console.log('Optimized Room Departure Map:', optimizedMap);
+          } else {
+            console.log('No optimized map available.');
+          }
+        }
+      )
+    );
   }
 
   getRoomIds(): string[] {

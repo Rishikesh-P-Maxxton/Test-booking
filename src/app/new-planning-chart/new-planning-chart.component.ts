@@ -5,6 +5,10 @@ import { Reservation } from '../Interfaces/reservation';
 import { Stay } from '../Interfaces/stay';
 import { Room } from '../Interfaces/room';
 import { StayService } from '../services/stays.service';
+import { ArrivalDepartureService } from '../services/arrival-departure.service';
+import { Subscription } from 'rxjs';
+import { RoomDepartureMap } from '../Interfaces/roomdeparturemap';
+
 
 interface DayObj {
   day: number;
@@ -32,6 +36,11 @@ export class NewPlanningChartComponent implements OnInit {
   selectedMonth: number;
   year: number;
 
+  roomDepartureMap: RoomDepartureMap | null = null;
+  private subscription: Subscription = new Subscription();
+
+  
+  validArrivalDaysMap: { [roomId: number]: Set<string> } = {};
 
   isMouseDown: boolean = false;
   selectedRoomId: number | null = null;
@@ -44,24 +53,45 @@ export class NewPlanningChartComponent implements OnInit {
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
-    private reservationStorageService: ReservationStorageService
+    private reservationStorageService: ReservationStorageService,
+    private arrivalDepartureService: ArrivalDepartureService
   ) {
     const today = new Date();
     this.selectedMonth = today.getMonth();
     this.year = today.getFullYear();
   }
-
+  
   ngOnInit(): void {
     this.roomService.getRooms().subscribe((rooms) => {
       this.rooms = rooms;
       this.stayService.getStays().subscribe((stays) => {
         this.stays = stays;
-
+  
+        this.subscription.add(
+          this.arrivalDepartureService.roomDepartureMap$.subscribe(map => {
+            this.roomDepartureMap = map;
+            console.log('Dashboard received Room Departure Map:', this.roomDepartureMap);
+          })
+        );
+  
+        this.subscription.add(
+          this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
+            (optimizedMap: RoomDepartureMap | null) => {
+              if (optimizedMap) {
+                console.log('Optimized Room Departure Map:', optimizedMap);
+                this.generateValidArrivalDaysMap(optimizedMap);
+              } else {
+                console.log('No optimized map available.');
+              }
+            }
+          )
+        );
+  
         // Retrieve both reservations and customers from the local storage
         const reservationData = this.reservationStorageService.getReservations();
         this.reservations = reservationData.map(item => item.reservation);
-        this.customers = reservationData.map(item => item.customer); // Assuming each reservation has a customer
-
+        this.customers = reservationData.map(item => item.customer);
+  
         this.generateChart();
         setTimeout(() => {
           this.scrollToToday(); // Smooth scroll to today's date after rendering
@@ -70,6 +100,45 @@ export class NewPlanningChartComponent implements OnInit {
       });
     });
   }
+  
+  generateValidArrivalDaysMap(optimizedMap: RoomDepartureMap): void {
+    this.validArrivalDaysMap = {};
+  
+    for (const roomId in optimizedMap) {
+      if (optimizedMap.hasOwnProperty(roomId)) {
+        this.validArrivalDaysMap[+roomId] = new Set<string>();
+  
+        for (const arrivalDate in optimizedMap[roomId]) {
+          if (optimizedMap[roomId].hasOwnProperty(arrivalDate)) {
+            // Split the arrivalDate string to extract year, month, and day
+            const [yearStr, monthStr, dayStr] = arrivalDate.split('-');
+            const year = parseInt(yearStr, 10);
+            const month = parseInt(monthStr, 10) - 1; // Convert from one-based to zero-based index for Date object creation
+            const day = parseInt(dayStr, 10);
+  
+            // Create a JavaScript Date object
+            const dateObj = new Date(year, month, day);
+  
+            // Format the corrected date back to string with correct month indexing (one-based)
+            const correctedArrivalDateKey = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1)
+              .toString()
+              .padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+  
+            // Add the corrected date string as a valid arrival day for the room
+            this.validArrivalDaysMap[+roomId].add(correctedArrivalDateKey);
+          }
+        }
+      }
+    }
+    console.log('valid arrival days', this.validArrivalDaysMap )
+  }
+  
+  isValidArrivalDay(roomId: number, dayObj: DayObj): boolean {
+    // Convert dayObj to the same format as used in validArrivalDaysMap (YYYY-MM-DD)
+    const arrivalDateKey = `${dayObj.year}-${(dayObj.month + 1).toString().padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+    return this.validArrivalDaysMap[roomId]?.has(arrivalDateKey) ?? false;
+  }
+  
 
   onMouseDown(roomId: number, dayObj: DayObj, event: MouseEvent): void {
     event.preventDefault();
@@ -278,8 +347,14 @@ export class NewPlanningChartComponent implements OnInit {
       classes += ' selected';
     }
   
+    // Add a specific class if the day is a valid arrival day
+    if (this.isValidArrivalDay(roomId, dayObj)) {
+      classes += ' valid-arrival-day';
+    }
+  
     return classes;
   }
+  
   
   
   
@@ -389,6 +464,11 @@ export class NewPlanningChartComponent implements OnInit {
     }
   
     return false;
+  }
+  
+  onCellClick(roomId: number, dayObj: DayObj): void {
+    const clickedDate = new Date(dayObj.year, dayObj.month, dayObj.day);
+    console.log(`Room ID: ${roomId}, Date: ${clickedDate.toDateString()}`);
   }
   
   
