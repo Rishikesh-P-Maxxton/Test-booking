@@ -182,13 +182,15 @@ generateRoomDepartureMap(): void {
 
     // Iterate over each arrival date for the room
     arrivalDates.forEach(arrivalDate => {
-      const formattedArrivalDate = arrivalDate; // Arrival date in "YYYY-MM-DD" format
-      roomDepartureMap[roomId][formattedArrivalDate] = {};
+      // Convert the formatted arrival date into a Date object set to midnight
+      const arrivalDateObj = this.normalizeDate(new Date(arrivalDate)); // Normalized to midnight
+
+      roomDepartureMap[roomId][arrivalDate] = {};
+      console.log('Normalized Arrival Date:', arrivalDateObj);
 
       // Iterate over each stay for the current room to find valid departures
       room.stays.forEach(stay => {
         // Validate the arrival date against the stay's booking window and arrival days
-        const arrivalDateObj = new Date(formattedArrivalDate);
         if (!this.isValidArrivalDate(arrivalDateObj, stay)) {
           return; // Skip if the arrival date is not valid for the stay
         }
@@ -201,26 +203,26 @@ generateRoomDepartureMap(): void {
 
         // Populate roomDepartureMap with each valid departure date and the corresponding stay
         filteredDepartureDates.forEach(departureDate => {
-          roomDepartureMap[roomId][formattedArrivalDate][departureDate.toISOString().split('T')[0]] = stay;
+          const formattedDepartureDate = this.formatDateToYYYYMMDD(departureDate);
+          roomDepartureMap[roomId][arrivalDate][formattedDepartureDate] = stay;
         });
       });
     });
   }
-
-
-      // Generate the Room Arrival Dates Map (new function)
-      this.roomArrivalDatesMap = this.generateRoomArrivalDatesMap();
-
+  
 
   // Store the calculated roomDepartureMap in the component
   this.roomDepartureMap = roomDepartureMap;
-
   this.arrivalDepartureService.setRoomDepartureMap(roomDepartureMap);
 
   // Log the roomDepartureMap for debugging purposes
   console.log('\n=== Room Departure Map ===');
   console.log(this.roomDepartureMap);
   console.log('==============================\n');
+}
+
+normalizeDate(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 
@@ -299,6 +301,7 @@ generateRoomDepartureMap(): void {
         }
   
         const today = new Date();
+today.setHours(0, 0, 0, 0);
         const bookDateFrom = stay.bookDateFrom ? new Date(stay.bookDateFrom) : null;
         const bookDateTo = stay.bookDateTo ? new Date(stay.bookDateTo) : null;
   
