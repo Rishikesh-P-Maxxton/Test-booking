@@ -32,6 +32,15 @@ export class NewPlanningChartComponent implements OnInit {
   selectedMonth: number;
   year: number;
 
+
+  isMouseDown: boolean = false;
+  selectedRoomId: number | null = null;
+  startDay: Date | null = null;
+  endDay: Date | null = null;
+  selectedCells: Set<string> = new Set();
+  
+
+
   constructor(
     private roomService: RoomService,
     private stayService: StayService,
@@ -61,6 +70,83 @@ export class NewPlanningChartComponent implements OnInit {
       });
     });
   }
+
+  onMouseDown(roomId: number, dayObj: DayObj, event: MouseEvent): void {
+    event.preventDefault();
+    this.isMouseDown = true;
+    this.selectedRoomId = roomId;
+  
+    // Create a Date object for the start day
+    this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    this.endDay = this.startDay;
+    this.selectedCells.clear(); // Clear any previous selection
+    this.addSelection(this.startDay, roomId);
+  }
+  
+  
+  onMouseOver(roomId: number, dayObj: DayObj, event: MouseEvent): void {
+    if (this.isMouseDown) {
+      // Ensure we're still within the same room
+      if (roomId !== this.selectedRoomId) {
+        this.clearAllSelections(); // Invalidate the selection
+        return;
+      }
+  
+      // Update the end day as we drag
+      this.endDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+      this.updateSelection(this.startDay, this.endDay, roomId);
+    }
+  }
+  
+  
+  onMouseUp(): void {
+    this.isMouseDown = false;
+  
+    if (this.selectedRoomId && this.startDay && this.endDay) {
+      // Check if the selection is a single-click (i.e., startDay equals endDay)
+      if (this.startDay.getTime() === this.endDay.getTime()) {
+        // Invalidate single-click selection
+        console.log('Single-click detected, invalidating selection.');
+        this.clearAllSelections();
+      } else {
+        // Finalize the valid selection
+        console.log('Selection Finalized:', this.selectedCells);
+      }
+    } else {
+      this.clearAllSelections(); // Clear if the selection was invalid
+    }
+  }
+  
+
+  addSelection(date: Date, roomId: number): void {
+    const cellKey = `${roomId}-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    this.selectedCells.add(cellKey);
+  }
+  
+  
+  updateSelection(startDay: Date | null, endDay: Date | null, roomId: number): void {
+    if (!startDay || !endDay) return;
+  
+    // Clear previous selection
+    this.selectedCells.clear();
+  
+    // Ensure startDay is before endDay
+    let startDate = startDay < endDay ? startDay : endDay;
+    let endDate = startDay > endDay ? startDay : endDay;
+  
+    // Iterate from start date to end date
+    let currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      this.addSelection(currentDate, roomId);
+      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+    }
+  }
+  
+   
+  clearAllSelections(): void {
+    this.selectedCells.clear();
+  }
+  
 
   generateChart(): void {
     const totalMonths = 3; // Load three months at a time
@@ -186,8 +272,17 @@ export class NewPlanningChartComponent implements OnInit {
       classes += ` ${statusClass}`;
     }
   
+    // Check if the cell is part of the selected range using the generated key
+    const cellKey = `${roomId}-${dayObj.year}-${dayObj.month}-${dayObj.day}`;
+    if (this.selectedCells.has(cellKey)) {
+      classes += ' selected';
+    }
+  
     return classes;
   }
+  
+  
+  
   
   
   getTooltipForCell(roomId: number, dayObj: DayObj): string {

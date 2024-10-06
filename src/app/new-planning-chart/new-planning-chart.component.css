@@ -163,3 +163,13 @@
     background-color: #5a5acf; /* Confirmed color for the second part */
   }
   
+
+  /* Define the selected state style */
+.cell.selected {
+    background-color: #007bff; /* Blue color for selected cells */
+    color: #fff; /* Ensure text color contrasts well with the background */
+    border: none; /* Make the selection more visually distinct */
+    z-index: 1; /* Ensure selected cells appear above other elements */
+    transition: background-color 0.3s ease, border 0.3s ease;
+  }
+  

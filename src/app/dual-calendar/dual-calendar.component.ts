@@ -1062,14 +1062,7 @@ formatDateToYYYYMMDD(date: Date): string {
     }
   }
   
-  
 
-
-
-  
-  
-  
-  
 
   // Helper to get the month name
   getMonthName(month: number): string {
@@ -1116,12 +1109,6 @@ onDatesSelected(selectionData: any): void {
     }
   }
 }
-
-
-//Departure room map
-
-
-
 
 
 }
