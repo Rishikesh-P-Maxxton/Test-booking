@@ -148,6 +148,7 @@ export class NewRoomsFilterComponent implements OnInit {
       totalPrice: [{ value: 0, disabled: true }]
     });
     
+    
 
     this.paymentForm.get('paidAmount')?.valueChanges.subscribe(() => {
       this.calculateDueAmount();
