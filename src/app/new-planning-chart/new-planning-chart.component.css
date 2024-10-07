@@ -44,7 +44,7 @@
     font-weight: 400;
     position: sticky;
     left: 0;
-    z-index: 15;
+    z-index: 35;
   }
   
   .day-header {
@@ -203,6 +203,12 @@
     border: none; /* Make the selection more visually distinct */
     z-index: 25; /* Ensure selected cells appear above other elements */
     transition: background-color 0.3s ease, border 0.3s ease;
+  }
+  
+  .cell.valid-departure-day {
+    background-color: rgb(248, 169, 255); /* Choose a suitable color to indicate departure dates */
+    
+    z-index: 20;
   }
   
 

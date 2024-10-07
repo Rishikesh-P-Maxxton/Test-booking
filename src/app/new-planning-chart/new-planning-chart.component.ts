@@ -37,6 +37,7 @@ export class NewPlanningChartComponent implements OnInit {
   year: number;
 
   roomDepartureMap: RoomDepartureMap | null = null;
+Optimap: RoomDepartureMap | null = null;
   private subscription: Subscription = new Subscription();
 
   
@@ -76,6 +77,7 @@ export class NewPlanningChartComponent implements OnInit {
             (optimizedMap: RoomDepartureMap | null) => {
               if (optimizedMap) {
                 console.log('Optimized Room Departure Map:', optimizedMap);
+                this.Optimap=optimizedMap;
                 this.generateValidArrivalDaysMap(optimizedMap); // Use optimizedMap initially
               } else {
                 console.log('No optimized map available.');
@@ -143,36 +145,30 @@ export class NewPlanningChartComponent implements OnInit {
   onMouseDown(roomId: number, dayObj: DayObj, event: MouseEvent): void {
     event.preventDefault();
   
-    // Determine if the current day is a valid arrival day
     if (this.isValidArrivalDay(roomId, dayObj)) {
-      this.isArrivalDayFlag = true;  // Mark that an arrival day is being interacted with
+      this.isArrivalDayFlag = true;
       this.selectedRoomId = roomId;
-  
-      // Create a Date object for the start day
       this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
       this.endDay = this.startDay;
   
-      // Reduce validArrivalDaysMap to include only the currently selected arrival day
       this.reduceToSelectedArrivalDay(roomId, dayObj);
-  
-      // Clear any previous selection
       this.selectedCells.clear();
       this.addSelection(this.startDay, roomId);
-  
-      // Set the isMouseDown to true to enable dragging
       this.isMouseDown = true;
+  
+      // Set the valid departure dates for the selected arrival date
+      this.setDepartureDatesForArrival(roomId, dayObj);
     } else {
-      // If it's not an arrival day, proceed with the regular mouse down behavior
       this.isMouseDown = true;
       this.selectedRoomId = roomId;
-  
-      // Create a Date object for the start day
       this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
       this.endDay = this.startDay;
-      this.selectedCells.clear(); // Clear any previous selection
+      this.selectedCells.clear();
       this.addSelection(this.startDay, roomId);
     }
   }
+  
+  
   
   onMouseOver(roomId: number, dayObj: DayObj, event: MouseEvent): void {
     if (this.isMouseDown) {
@@ -203,50 +199,99 @@ export class NewPlanningChartComponent implements OnInit {
     }
   }
   
+  // onMouseUp(): void {
+  //   this.isMouseDown = false;
+  
+  //   if (this.selectedRoomId && this.startDay && this.endDay) {
+  //     if (this.startDay.getTime() === this.endDay.getTime()) {
+  //       console.log('Single cell selected, invalidating selection.');
+  //       this.clearAllSelections();
+  //       this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
+  //     } else {
+  //       if (this.isArrivalDayFlag) {
+  //         const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
+  //           .toString()
+  //           .padStart(2, '0')}-${this.endDay.getDate().toString().padStart(2, '0')}`;
+  
+  //         if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
+  //           console.log('Invalid selection - does not end at a valid departure day.');
+  //           this.clearAllSelections();
+  //           this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
+  //         } else {
+  //           console.log('Valid selection.',this.startDay, this.endDay );
+  //         }
+  //       }
+  //     }
+  //   } else {
+  //     this.clearAllSelections();
+  //     this.hideDepartureDates(); // Clear departure dates when selection is invalid
+  //   }
+  
+  //   this.subscription.add(
+  //     this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
+  //       (optimizedMap: RoomDepartureMap | null) => {
+  //         if (optimizedMap) {
+  //           this.generateValidArrivalDaysMap(optimizedMap);
+  //           this.updateArrivalDayUI();
+  //         }
+  //       }
+  //     )
+  //   );
+  
+  //   this.isArrivalDayFlag = false;
+  // }
+ 
   onMouseUp(): void {
     this.isMouseDown = false;
   
     if (this.selectedRoomId && this.startDay && this.endDay) {
-      // If the selection is only a single cell, invalidate it
       if (this.startDay.getTime() === this.endDay.getTime()) {
         console.log('Single cell selected, invalidating selection.');
         this.clearAllSelections();
+        this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
       } else {
-        // Validation after mouse-up
         if (this.isArrivalDayFlag) {
           const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
             .toString()
             .padStart(2, '0')}-${this.endDay.getDate().toString().padStart(2, '0')}`;
   
-          // Validate if the selection ends at a valid departure day
           if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
             console.log('Invalid selection - does not end at a valid departure day.');
             this.clearAllSelections();
+            this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
           } else {
-            console.log('Valid selection.');
+            console.log('Valid selection.', this.startDay, this.endDay);
+            this.reduceToSelectedDepartureDay(this.selectedRoomId!, endDayKey); // Reduce to only the selected departure day
           }
         }
       }
     } else {
-      this.clearAllSelections(); // Clear if the selection was invalid
+      this.clearAllSelections();
+      this.hideDepartureDates(); // Clear departure dates when selection is invalid
     }
   
-    // Restore all valid arrival days using the optimized map, if available
     this.subscription.add(
       this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
         (optimizedMap: RoomDepartureMap | null) => {
           if (optimizedMap) {
             this.generateValidArrivalDaysMap(optimizedMap);
-            // Ensure the UI reflects the restored arrival days only after the selection has completed
-            this.updateArrivalDayUI(); 
+            this.updateArrivalDayUI();
           }
         }
       )
     );
   
-    // Reset arrival day flag
     this.isArrivalDayFlag = false;
   }
+  
+
+
+  hideDepartureDates(): void {
+    this.validDepartureDaysMap = {}; // Clear the map, removing all visible departure days
+    this.updateArrivalDayUI(); // Trigger the UI update to remove the departure day rendering
+  }
+  
+  
   
   
   reduceToSelectedArrivalDay(roomId: number, dayObj: DayObj): void {
@@ -431,6 +476,42 @@ export class NewPlanningChartComponent implements OnInit {
     };
   }
   
+  // getCombinedCellClass(roomId: number, dayObj: DayObj): string {
+  //   let classes = 'cell';
+  
+  //   const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
+  
+  //   // Add split-reservation if there is an overlap
+  //   if (overlapInfo.hasOverlap) {
+  //     classes += ' split-reservation';
+  //   }
+  
+  //   // Append the reservation status class
+  //   const statusClass = this.getCellClass(roomId, dayObj);
+  //   if (statusClass && statusClass !== 'split-reservation') {
+  //     classes += ` ${statusClass}`;
+  //   }
+  
+  //   // Check if the cell is part of the selected range using the generated key
+  //   const cellKey = `${roomId}-${dayObj.year}-${dayObj.month}-${dayObj.day}`;
+  //   if (this.selectedCells.has(cellKey)) {
+  //     classes += ' selected';
+  //   }
+  
+  //   // Add a specific class if the day is a valid arrival day
+  //   if (this.isValidArrivalDay(roomId, dayObj)) {
+  //     classes += ' valid-arrival-day';
+  //   }
+  
+  //   // Add a specific class if the day is a valid departure day
+  //   const departureDateKey = `${dayObj.year}-${(dayObj.month + 1).toString().padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+  //   if (this.validDepartureDaysMap[roomId]?.has(departureDateKey)) {
+  //     classes += ' valid-departure-day';
+  //   }
+  
+  //   return classes;
+  // }
+  
   getCombinedCellClass(roomId: number, dayObj: DayObj): string {
     let classes = 'cell';
   
@@ -451,11 +532,20 @@ export class NewPlanningChartComponent implements OnInit {
     const cellKey = `${roomId}-${dayObj.year}-${dayObj.month}-${dayObj.day}`;
     if (this.selectedCells.has(cellKey)) {
       classes += ' selected';
+      // If the cell is selected, return the class immediately
+      // to ensure that the selected class takes precedence
+      return classes;
     }
   
     // Add a specific class if the day is a valid arrival day
     if (this.isValidArrivalDay(roomId, dayObj)) {
       classes += ' valid-arrival-day';
+    }
+  
+    // Add a specific class if the day is a valid departure day
+    const departureDateKey = `${dayObj.year}-${(dayObj.month + 1).toString().padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+    if (this.validDepartureDaysMap[roomId]?.has(departureDateKey)) {
+      classes += ' valid-departure-day';
     }
   
     return classes;
@@ -576,6 +666,52 @@ export class NewPlanningChartComponent implements OnInit {
     const clickedDate = new Date(dayObj.year, dayObj.month, dayObj.day);
     console.log(`Room ID: ${roomId}, Date: ${clickedDate.toDateString()}`);
   }
+  
+
+  getValidDepartureDates(roomId: number, arrivalDateKey: string): Set<string> {
+    if (this.roomDepartureMap && this.roomDepartureMap[roomId] && this.roomDepartureMap[roomId][arrivalDateKey]) {
+      return new Set(Object.keys(this.roomDepartureMap[roomId][arrivalDateKey]));
+    }
+    return new Set();
+  }
+
+    
+  setDepartureDatesForArrival(roomId: number, arrivalDayObj: DayObj): void {
+    if (!this.Optimap) {
+      console.warn('Room departure map is not available.');
+      return;
+    }
+  
+    // Convert dayObj to string format used in roomDepartureMap (YYYY-MM-DD)
+    const arrivalDateKey = `${arrivalDayObj.year}-${(arrivalDayObj.month + 1).toString().padStart(2, '0')}-${arrivalDayObj.day.toString().padStart(2, '0')}`;
+  
+    // Check if the roomId and arrivalDateKey are present in the map
+    if (this.Optimap[roomId] && this.Optimap[roomId][arrivalDateKey]) {
+      // Extract the valid departure dates from the object and create a Set
+      const validDepartures = Object.keys(this.Optimap[roomId][arrivalDateKey]);
+      this.validDepartureDaysMap = {
+        [roomId]: new Set(validDepartures)
+      };
+  
+      // Log the selected arrival and corresponding departure dates for debugging
+      console.log(`Selected arrival date: ${arrivalDateKey}`);
+      console.log('Valid departure days:', this.validDepartureDaysMap[roomId]);
+    } else {
+      console.warn('No valid departure dates found for the selected arrival.');
+      this.validDepartureDaysMap = {};
+    }
+  }
+
+  reduceToSelectedDepartureDay(roomId: number, selectedDepartureDateKey: string): void {
+    // Update validDepartureDaysMap to keep only the selected departure day
+    this.validDepartureDaysMap = {
+      [roomId]: new Set([selectedDepartureDateKey])
+    };
+  
+    // Log the reduced valid departure days for debugging
+    console.log('Reduced valid departure days:', this.validDepartureDaysMap);
+  }
+  
   
   
 }
