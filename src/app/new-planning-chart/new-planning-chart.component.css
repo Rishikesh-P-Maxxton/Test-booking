@@ -185,14 +185,14 @@
   
 /* Highlight arrival days to show where reservations can start */
 .valid-arrival-day  {
-    background-color: #d4ffe1; /* Bright yellow to stand out */
+    background-color: #c3dbff; /* Bright yellow to stand out */
     border-bottom: 1px solid #ffffff; /* Consistent bottom border */
   }
   
   /* Highlight valid departure days when an arrival day is selected */
   .valid-departure-day {
     background-color: #c8e6c9; /* Light green for indicating availability */
-    border: 1px solid #66bb6a; /* Green border for highlighting */
+    border: 1px solid #a2e8ff; /* Green border for highlighting */
     z-index: 15; /* Ensure this is above other styles */
   }
   
@@ -207,7 +207,7 @@
   
   .cell.valid-departure-day {
     background-color: rgb(248, 169, 255); /* Choose a suitable color to indicate departure dates */
-    
+    border: none;
     z-index: 20;
   }
   

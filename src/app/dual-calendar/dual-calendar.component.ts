@@ -9,6 +9,7 @@ import { EventEmitter, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FilterStateService } from '../services/filter-state-service.service';
 import { ArrivalDepartureService } from '../services/arrival-departure.service';
+import { DualCalendarTriggerService } from '../dual-calendar-trigger-service.service';
 
 export interface SimplifiedReservation {
   roomId: number;
@@ -72,7 +73,8 @@ export class DualCalendarComponent implements OnInit {
     private roomService: RoomService,
     private filterStateService: FilterStateService,
     private stayService: StayService,
-    private reservationStorageService: ReservationStorageService
+    private reservationStorageService: ReservationStorageService,
+    private dualCalendarTriggerService: DualCalendarTriggerService
   ) {
     this.today.setDate(this.today.getDate() - 1);
     console.log('today' , this.today);
@@ -95,6 +97,11 @@ getFixedToday(): Date {
 
 
   ngOnInit(): void {
+
+    this.dualCalendarTriggerService.initialize$.subscribe(() => {
+      this.initializeRoomsAndStays();
+      this.generateCalendarDays();
+    });
     this.generateCalendarDays();
     this.initializeRoomsAndStays();
      // Subscribe to reset action from the service

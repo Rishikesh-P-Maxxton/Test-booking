@@ -8,6 +8,7 @@ import { StayService } from '../services/stays.service';
 import { ArrivalDepartureService } from '../services/arrival-departure.service';
 import { Subscription } from 'rxjs';
 import { RoomDepartureMap } from '../Interfaces/roomdeparturemap';
+import { DualCalendarTriggerService } from '../dual-calendar-trigger-service.service';
 
 
 interface DayObj {
@@ -58,7 +59,7 @@ Optimap: RoomDepartureMap | null = null;
     private roomService: RoomService,
     private stayService: StayService,
     private reservationStorageService: ReservationStorageService,
-    private arrivalDepartureService: ArrivalDepartureService
+    private arrivalDepartureService: ArrivalDepartureService, private dualCalendarTriggerService: DualCalendarTriggerService
   ) {
     const today = new Date();
     this.selectedMonth = today.getMonth();
@@ -66,6 +67,9 @@ Optimap: RoomDepartureMap | null = null;
   }
   
   ngOnInit(): void {
+     // Trigger the initialization of DualCalendarComponent
+     console.log('Triggering DualCalendarComponent initialization from OtherComponent...');
+     this.dualCalendarTriggerService.initialize();
     this.roomService.getRooms().subscribe((rooms) => {
       this.rooms = rooms;
       this.stayService.getStays().subscribe((stays) => {
@@ -199,47 +203,7 @@ Optimap: RoomDepartureMap | null = null;
     }
   }
   
-  // onMouseUp(): void {
-  //   this.isMouseDown = false;
-  
-  //   if (this.selectedRoomId && this.startDay && this.endDay) {
-  //     if (this.startDay.getTime() === this.endDay.getTime()) {
-  //       console.log('Single cell selected, invalidating selection.');
-  //       this.clearAllSelections();
-  //       this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
-  //     } else {
-  //       if (this.isArrivalDayFlag) {
-  //         const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
-  //           .toString()
-  //           .padStart(2, '0')}-${this.endDay.getDate().toString().padStart(2, '0')}`;
-  
-  //         if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
-  //           console.log('Invalid selection - does not end at a valid departure day.');
-  //           this.clearAllSelections();
-  //           this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
-  //         } else {
-  //           console.log('Valid selection.',this.startDay, this.endDay );
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     this.clearAllSelections();
-  //     this.hideDepartureDates(); // Clear departure dates when selection is invalid
-  //   }
-  
-  //   this.subscription.add(
-  //     this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
-  //       (optimizedMap: RoomDepartureMap | null) => {
-  //         if (optimizedMap) {
-  //           this.generateValidArrivalDaysMap(optimizedMap);
-  //           this.updateArrivalDayUI();
-  //         }
-  //       }
-  //     )
-  //   );
-  
-  //   this.isArrivalDayFlag = false;
-  // }
+ 
  
   onMouseUp(): void {
     this.isMouseDown = false;
