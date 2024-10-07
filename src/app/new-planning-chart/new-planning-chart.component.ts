@@ -41,7 +41,10 @@ export class NewPlanningChartComponent implements OnInit {
 
   
   validArrivalDaysMap: { [roomId: number]: Set<string> } = {};
+  isArrivalDayFlag: boolean = false; // Track if mouse down is on an arrival day
+  validDepartureDaysMap: { [roomId: number]: Set<string> } = {}; // Store valid departure days for a selected arrival day
 
+  
   isMouseDown: boolean = false;
   selectedRoomId: number | null = null;
   startDay: Date | null = null;
@@ -67,19 +70,13 @@ export class NewPlanningChartComponent implements OnInit {
       this.stayService.getStays().subscribe((stays) => {
         this.stays = stays;
   
-        this.subscription.add(
-          this.arrivalDepartureService.roomDepartureMap$.subscribe(map => {
-            this.roomDepartureMap = map;
-            console.log('Dashboard received Room Departure Map:', this.roomDepartureMap);
-          })
-        );
-  
+        // Subscribe to the optimized map and use it consistently
         this.subscription.add(
           this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
             (optimizedMap: RoomDepartureMap | null) => {
               if (optimizedMap) {
                 console.log('Optimized Room Departure Map:', optimizedMap);
-                this.generateValidArrivalDaysMap(optimizedMap);
+                this.generateValidArrivalDaysMap(optimizedMap); // Use optimizedMap initially
               } else {
                 console.log('No optimized map available.');
               }
@@ -87,7 +84,7 @@ export class NewPlanningChartComponent implements OnInit {
           )
         );
   
-        // Retrieve both reservations and customers from the local storage
+        // Retrieve both reservations and customers from local storage
         const reservationData = this.reservationStorageService.getReservations();
         this.reservations = reservationData.map(item => item.reservation);
         this.customers = reservationData.map(item => item.customer);
@@ -100,6 +97,7 @@ export class NewPlanningChartComponent implements OnInit {
       });
     });
   }
+  
   
   generateValidArrivalDaysMap(optimizedMap: RoomDepartureMap): void {
     this.validArrivalDaysMap = {};
@@ -140,18 +138,41 @@ export class NewPlanningChartComponent implements OnInit {
   }
   
 
+
+  
   onMouseDown(roomId: number, dayObj: DayObj, event: MouseEvent): void {
     event.preventDefault();
-    this.isMouseDown = true;
-    this.selectedRoomId = roomId;
   
-    // Create a Date object for the start day
-    this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
-    this.endDay = this.startDay;
-    this.selectedCells.clear(); // Clear any previous selection
-    this.addSelection(this.startDay, roomId);
+    // Determine if the current day is a valid arrival day
+    if (this.isValidArrivalDay(roomId, dayObj)) {
+      this.isArrivalDayFlag = true;  // Mark that an arrival day is being interacted with
+      this.selectedRoomId = roomId;
+  
+      // Create a Date object for the start day
+      this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+      this.endDay = this.startDay;
+  
+      // Reduce validArrivalDaysMap to include only the currently selected arrival day
+      this.reduceToSelectedArrivalDay(roomId, dayObj);
+  
+      // Clear any previous selection
+      this.selectedCells.clear();
+      this.addSelection(this.startDay, roomId);
+  
+      // Set the isMouseDown to true to enable dragging
+      this.isMouseDown = true;
+    } else {
+      // If it's not an arrival day, proceed with the regular mouse down behavior
+      this.isMouseDown = true;
+      this.selectedRoomId = roomId;
+  
+      // Create a Date object for the start day
+      this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+      this.endDay = this.startDay;
+      this.selectedCells.clear(); // Clear any previous selection
+      this.addSelection(this.startDay, roomId);
+    }
   }
-  
   
   onMouseOver(roomId: number, dayObj: DayObj, event: MouseEvent): void {
     if (this.isMouseDown) {
@@ -161,30 +182,115 @@ export class NewPlanningChartComponent implements OnInit {
         return;
       }
   
+      // Create a Date object for the current day being hovered
+      const currentDate = new Date(dayObj.year, dayObj.month, dayObj.day);
+  
+      // Prevent dragging to a date before the start date (leftward dragging)
+      if (currentDate < this.startDay!) {
+        return; // Do nothing, do not expand selection to the left
+      }
+  
+      // Check if the current cell is reserved
+      if (this.isCellReserved(roomId, dayObj)) {
+        // If we encounter a reserved cell while dragging, stop updating the selection
+        console.log('Reserved cell encountered, stopping selection at:', dayObj);
+        return;
+      }
+  
       // Update the end day as we drag
-      this.endDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+      this.endDay = currentDate;
       this.updateSelection(this.startDay, this.endDay, roomId);
     }
   }
-  
   
   onMouseUp(): void {
     this.isMouseDown = false;
   
     if (this.selectedRoomId && this.startDay && this.endDay) {
-      // Check if the selection is a single-click (i.e., startDay equals endDay)
+      // If the selection is only a single cell, invalidate it
       if (this.startDay.getTime() === this.endDay.getTime()) {
-        // Invalidate single-click selection
-        console.log('Single-click detected, invalidating selection.');
+        console.log('Single cell selected, invalidating selection.');
         this.clearAllSelections();
       } else {
-        // Finalize the valid selection
-        console.log('Selection Finalized:', this.selectedCells);
+        // Validation after mouse-up
+        if (this.isArrivalDayFlag) {
+          const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
+            .toString()
+            .padStart(2, '0')}-${this.endDay.getDate().toString().padStart(2, '0')}`;
+  
+          // Validate if the selection ends at a valid departure day
+          if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
+            console.log('Invalid selection - does not end at a valid departure day.');
+            this.clearAllSelections();
+          } else {
+            console.log('Valid selection.');
+          }
+        }
       }
     } else {
       this.clearAllSelections(); // Clear if the selection was invalid
     }
+  
+    // Restore all valid arrival days using the optimized map, if available
+    this.subscription.add(
+      this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
+        (optimizedMap: RoomDepartureMap | null) => {
+          if (optimizedMap) {
+            this.generateValidArrivalDaysMap(optimizedMap);
+            // Ensure the UI reflects the restored arrival days only after the selection has completed
+            this.updateArrivalDayUI(); 
+          }
+        }
+      )
+    );
+  
+    // Reset arrival day flag
+    this.isArrivalDayFlag = false;
   }
+  
+  
+  reduceToSelectedArrivalDay(roomId: number, dayObj: DayObj): void {
+    // Convert dayObj to the format used in validArrivalDaysMap (YYYY-MM-DD)
+    const arrivalDateKey = `${dayObj.year}-${(dayObj.month + 1).toString().padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+  
+    // Update validArrivalDaysMap to keep only the selected arrival day
+    this.validArrivalDaysMap = { [roomId]: new Set([arrivalDateKey]) };
+  
+    // Log the reduced valid arrival days for debugging
+    console.log('Reduced valid arrival days:', this.validArrivalDaysMap);
+  }
+  
+  updateArrivalDayUI(): void {
+    // Trigger change detection by updating component state
+    // Depending on your rendering approach, you might need to trigger a UI update manually.
+    // Here we're just ensuring the validArrivalDaysMap is up-to-date.
+    this.generateChart(); // Ensure this function redraws the cells based on the latest validArrivalDaysMap
+  }
+  
+  
+  isCellReserved(roomId: number, dayObj: DayObj): boolean {
+    const reservation = this.reservations.find((res) => {
+      const reservationStartDate = new Date(res.arrivalDate);
+      const reservationEndDate = new Date(res.departureDate);
+      
+      // Adjust times to ensure consistent comparison
+      reservationStartDate.setHours(11, 0, 0, 0);
+      reservationEndDate.setHours(10, 0, 0, 0);
+  
+      const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+      currentDay.setHours(12, 0, 0, 0);
+  
+      return (
+        res.roomId === roomId &&
+        currentDay >= reservationStartDate &&
+        currentDay < reservationEndDate
+      );
+    });
+  
+    return !!reservation; // Return true if a reservation is found
+  }
+  
+  
   
 
   addSelection(date: Date, roomId: number): void {
