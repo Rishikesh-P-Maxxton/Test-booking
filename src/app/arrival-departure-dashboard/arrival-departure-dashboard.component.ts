@@ -4,8 +4,6 @@ import { Subscription } from 'rxjs';
 import { Stay } from '../Interfaces/stay';
 import { RoomDepartureMap } from '../Interfaces/roomdeparturemap';
 
-
-
 @Component({
   selector: 'app-arrival-departure-dashboard',
   templateUrl: './arrival-departure-dashboard.component.html',
@@ -19,46 +17,47 @@ export class ArrivalDepartureDashboardComponent implements OnInit, OnDestroy {
   constructor(private arrivalDepartureService: ArrivalDepartureService) {}
 
   ngOnInit(): void {
-    this.subscription.add(
-      this.arrivalDepartureService.roomDepartureMap$.subscribe(map => {
-        this.roomDepartureMap = map;
-        console.log('Dashboard received Room Departure Map:', this.roomDepartureMap);
-      })
-    );
+    // Subscribe to the optimized room departure map
     this.subscription.add(
       this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
-        (optimizedMap: RoomDepartureMap | null) => {
+        (optimizedMap) => {
           if (optimizedMap) {
-            console.log('Optimized Room Departure Map:', optimizedMap);
+            this.roomDepartureMap = optimizedMap;
+            console.log('Optimized Room Departure Map:', this.roomDepartureMap);
           } else {
             console.log('No optimized map available.');
           }
+        },
+        (error) => {
+          console.error('Error fetching optimized map:', error);
         }
       )
     );
   }
 
   getRoomIds(): string[] {
+    // Use nullish coalescing to ensure an empty array if roomDepartureMap is null
     return this.roomDepartureMap ? Object.keys(this.roomDepartureMap) : [];
   }
 
   getArrivalDates(roomId: string): string[] {
+    // Ensure that roomDepartureMap is not null before accessing properties
     const numericRoomId = Number(roomId);
-    return this.roomDepartureMap && this.roomDepartureMap[numericRoomId]
+    return this.roomDepartureMap?.[numericRoomId]
       ? Object.keys(this.roomDepartureMap[numericRoomId])
       : [];
   }
 
   getDepartureDates(roomId: string, arrivalDate: string): string[] {
+    // Use optional chaining to safely access properties if they exist
     const numericRoomId = Number(roomId);
-    return this.roomDepartureMap &&
-      this.roomDepartureMap[numericRoomId] &&
-      this.roomDepartureMap[numericRoomId][arrivalDate]
+    return this.roomDepartureMap?.[numericRoomId]?.[arrivalDate]
       ? Object.keys(this.roomDepartureMap[numericRoomId][arrivalDate])
       : [];
   }
 
   getStay(roomId: string, arrivalDate: string): Stay | null {
+    // Ensure properties are safely accessed without throwing errors if null
     const numericRoomId = Number(roomId);
     const departures = this.roomDepartureMap?.[numericRoomId]?.[arrivalDate];
     if (departures) {
@@ -69,6 +68,7 @@ export class ArrivalDepartureDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Properly unsubscribe to prevent memory leaks
     this.subscription.unsubscribe();
   }
 }

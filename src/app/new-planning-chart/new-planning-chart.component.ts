@@ -72,13 +72,20 @@ export class NewPlanningChartComponent implements OnInit {
   
         // Subscribe to the optimized map and use it consistently
         this.subscription.add(
-          this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
-            (optimizedMap: RoomDepartureMap | null) => {
-              if (optimizedMap) {
-                console.log('Optimized Room Departure Map:', optimizedMap);
-                this.generateValidArrivalDaysMap(optimizedMap); // Use optimizedMap initially
-              } else {
-                console.log('No optimized map available.');
+          this.arrivalDepartureService.roomDepartureMap$.subscribe(
+            (roomDepartureMap: RoomDepartureMap | null) => {
+              if (roomDepartureMap) {
+                // Set the room departure map so it automatically sets the optimized map
+                this.arrivalDepartureService.setRoomDepartureMap(roomDepartureMap);
+  
+                // Directly use the optimized map to generate valid arrival days
+                const optimizedMap = this.arrivalDepartureService.getRoomDepartureMap();
+                if (optimizedMap) {
+                  console.log('Optimized Room Departure Map:', optimizedMap);
+                  this.generateValidArrivalDaysMap(optimizedMap); // Use optimizedMap initially
+                } else {
+                  console.log('No optimized map available.');
+                }
               }
             }
           )
@@ -97,6 +104,7 @@ export class NewPlanningChartComponent implements OnInit {
       });
     });
   }
+  
   
   
   generateValidArrivalDaysMap(optimizedMap: RoomDepartureMap): void {
