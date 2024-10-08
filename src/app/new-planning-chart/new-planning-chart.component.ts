@@ -363,6 +363,11 @@ Optimap: RoomDepartureMap | null = null;
   
 
   getCellClass(roomId: number, dayObj: DayObj): string {
+
+      // Skip reservations for the selected room during selection
+  if (this.isArrivalDayFlag && roomId === this.selectedRoomId) {
+    return 'available';
+  }
     const roomData = this.rooms.find(room => room.roomId === roomId);
     if (!roomData) return 'not-available';
     
@@ -440,57 +445,25 @@ Optimap: RoomDepartureMap | null = null;
     };
   }
   
-  // getCombinedCellClass(roomId: number, dayObj: DayObj): string {
-  //   let classes = 'cell';
-  
-  //   const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
-  
-  //   // Add split-reservation if there is an overlap
-  //   if (overlapInfo.hasOverlap) {
-  //     classes += ' split-reservation';
-  //   }
-  
-  //   // Append the reservation status class
-  //   const statusClass = this.getCellClass(roomId, dayObj);
-  //   if (statusClass && statusClass !== 'split-reservation') {
-  //     classes += ` ${statusClass}`;
-  //   }
-  
-  //   // Check if the cell is part of the selected range using the generated key
-  //   const cellKey = `${roomId}-${dayObj.year}-${dayObj.month}-${dayObj.day}`;
-  //   if (this.selectedCells.has(cellKey)) {
-  //     classes += ' selected';
-  //   }
-  
-  //   // Add a specific class if the day is a valid arrival day
-  //   if (this.isValidArrivalDay(roomId, dayObj)) {
-  //     classes += ' valid-arrival-day';
-  //   }
-  
-  //   // Add a specific class if the day is a valid departure day
-  //   const departureDateKey = `${dayObj.year}-${(dayObj.month + 1).toString().padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
-  //   if (this.validDepartureDaysMap[roomId]?.has(departureDateKey)) {
-  //     classes += ' valid-departure-day';
-  //   }
-  
-  //   return classes;
-  // }
-  
+
   getCombinedCellClass(roomId: number, dayObj: DayObj): string {
     let classes = 'cell';
   
-    const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
-  
-    // Add split-reservation if there is an overlap
-    if (overlapInfo.hasOverlap) {
+      // **Modify overlap check to skip during selection**
+  const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
+  if (overlapInfo.hasOverlap) {
+    if (!(this.isArrivalDayFlag && roomId === this.selectedRoomId)) {
       classes += ' split-reservation';
     }
-  
-    // Append the reservation status class
+  }
+
+  // **Modify reservation status class to skip during selection**
+  if (!(this.isArrivalDayFlag && roomId === this.selectedRoomId)) {
     const statusClass = this.getCellClass(roomId, dayObj);
     if (statusClass && statusClass !== 'split-reservation') {
       classes += ` ${statusClass}`;
     }
+  }
   
     // Check if the cell is part of the selected range using the generated key
     const cellKey = `${roomId}-${dayObj.year}-${dayObj.month}-${dayObj.day}`;
@@ -520,6 +493,12 @@ Optimap: RoomDepartureMap | null = null;
   
   
   getTooltipForCell(roomId: number, dayObj: DayObj): string | null {
+
+  
+  if (this.isArrivalDayFlag && roomId === this.selectedRoomId) {
+    return null;
+  }
+
     if (!this.isSecondDayOfReservation(roomId, dayObj)) {
       return null; // Tooltip should only be generated for the second day
     }
