@@ -363,30 +363,31 @@ Optimap: RoomDepartureMap | null = null;
   
 
   getCellClass(roomId: number, dayObj: DayObj): string {
-
-      // Skip reservations for the selected room during selection
-  if (this.isArrivalDayFlag && roomId === this.selectedRoomId) {
-    return 'available';
-  }
+    // Skip reservations for the selected room during selection
+    if (this.isArrivalDayFlag && roomId === this.selectedRoomId) {
+      return 'available';
+    }
+  
     const roomData = this.rooms.find(room => room.roomId === roomId);
     if (!roomData) return 'not-available';
-    
+  
     const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
-    currentDay.setHours(12, 0, 0, 0);
+    currentDay.setHours(19, 0, 0, 0); // Set to midday for comparison
   
     // Check if the current day falls within any reservation period
     const reservation = this.reservations.find((res) => {
       const reservationStartDate = new Date(res.arrivalDate);
-      const reservationEndDate = new Date(res.departureDate);
+      reservationStartDate.setHours(11, 0, 0, 0); // Check-in at 11:00 AM
   
-      // Adjust times to reflect industry standards
-      reservationStartDate.setHours(11, 0, 0, 0);
-      reservationEndDate.setHours(10, 0, 0, 0);
+      // Adjust reservation end date to include the departure date
+      const reservationEndDate = new Date(res.departureDate);
+      reservationEndDate.setDate(reservationEndDate.getDate() + 1); // Move to next day
+      reservationEndDate.setHours(10, 0, 0, 0); // Check-out at 10:00 AM
   
       return (
         res.roomId === roomId &&
         currentDay >= reservationStartDate &&
-        currentDay < reservationEndDate
+        currentDay < reservationEndDate // Use '<' to include departure date
       );
     });
   
@@ -407,6 +408,8 @@ Optimap: RoomDepartureMap | null = null;
   
     return 'available';
   }
+  
+  
   
   
 
@@ -449,44 +452,68 @@ Optimap: RoomDepartureMap | null = null;
   getCombinedCellClass(roomId: number, dayObj: DayObj): string {
     let classes = 'cell';
   
-      // **Modify overlap check to skip during selection**
-  const overlapInfo = this.isOverlappingReservation(roomId, dayObj);
-  if (overlapInfo.hasOverlap) {
-    if (!(this.isArrivalDayFlag && roomId === this.selectedRoomId)) {
-      classes += ' split-reservation';
-    }
-  }
-
-  // **Modify reservation status class to skip during selection**
-  if (!(this.isArrivalDayFlag && roomId === this.selectedRoomId)) {
-    const statusClass = this.getCellClass(roomId, dayObj);
-    if (statusClass && statusClass !== 'split-reservation') {
-      classes += ` ${statusClass}`;
-    }
-  }
-  
-    // Check if the cell is part of the selected range using the generated key
     const cellKey = `${roomId}-${dayObj.year}-${dayObj.month}-${dayObj.day}`;
+  
     if (this.selectedCells.has(cellKey)) {
       classes += ' selected';
-      // If the cell is selected, return the class immediately
-      // to ensure that the selected class takes precedence
       return classes;
     }
   
-    // Add a specific class if the day is a valid arrival day
-    if (this.isValidArrivalDay(roomId, dayObj)) {
+    const isValidArrival = this.isValidArrivalDay(roomId, dayObj);
+    const statusClass = this.getCellClass(roomId, dayObj);
+  
+    // Special Case: Reservation ends on a valid arrival day
+    if (this.isReservationEndingOnArrivalDay(roomId, dayObj)) {
+      classes += ' split-reservation-arrival';
+  
+      if (statusClass && statusClass !== 'available') {
+        classes += ` ${statusClass}`;
+      }
+      // Also add 'valid-arrival-day' class
       classes += ' valid-arrival-day';
+    } else {
+      if (statusClass) {
+        classes += ` ${statusClass}`;
+      }
+      if (isValidArrival) {
+        classes += ' valid-arrival-day';
+      }
     }
   
-    // Add a specific class if the day is a valid departure day
-    const departureDateKey = `${dayObj.year}-${(dayObj.month + 1).toString().padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+    // Existing code for valid departure days
+    const departureDateKey = `${dayObj.year}-${(dayObj.month + 1)
+      .toString()
+      .padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
     if (this.validDepartureDaysMap[roomId]?.has(departureDateKey)) {
       classes += ' valid-departure-day';
     }
   
     return classes;
   }
+  
+  
+  
+  isReservationEndingOnArrivalDay(roomId: number, dayObj: DayObj): boolean {
+    const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    currentDay.setHours(19, 0, 0, 0); // Set to 7:00 PM
+  
+    const isValidArrival = this.isValidArrivalDay(roomId, dayObj);
+    if (!isValidArrival) {
+      return false;
+    }
+  
+    const reservationEndingToday = this.reservations.find((res) => {
+      const reservationEndDate = new Date(res.departureDate);
+      reservationEndDate.setHours(19, 0, 0, 0); // Set to 7:00 PM
+  
+      return res.roomId === roomId && currentDay.getTime() === reservationEndDate.getTime();
+    });
+  
+    return !!reservationEndingToday;
+  }
+  
+  
+  
   
   
   

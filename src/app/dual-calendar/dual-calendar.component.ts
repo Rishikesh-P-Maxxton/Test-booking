@@ -829,49 +829,59 @@ generateCombinedArrivalDates(): {
 
   
   // New function that accepts arrivalDate as a parameter
-filterOutReservedDatesWithArrivalDate(validDates: Date[], roomId: number, arrivalDate: Date): Date[] {
-  const reservations = this.reservationStorageService.getReservations()
-    .filter(res => res.reservation.roomId === roomId)
-    .map(res => ({
-      arrivalDate: new Date(res.reservation.arrivalDate),
-      departureDate: new Date(res.reservation.departureDate)
-    }));
-
-  return validDates.filter(date => {
-    return !reservations.some(reservation => {
-      const checkOutTime = 10 * 60 * 60 * 1000;  // 10:00 AM in milliseconds
-      const checkInTime = 11 * 60 * 60 * 1000;   // 11:00 AM in milliseconds
-
-      const reservationStart = new Date(reservation.arrivalDate.getTime() - checkInTime); // Reservation start
-      const reservationEnd = new Date(reservation.departureDate.getTime() + checkOutTime); // Reservation end
-
-      // Case 1: Overlap check
-      if (date >= reservationStart && date <= reservationEnd) {
-        console.log(`Date ${date.toDateString()} overlaps with a reservation (from ${reservation.arrivalDate.toDateString()} to ${reservation.departureDate.toDateString()}).`);
-        return true;  // This date overlaps with the reservation, so it's invalid.
-      }
-
-      // Case 2: Engulfing check
-      if (arrivalDate && arrivalDate < reservation.arrivalDate && date > reservation.departureDate) {
-        console.log(`Date ${date.toDateString()} engulfs a reservation (from ${reservation.arrivalDate.toDateString()} to ${reservation.departureDate.toDateString()}).`);
-        return true;  // This date engulfs the reservation, so it's invalid.
-      }
-      if (arrivalDate && arrivalDate >= reservation.arrivalDate && arrivalDate < reservation.departureDate && date > reservation.departureDate) {
-        console.log(`Date ${date.toDateString()} engulfs a reservation (from ${reservation.arrivalDate.toDateString()} to ${reservation.departureDate.toDateString()}).`);
-        return true;  // This date engulfs the reservation, so it's invalid.
-      }
-
-      // Case 3: Same-day check-in/out allowed
-      if (date.getTime() === reservation.arrivalDate.getTime()) {
-        console.log(`Date ${date.toDateString()} is valid for same-day check-out and check-in.`);
-        return false;  // This date is valid.
-      }
-
-      return false;  // If none of the conditions apply, the date is valid.
+  filterOutReservedDatesWithArrivalDate(validDates: Date[], roomId: number, arrivalDate: Date): Date[] {
+    const reservations = this.reservationStorageService.getReservations()
+      .filter(res => res.reservation.roomId === roomId)
+      .map(res => ({
+        arrivalDate: new Date(res.reservation.arrivalDate),
+        departureDate: new Date(res.reservation.departureDate)
+      }));
+  
+    return validDates.filter(date => {
+      return !reservations.some(reservation => {
+        // Set reservation check-in and check-out times
+        const reservationStart = new Date(reservation.arrivalDate);
+        reservationStart.setHours(11, 0, 0, 0); // Check-in at 11:00 AM
+  
+        const reservationEnd = new Date(reservation.departureDate);
+        reservationEnd.setHours(10, 0, 0, 0); // Check-out at 10:00 AM
+  
+        // Set candidate dates
+        const candidateArrivalDate = new Date(arrivalDate);
+        candidateArrivalDate.setHours(11, 0, 0, 0); // Arrival at 11:00 AM
+  
+        const candidateDepartureDate = new Date(date);
+        candidateDepartureDate.setHours(10, 0, 0, 0); // Departure at 10:00 AM
+  
+        // Overlap Check
+        if (
+          (candidateArrivalDate >= reservationStart && candidateArrivalDate < reservationEnd) ||
+          (candidateDepartureDate > reservationStart && candidateDepartureDate <= reservationEnd)
+        ) {
+          console.log(`Dates overlap with a reservation (from ${reservationStart} to ${reservationEnd}).`);
+          return true; // Overlaps with existing reservation
+        }
+  
+        // Engulfing Check
+        if (candidateArrivalDate <= reservationStart && candidateDepartureDate >= reservationEnd) {
+          console.log(`Dates engulf a reservation (from ${reservationStart} to ${reservationEnd}).`);
+          return true; // Engulfs existing reservation
+        }
+  
+        // Same-Day Check-In/Out Allowed
+        if (
+          candidateArrivalDate.getTime() === reservationEnd.getTime() ||
+          candidateDepartureDate.getTime() === reservationStart.getTime()
+        ) {
+          console.log(`Same-day check-out and check-in allowed on ${candidateArrivalDate.toDateString()} or ${candidateDepartureDate.toDateString()}.`);
+          return false; // Valid date
+        }
+  
+        return false; // No conflict
+      });
     });
-  });
-}
-
+  }
+  
 
 // Filter out reserved dates for a given room
 filterOutReservedDates(validDates: Date[], roomId: number): Date[] {

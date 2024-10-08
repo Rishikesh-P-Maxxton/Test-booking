@@ -213,5 +213,46 @@
   
 
   
+  .split-reservation-arrival {
+    position: relative;
+    border-radius: 0;
+    border-top: none;
+    border-right: none;
+    border-bottom: 1px solid #FEFEFE;
+    border-left: none;
+  }
+  
+  .split-reservation-arrival::before,
+.split-reservation-arrival::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(50% - 1px); /* Subtract half of the border width */
+}
+
+.split-reservation-arrival::before {
+  left: 0;
+  border-right: 2px solid white; /* Add the white line */
+}
+
+.split-reservation-arrival::after {
+  right: 0;
+}
+
+  /* Left Half: Reservation Status Color */
+  .split-reservation-arrival.checked-in::before {
+    background-color: #ffad33; /* Checked-in color */
+  }
+  
+  .split-reservation-arrival.confirmed::before {
+    background-color: #5a5acf; /* Confirmed color */
+  }
+  
+  /* Right Half: Arrival Day Color */
+  .split-reservation-arrival::after {
+    background-color: #c3dbff; /* Arrival day color */
+  }
+  
   
   
