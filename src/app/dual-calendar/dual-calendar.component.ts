@@ -217,7 +217,8 @@ generateRoomDepartureMap(): void {
         const validDepartureDates = this.calculateValidDepartureDates(arrivalDateObj, stay);
 
         // Apply filtering for reservations that conflict with the valid departure dates using existing function
-        const filteredDepartureDates = this.filterOutReservedDates(validDepartureDates, parseInt(roomId));
+        const filteredDepartureDates = this.filterOutReservedDatesWithArrivalDate(validDepartureDates, parseInt(roomId), arrivalDateObj);
+
 
         // Populate roomDepartureMap with each valid departure date and the corresponding stay
         filteredDepartureDates.forEach(departureDate => {
@@ -827,6 +828,50 @@ generateCombinedArrivalDates(): {
   }
 
   
+  // New function that accepts arrivalDate as a parameter
+filterOutReservedDatesWithArrivalDate(validDates: Date[], roomId: number, arrivalDate: Date): Date[] {
+  const reservations = this.reservationStorageService.getReservations()
+    .filter(res => res.reservation.roomId === roomId)
+    .map(res => ({
+      arrivalDate: new Date(res.reservation.arrivalDate),
+      departureDate: new Date(res.reservation.departureDate)
+    }));
+
+  return validDates.filter(date => {
+    return !reservations.some(reservation => {
+      const checkOutTime = 10 * 60 * 60 * 1000;  // 10:00 AM in milliseconds
+      const checkInTime = 11 * 60 * 60 * 1000;   // 11:00 AM in milliseconds
+
+      const reservationStart = new Date(reservation.arrivalDate.getTime() - checkInTime); // Reservation start
+      const reservationEnd = new Date(reservation.departureDate.getTime() + checkOutTime); // Reservation end
+
+      // Case 1: Overlap check
+      if (date >= reservationStart && date <= reservationEnd) {
+        console.log(`Date ${date.toDateString()} overlaps with a reservation (from ${reservation.arrivalDate.toDateString()} to ${reservation.departureDate.toDateString()}).`);
+        return true;  // This date overlaps with the reservation, so it's invalid.
+      }
+
+      // Case 2: Engulfing check
+      if (arrivalDate && arrivalDate < reservation.arrivalDate && date > reservation.departureDate) {
+        console.log(`Date ${date.toDateString()} engulfs a reservation (from ${reservation.arrivalDate.toDateString()} to ${reservation.departureDate.toDateString()}).`);
+        return true;  // This date engulfs the reservation, so it's invalid.
+      }
+      if (arrivalDate && arrivalDate >= reservation.arrivalDate && arrivalDate < reservation.departureDate && date > reservation.departureDate) {
+        console.log(`Date ${date.toDateString()} engulfs a reservation (from ${reservation.arrivalDate.toDateString()} to ${reservation.departureDate.toDateString()}).`);
+        return true;  // This date engulfs the reservation, so it's invalid.
+      }
+
+      // Case 3: Same-day check-in/out allowed
+      if (date.getTime() === reservation.arrivalDate.getTime()) {
+        console.log(`Date ${date.toDateString()} is valid for same-day check-out and check-in.`);
+        return false;  // This date is valid.
+      }
+
+      return false;  // If none of the conditions apply, the date is valid.
+    });
+  });
+}
+
 
 // Filter out reserved dates for a given room
 filterOutReservedDates(validDates: Date[], roomId: number): Date[] {
