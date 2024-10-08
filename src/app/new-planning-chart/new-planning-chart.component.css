@@ -256,3 +256,41 @@
   
   
   
+
+  /*arr*/
+  .split-reservation-start {
+  position: relative;
+  border-radius: 0;
+  border-top: none;
+  border-right: none;
+  border-bottom: 1px solid #FEFEFE;
+  border-left: none;
+}
+
+.split-reservation-start::before,
+.split-reservation-start::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  box-sizing: border-box;
+}
+
+.split-reservation-start::before {
+  left: 0;
+  background-color: white; /* Left half is white */
+  border-right: 2px solid white; /* Optional: Thin line */
+}
+
+.split-reservation-start::after {
+  right: 0;
+}
+
+.split-reservation-start.checked-in::after {
+  background-color: #ffad33; /* Checked-in color */
+}
+
+.split-reservation-start.confirmed::after {
+  background-color: #5a5acf; /* Confirmed color */
+}

@@ -471,6 +471,14 @@ Optimap: RoomDepartureMap | null = null;
       }
       // Also add 'valid-arrival-day' class
       classes += ' valid-arrival-day';
+    }
+    // New code for reservation starting today
+    else if (this.isReservationStartingToday(roomId, dayObj)) {
+      classes += ' split-reservation-start';
+  
+      if (statusClass && statusClass !== 'available') {
+        classes += ` ${statusClass}`;
+      }
     } else {
       if (statusClass) {
         classes += ` ${statusClass}`;
@@ -491,6 +499,43 @@ Optimap: RoomDepartureMap | null = null;
     return classes;
   }
   
+  
+  // Check if a reservation starts today and is not overlapping
+isReservationStartingToday(roomId: number, dayObj: DayObj): boolean {
+  const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+  currentDay.setHours(19, 0, 0, 0); // Set to 7:00 PM (consistent with your other time settings)
+
+  // Find reservations starting today
+  const reservationsStartingToday = this.reservations.filter((res) => {
+    const reservationStartDate = new Date(res.arrivalDate);
+    reservationStartDate.setHours(19, 0, 0, 0);
+
+    return res.roomId === roomId && currentDay.getTime() === reservationStartDate.getTime();
+  });
+
+  // If there is no reservation starting today, return false
+  if (reservationsStartingToday.length === 0) {
+    return false;
+  }
+
+  // Check for overlapping reservations on the current day
+  const overlappingReservations = this.reservations.filter((res) => {
+    if (res.roomId !== roomId) return false;
+
+    const reservationStartDate = new Date(res.arrivalDate);
+    reservationStartDate.setHours(11, 0, 0, 0); // Check-in at 11:00 AM
+
+    const reservationEndDate = new Date(res.departureDate);
+    reservationEndDate.setHours(10, 0, 0, 0); // Check-out at 10:00 AM
+
+    // Check if the current day falls within the reservation period
+    return currentDay >= reservationStartDate && currentDay < reservationEndDate;
+  });
+
+  // If there's more than one overlapping reservation, it's an overlap
+  return overlappingReservations.length === 1; // Only the reservation starting today
+}
+
   
   
   isReservationEndingOnArrivalDay(roomId: number, dayObj: DayObj): boolean {
