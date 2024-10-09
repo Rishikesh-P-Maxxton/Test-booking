@@ -41,6 +41,8 @@ export class NewPlanningChartComponent implements OnInit {
 Optimap: RoomDepartureMap | null = null;
   private subscription: Subscription = new Subscription();
 
+  showInvalidSelectionAlert: boolean = false;
+
   
   validArrivalDaysMap: { [roomId: number]: Set<string> } = {};
   isArrivalDayFlag: boolean = false; // Track if mouse down is on an arrival day
@@ -163,13 +165,23 @@ Optimap: RoomDepartureMap | null = null;
       // Set the valid departure dates for the selected arrival date
       this.setDepartureDatesForArrival(roomId, dayObj);
     } else {
-      this.isMouseDown = true;
-      this.selectedRoomId = roomId;
-      this.startDay = new Date(dayObj.year, dayObj.month, dayObj.day);
-      this.endDay = this.startDay;
-      this.selectedCells.clear();
-      this.addSelection(this.startDay, roomId);
+      // Do not start selection on non-arrival days
+      console.log('Not a valid arrival day, selection not started.');
+      this.isMouseDown = false;
     }
+  }
+  
+  showInvalidSelectionMessage(): void {
+    this.showInvalidSelectionAlert = true;
+  
+    // Automatically hide the alert after 5 seconds
+    setTimeout(() => {
+      this.showInvalidSelectionAlert = false;
+    }, 5000); // Adjust the duration as needed (5000 milliseconds = 5 seconds)
+  }
+  
+  closeInvalidSelectionAlert(): void {
+    this.showInvalidSelectionAlert = false;
   }
   
   
@@ -188,7 +200,17 @@ Optimap: RoomDepartureMap | null = null;
       // Prevent dragging to a date before the start date (leftward dragging)
       if (currentDate < this.startDay!) {
         this.clearAllSelections();
-        return; // Do nothing, do not expand selection to the left
+        return; // Do not expand selection to the left
+      }
+  
+      // Get the last valid departure date for the selected arrival day
+      const lastValidDepartureDate = this.getLastValidDepartureDate(this.selectedRoomId!);
+  
+      // If currentDate is after the last valid departure date, limit it
+      if (lastValidDepartureDate && currentDate > lastValidDepartureDate) {
+        this.endDay = lastValidDepartureDate;
+      } else {
+        this.endDay = currentDate;
       }
   
       // Check if the current cell is selectable
@@ -200,11 +222,11 @@ Optimap: RoomDepartureMap | null = null;
         return;
       }
   
-      // Update the end day as we drag
-      this.endDay = currentDate;
+      // Update the selection
       this.updateSelection(this.startDay, this.endDay, roomId);
     }
   }
+  
   
   
  
@@ -216,7 +238,8 @@ Optimap: RoomDepartureMap | null = null;
       if (this.startDay.getTime() === this.endDay.getTime()) {
         console.log('Single cell selected, invalidating selection.');
         this.clearAllSelections();
-        this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
+        this.hideDepartureDates();
+        this.showInvalidSelectionMessage(); // Show alert
       } else {
         if (this.isArrivalDayFlag) {
           const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
@@ -226,16 +249,18 @@ Optimap: RoomDepartureMap | null = null;
           if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
             console.log('Invalid selection - does not end at a valid departure day.');
             this.clearAllSelections();
-            this.hideDepartureDates(); // Clear departure dates when an invalid selection is made
+            this.hideDepartureDates();
+            this.showInvalidSelectionMessage(); // Show alert
           } else {
             console.log('Valid selection.', this.startDay, this.endDay);
-            this.reduceToSelectedDepartureDay(this.selectedRoomId!, endDayKey); // Reduce to only the selected departure day
+            this.reduceToSelectedDepartureDay(this.selectedRoomId!, endDayKey);
           }
         }
       }
     } else {
       this.clearAllSelections();
-      this.hideDepartureDates(); // Clear departure dates when selection is invalid
+      this.hideDepartureDates();
+      this.showInvalidSelectionMessage(); // Show alert
     }
   
     this.subscription.add(
@@ -251,6 +276,7 @@ Optimap: RoomDepartureMap | null = null;
   
     this.isArrivalDayFlag = false;
   }
+  
   
 
 
@@ -530,6 +556,25 @@ Optimap: RoomDepartureMap | null = null;
   
   
   
+  getLastValidDepartureDate(roomId: number): Date | null {
+    const validDepartureDatesSet = this.validDepartureDaysMap[roomId];
+    if (!validDepartureDatesSet || validDepartureDatesSet.size === 0) {
+      return null;
+    }
+  
+    // Convert the set to an array of Date objects
+    const validDepartureDates = Array.from(validDepartureDatesSet).map(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    });
+  
+    // Find the latest date
+    const lastDate = validDepartureDates.reduce((latest, date) => {
+      return date > latest ? date : latest;
+    }, validDepartureDates[0]);
+  
+    return lastDate;
+  }
   
   // Check if a reservation starts today and is not overlapping
 isReservationStartingToday(roomId: number, dayObj: DayObj): boolean {

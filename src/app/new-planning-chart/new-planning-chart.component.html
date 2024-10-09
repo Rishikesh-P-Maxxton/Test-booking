@@ -41,3 +41,15 @@
   
     </div>
   </div>
+
+
+  <!-- Alert for Invalid Selection -->
+<div
+*ngIf="showInvalidSelectionAlert"
+class="alert alert-danger alert-dismissible fade show position-fixed bottom-0 end-0 m-3"
+role="alert"
+style="z-index: 1100;"
+>
+Selection invalid. Please select a departure date highlighted in pink.
+
+</div>
