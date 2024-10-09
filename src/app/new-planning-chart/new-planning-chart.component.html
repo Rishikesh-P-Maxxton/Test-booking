@@ -24,23 +24,29 @@
       <ng-container *ngFor="let room of rooms">
         <div class="room-name sticky">Room {{ room.roomId }}</div>
         <div *ngFor="let dayObj of days"
-        [class]="getCombinedCellClass(room.roomId, dayObj)"
-        (mousedown)="onMouseDown(room.roomId, dayObj, $event)"
-        (mouseover)="onMouseOver(room.roomId, dayObj, $event)"
-        (mouseup)="onMouseUp()"
-        (click)="onCellClick(room.roomId, dayObj)"
-        [attr.data-statuses]="getStatusesString(room.roomId, dayObj)"
-        [attr.data-bs-toggle]="isSecondDayOfReservation(room.roomId, dayObj) ? 'tooltip' : null"
-        [attr.title]="getTooltipForCell(room.roomId, dayObj)"
-        [attr.aria-selected]="selectedCells.has(room.roomId + '-' + dayObj.year + '-' + dayObj.month + '-' + dayObj.day)">
-   </div>
-   
-   
-      </ng-container>
-      
-  
+  [class]="getCombinedCellClass(room.roomId, dayObj)"
+  (mousedown)="onMouseDown(room.roomId, dayObj, $event)"
+  (mouseover)="onMouseOver(room.roomId, dayObj, $event)"
+  (mouseup)="onMouseUp()"
+  (click)="onCellClick(room.roomId, dayObj)"
+  [attr.data-statuses]="getStatusesString(room.roomId, dayObj)"
+  [attr.data-bs-toggle]="isSecondDayOfReservation(room.roomId, dayObj) ? 'tooltip' : null"
+  [attr.title]="getTooltipForCell(room.roomId, dayObj)"
+  [attr.aria-selected]="selectedCells.has(room.roomId + '-' + dayObj.year + '-' + dayObj.month + '-' + dayObj.day)"
+>
+
+  <!-- Display the customer's name if conditions are met -->
+  <ng-container *ngIf="shouldDisplayCustomerName(room.roomId, dayObj) as customerName">
+    <div class="customer-name">
+      {{ customerName }}
     </div>
-  </div>
+  </ng-container>
+
+</div>
+
+   
+
+ 
 
 
   <!-- Alert for Invalid Selection -->

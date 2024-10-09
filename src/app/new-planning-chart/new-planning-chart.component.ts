@@ -804,5 +804,57 @@ isReservationStartingToday(roomId: number, dayObj: DayObj): boolean {
   }
   
   
+
+  isSecondDayOfLongReservation(roomId: number, dayObj: DayObj): { isSecondDay: boolean, customerName: string } {
+    const currentDay = new Date(dayObj.year, dayObj.month, dayObj.day);
+    currentDay.setHours(12, 0, 0, 0);
   
+    // Find the reservation that overlaps with the current day
+    const reservation = this.reservations.find((res) => {
+      const reservationStartDate = new Date(res.arrivalDate);
+      const reservationEndDate = new Date(res.departureDate);
+  
+      reservationStartDate.setHours(11, 0, 0, 0);
+      reservationEndDate.setHours(10, 0, 0, 0);
+  
+      return (
+        res.roomId === roomId &&
+        currentDay >= reservationStartDate &&
+        currentDay < reservationEndDate
+      );
+    });
+  
+    if (reservation) {
+      // Calculate the second day of the reservation
+      const reservationStartDate = new Date(reservation.arrivalDate);
+      reservationStartDate.setHours(11, 0, 0, 0);
+      
+      const secondDay = new Date(reservationStartDate);
+      secondDay.setDate(secondDay.getDate() + 1);
+      secondDay.setHours(12, 0, 0, 0);
+  
+      // Calculate the total number of days in the reservation
+      const reservationEndDate = new Date(reservation.departureDate);
+      reservationEndDate.setHours(10, 0, 0, 0);
+  
+      const totalDays = Math.ceil((reservationEndDate.getTime() - reservationStartDate.getTime()) / (1000 * 3600 * 24));
+  
+      // Return true if currentDay matches the secondDay and the reservation is longer than one day
+      if (currentDay.getTime() === secondDay.getTime() && totalDays > 1) {
+        const customer = this.customers.find(cust => cust.customerId === reservation.customerId);
+        const customerName = customer ? `${customer.firstName} ${customer.lastName}` : '';
+        return { isSecondDay: true, customerName };
+      }
+    }
+  
+    return { isSecondDay: false, customerName: '' };
+  }
+  
+  shouldDisplayCustomerName(roomId: number, dayObj: DayObj): string | null {
+    const { isSecondDay, customerName } = this.isSecondDayOfLongReservation(roomId, dayObj);
+    if (isSecondDay) {
+      return customerName;
+    }
+    return null;
+  }
 }
