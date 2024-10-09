@@ -209,6 +209,7 @@
     background-color: rgb(248, 169, 255); /* Choose a suitable color to indicate departure dates */
     border: none;
     z-index: 20;
+    
   }
   
 
@@ -287,6 +288,25 @@
   right: 0;
 }
 
+.split-reservation-start.checked-in::after {
+  background-color: #ffad33; /* Checked-in color */
+}
+
+.split-reservation-start.confirmed::after {
+  background-color: #5a5acf; /* Confirmed color */
+}
+
+/* When the cell is both the start of a reservation and a valid departure day during selection */
+.split-reservation-start.valid-departure-day::before {
+  background-color: rgb(248, 169, 255); /* Departure day color */
+}
+
+/* Ensure the default left half is white when not a valid departure day */
+.split-reservation-start::before {
+  background-color: white; /* Left half is white by default */
+}
+
+/* Right half styling remains based on reservation status */
 .split-reservation-start.checked-in::after {
   background-color: #ffad33; /* Checked-in color */
 }

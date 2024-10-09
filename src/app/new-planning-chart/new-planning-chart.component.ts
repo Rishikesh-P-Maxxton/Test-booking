@@ -187,13 +187,16 @@ Optimap: RoomDepartureMap | null = null;
   
       // Prevent dragging to a date before the start date (leftward dragging)
       if (currentDate < this.startDay!) {
+        this.clearAllSelections();
         return; // Do nothing, do not expand selection to the left
       }
   
-      // Check if the current cell is reserved
-      if (this.isCellReserved(roomId, dayObj)) {
-        // If we encounter a reserved cell while dragging, stop updating the selection
-        console.log('Reserved cell encountered, stopping selection at:', dayObj);
+      // Check if the current cell is selectable
+      if (!this.isCellSelectable(roomId, dayObj)) {
+        // If the cell is not selectable, reset the selection
+        console.log('Non-selectable cell encountered, resetting selection at:', dayObj);
+        this.clearAllSelections();
+        this.hideDepartureDates(); // Hide departure dates
         return;
       }
   
@@ -202,6 +205,7 @@ Optimap: RoomDepartureMap | null = null;
       this.updateSelection(this.startDay, this.endDay, roomId);
     }
   }
+  
   
  
  
@@ -250,6 +254,27 @@ Optimap: RoomDepartureMap | null = null;
   
 
 
+  isCellSelectable(roomId: number, dayObj: DayObj): boolean {
+    // First, check if the cell is reserved
+    const isReserved = this.isCellReserved(roomId, dayObj);
+  
+    if (!isReserved) {
+      // If the cell is not reserved, it is selectable
+      return true;
+    } else {
+      // If the cell is reserved, check if it is both a valid departure day and the start of a reservation
+      const departureDateKey = `${dayObj.year}-${(dayObj.month + 1)
+        .toString()
+        .padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+  
+      const isValidDeparture = this.validDepartureDaysMap[roomId]?.has(departureDateKey) ?? false;
+      const isReservationStart = this.isReservationStartingToday(roomId, dayObj);
+  
+      // The cell is selectable only if it is a valid departure day and the start of a reservation
+      return isValidDeparture && isReservationStart;
+    }
+  }
+  
   hideDepartureDates(): void {
     this.validDepartureDaysMap = {}; // Clear the map, removing all visible departure days
     this.updateArrivalDayUI(); // Trigger the UI update to remove the departure day rendering
@@ -364,9 +389,9 @@ Optimap: RoomDepartureMap | null = null;
 
   getCellClass(roomId: number, dayObj: DayObj): string {
     // Skip reservations for the selected room during selection
-    if (this.isArrivalDayFlag && roomId === this.selectedRoomId) {
-      return 'available';
-    }
+    // if (this.isArrivalDayFlag && roomId === this.selectedRoomId) {
+    //   return 'available';
+    // }
   
     const roomData = this.rooms.find(room => room.roomId === roomId);
     if (!roomData) return 'not-available';
@@ -462,22 +487,31 @@ Optimap: RoomDepartureMap | null = null;
     const isValidArrival = this.isValidArrivalDay(roomId, dayObj);
     const statusClass = this.getCellClass(roomId, dayObj);
   
-    // Special Case: Reservation ends on a valid arrival day
+    const departureDateKey = `${dayObj.year}-${(dayObj.month + 1)
+      .toString()
+      .padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
+    const isValidDeparture = this.validDepartureDaysMap[roomId]?.has(departureDateKey);
+  
+    // Check if we are in selection mode
+    const isSelecting = this.isMouseDown && this.isArrivalDayFlag && this.selectedRoomId === roomId;
+  
     if (this.isReservationEndingOnArrivalDay(roomId, dayObj)) {
       classes += ' split-reservation-arrival';
   
       if (statusClass && statusClass !== 'available') {
         classes += ` ${statusClass}`;
       }
-      // Also add 'valid-arrival-day' class
       classes += ' valid-arrival-day';
-    }
-    // New code for reservation starting today
-    else if (this.isReservationStartingToday(roomId, dayObj)) {
+    } else if (this.isReservationStartingToday(roomId, dayObj)) {
       classes += ' split-reservation-start';
   
       if (statusClass && statusClass !== 'available') {
         classes += ` ${statusClass}`;
+      }
+  
+      // Apply special styling only during selection when departure days are shown
+      if (isValidDeparture && isSelecting) {
+        classes += ' valid-departure-day';
       }
     } else {
       if (statusClass) {
@@ -486,18 +520,15 @@ Optimap: RoomDepartureMap | null = null;
       if (isValidArrival) {
         classes += ' valid-arrival-day';
       }
-    }
-  
-    // Existing code for valid departure days
-    const departureDateKey = `${dayObj.year}-${(dayObj.month + 1)
-      .toString()
-      .padStart(2, '0')}-${dayObj.day.toString().padStart(2, '0')}`;
-    if (this.validDepartureDaysMap[roomId]?.has(departureDateKey)) {
-      classes += ' valid-departure-day';
+      if (isValidDeparture) {
+        classes += ' valid-departure-day';
+      }
     }
   
     return classes;
   }
+  
+  
   
   
   // Check if a reservation starts today and is not overlapping
