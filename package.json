@@ -45,6 +45,7 @@
     "@angular-devkit/build-angular": "^18.1.0",
     "@angular/cli": "^18.1.0",
     "@angular/compiler-cli": "^18.1.0",
+    "@types/bootstrap": "^5.2.10",
     "@types/jasmine": "~5.1.0",
     "@types/jquery": "^3.5.30",
     "i": "^0.3.7",

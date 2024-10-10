@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { RoomService } from '../services/room.service';
 import { ReservationStorageService } from '../services/reservation-storage.service';
 import { Reservation } from '../Interfaces/reservation';
@@ -9,7 +9,7 @@ import { ArrivalDepartureService } from '../services/arrival-departure.service';
 import { Subscription } from 'rxjs';
 import { RoomDepartureMap } from '../Interfaces/roomdeparturemap';
 import { DualCalendarTriggerService } from '../dual-calendar-trigger-service.service';
-
+import { Tooltip } from 'bootstrap';
 
 interface DayObj {
   day: number;
@@ -22,7 +22,7 @@ interface DayObj {
   templateUrl: './new-planning-chart.component.html',
   styleUrls: ['./new-planning-chart.component.css']
 })
-export class NewPlanningChartComponent implements OnInit {
+export class NewPlanningChartComponent implements OnInit, AfterViewInit {
 
   months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -42,6 +42,10 @@ Optimap: RoomDepartureMap | null = null;
   private subscription: Subscription = new Subscription();
 
   showInvalidSelectionAlert: boolean = false;
+  
+
+  private tooltipInstances: Tooltip[] = [];
+  private tooltipsInitialized: boolean = false;
 
   
   validArrivalDaysMap: { [roomId: number]: Set<string> } = {};
@@ -54,6 +58,7 @@ Optimap: RoomDepartureMap | null = null;
   startDay: Date | null = null;
   endDay: Date | null = null;
   selectedCells: Set<string> = new Set();
+  
   
 
 
@@ -68,10 +73,15 @@ Optimap: RoomDepartureMap | null = null;
     this.year = today.getFullYear();
   }
   
+  ngAfterViewInit(): void {
+    this.scrollToToday();
+  }
+
   ngOnInit(): void {
-     // Trigger the initialization of DualCalendarComponent
-     console.log('Triggering DualCalendarComponent initialization from OtherComponent...');
-     this.dualCalendarTriggerService.initialize();
+    // Trigger the initialization of DualCalendarComponent
+    console.log('Triggering DualCalendarComponent initialization from OtherComponent...');
+    this.dualCalendarTriggerService.initialize();
+  
     this.roomService.getRooms().subscribe((rooms) => {
       this.rooms = rooms;
       this.stayService.getStays().subscribe((stays) => {
@@ -83,7 +93,7 @@ Optimap: RoomDepartureMap | null = null;
             (optimizedMap: RoomDepartureMap | null) => {
               if (optimizedMap) {
                 console.log('Optimized Room Departure Map:', optimizedMap);
-                this.Optimap=optimizedMap;
+                this.Optimap = optimizedMap;
                 this.generateValidArrivalDaysMap(optimizedMap); // Use optimizedMap initially
               } else {
                 console.log('No optimized map available.');
@@ -98,13 +108,13 @@ Optimap: RoomDepartureMap | null = null;
         this.customers = reservationData.map(item => item.customer);
   
         this.generateChart();
-        setTimeout(() => {
-          this.scrollToToday(); // Smooth scroll to today's date after rendering
-          this.initializeTooltips(); // Initialize tooltips after rendering the chart
-        }, 0);
+        // Smooth scroll to today's date after rendering
+        this.scrollToToday();
+        // No need to call initializeTooltips() here
       });
     });
   }
+  
   
   
   generateValidArrivalDaysMap(optimizedMap: RoomDepartureMap): void {
@@ -239,30 +249,37 @@ Optimap: RoomDepartureMap | null = null;
         console.log('Single cell selected, invalidating selection.');
         this.clearAllSelections();
         this.hideDepartureDates();
-        this.showInvalidSelectionMessage(); // Show alert
-      } else {
-        if (this.isArrivalDayFlag) {
-          const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
-            .toString()
-            .padStart(2, '0')}-${this.endDay.getDate().toString().padStart(2, '0')}`;
+      } else if (this.isArrivalDayFlag) {
+        const endDayKey = `${this.endDay.getFullYear()}-${(this.endDay.getMonth() + 1)
+          .toString()
+          .padStart(2, '0')}-${this.endDay.getDate().toString().padStart(2, '0')}`;
   
-          if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
-            console.log('Invalid selection - does not end at a valid departure day.');
-            this.clearAllSelections();
-            this.hideDepartureDates();
-            this.showInvalidSelectionMessage(); // Show alert
-          } else {
-            console.log('Valid selection.', this.startDay, this.endDay);
-            this.reduceToSelectedDepartureDay(this.selectedRoomId!, endDayKey);
-          }
+        // Ensure the selection starts on a valid arrival day and ends on a valid departure day
+        if (!this.isValidArrivalDay(this.selectedRoomId!, {
+            day: this.startDay.getDate(),
+            month: this.startDay.getMonth(),
+            year: this.startDay.getFullYear(),
+          })) {
+          console.log('Invalid selection - must start on a valid arrival day.');
+          this.clearAllSelections();
+          this.hideDepartureDates();
+          this.showInvalidSelectionMessage(); // Show alert
+        } else if (!this.validDepartureDaysMap[this.selectedRoomId!]?.has(endDayKey)) {
+          console.log('Invalid selection - does not end at a valid departure day.');
+          this.clearAllSelections();
+          this.hideDepartureDates();
+          this.showInvalidSelectionMessage(); // Show alert
+        } else {
+          console.log('Valid selection.', this.startDay, this.endDay);
+          this.reduceToSelectedDepartureDay(this.selectedRoomId!, endDayKey);
         }
       }
     } else {
       this.clearAllSelections();
       this.hideDepartureDates();
-      this.showInvalidSelectionMessage(); // Show alert
     }
   
+    // Fetch and update the optimized room departure map
     this.subscription.add(
       this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
         (optimizedMap: RoomDepartureMap | null) => {
@@ -275,6 +292,7 @@ Optimap: RoomDepartureMap | null = null;
     );
   
     this.isArrivalDayFlag = false;
+    this.tooltipsInitialized = false;
   }
   
   
@@ -399,6 +417,7 @@ Optimap: RoomDepartureMap | null = null;
         this.days.push({ day, month: currentMonth, year: currentYear });
       }
     }
+    this.tooltipsInitialized = false;
   }
 
   getStatusesString(roomId: number, dayObj: DayObj): string | null {
@@ -709,13 +728,19 @@ isReservationStartingToday(roomId: number, dayObj: DayObj): boolean {
   }
 
   initializeTooltips(): void {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    // Dispose of existing tooltips
+    this.tooltipInstances.forEach(tooltip => tooltip.dispose());
+    this.tooltipInstances = [];
+  
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.forEach((tooltipTriggerEl) => {
-      new bootstrap.Tooltip(tooltipTriggerEl, {
+      const tooltipInstance = new Tooltip(tooltipTriggerEl as Element, {
         html: true // Allow HTML content in the tooltip
       });
+      this.tooltipInstances.push(tooltipInstance);
     });
   }
+  
   
   
   isSecondDayOfReservation(roomId: number, dayObj: DayObj): boolean {
@@ -856,5 +881,22 @@ isReservationStartingToday(roomId: number, dayObj: DayObj): boolean {
       return customerName;
     }
     return null;
+  }
+
+
+  ngAfterViewChecked(): void {
+ 
+  if (!this.tooltipsInitialized) {
+    this.initializeTooltips();
+    this.tooltipsInitialized = true;
+  }
+}
+
+
+  ngOnDestroy(): void {
+    // Dispose of tooltip instances
+    this.tooltipInstances.forEach(tooltip => tooltip.dispose());
+    this.tooltipInstances = [];
+    this.subscription.unsubscribe();
   }
 }
