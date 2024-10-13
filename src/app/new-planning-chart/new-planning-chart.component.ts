@@ -10,6 +10,8 @@ import { Subscription } from 'rxjs';
 import { RoomDepartureMap } from '../Interfaces/roomdeparturemap';
 import { DualCalendarTriggerService } from '../dual-calendar-trigger-service.service';
 import { Tooltip } from 'bootstrap';
+import { CalendarRoom } from '../Interfaces/calendar-room';
+import { ReservationSharedService, SharedReservationDetails } from '../services/reservation-shared.service';
 
 interface DayObj {
   day: number;
@@ -58,6 +60,7 @@ Optimap: RoomDepartureMap | null = null;
   startDay: Date | null = null;
   endDay: Date | null = null;
   selectedCells: Set<string> = new Set();
+
   
   
 
@@ -66,7 +69,7 @@ Optimap: RoomDepartureMap | null = null;
     private roomService: RoomService,
     private stayService: StayService,
     private reservationStorageService: ReservationStorageService,
-    private arrivalDepartureService: ArrivalDepartureService, private dualCalendarTriggerService: DualCalendarTriggerService
+    private arrivalDepartureService: ArrivalDepartureService, private dualCalendarTriggerService: DualCalendarTriggerService, private reservationSharedService:ReservationSharedService
   ) {
     const today = new Date();
     this.selectedMonth = today.getMonth();
@@ -194,6 +197,43 @@ Optimap: RoomDepartureMap | null = null;
     this.showInvalidSelectionAlert = false;
   }
   
+  logSelectedStayAndRoomObject(roomId: number, startDay: Date, endDay: Date): void {
+    const arrivalDate = new Date(startDay);
+    arrivalDate.setHours(11, 0, 0, 0); // 11:00 AM
+  
+    const departureDate = new Date(endDay);
+    departureDate.setHours(10, 0, 0, 0); // 10:00 AM
+  
+    const arrivalDateKey = `${arrivalDate.getFullYear()}-${(arrivalDate.getMonth() + 1)
+      .toString().padStart(2, '0')}-${arrivalDate.getDate().toString().padStart(2, '0')}`;
+  
+    const departureDateKey = `${departureDate.getFullYear()}-${(departureDate.getMonth() + 1)
+      .toString().padStart(2, '0')}-${departureDate.getDate().toString().padStart(2, '0')}`;
+  
+    this.roomService.getRoomById(roomId).subscribe((roomData: CalendarRoom) => {
+      const selectedStay = this.Optimap?.[roomId]?.[arrivalDateKey]?.[departureDateKey];
+  
+      if (!selectedStay) {
+        console.warn('No stay found for the selected arrival and departure dates.');
+        return;
+      }
+  
+      const patchedRoom: CalendarRoom = {
+        ...roomData,
+        selectedStay: selectedStay,
+      };
+  
+      // Create the object to be emitted
+      const reservationDetails: SharedReservationDetails = {
+        arrivalDate: arrivalDate.toISOString(),
+        departureDate: departureDate.toISOString(),
+        room: patchedRoom,
+      };
+  
+      // Emit the reservation details using the shared service
+      this.reservationSharedService.setSelectedReservation(reservationDetails);
+    });
+  }
   
   
   onMouseOver(roomId: number, dayObj: DayObj, event: MouseEvent): void {
@@ -270,8 +310,12 @@ Optimap: RoomDepartureMap | null = null;
           this.hideDepartureDates();
           this.showInvalidSelectionMessage(); // Show alert
         } else {
+          // Selection is valid, process it
           console.log('Valid selection.', this.startDay, this.endDay);
           this.reduceToSelectedDepartureDay(this.selectedRoomId!, endDayKey);
+  
+          // Call the function to log the object with patched stay
+          this.logSelectedStayAndRoomObject(this.selectedRoomId!, this.startDay, this.endDay);
         }
       }
     } else {

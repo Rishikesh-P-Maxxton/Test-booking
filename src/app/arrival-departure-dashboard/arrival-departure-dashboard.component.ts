@@ -3,28 +3,33 @@ import { ArrivalDepartureService } from '../services/arrival-departure.service';
 import { Subscription } from 'rxjs';
 import { Stay } from '../Interfaces/stay';
 import { RoomDepartureMap } from '../Interfaces/roomdeparturemap';
-
-
+import { ReservationSharedService, SharedReservationDetails } from '../services/reservation-shared.service'; // Adjust path
 
 @Component({
   selector: 'app-arrival-departure-dashboard',
   templateUrl: './arrival-departure-dashboard.component.html',
-  styleUrls: ['./arrival-departure-dashboard.component.css']
+  styleUrls: ['./arrival-departure-dashboard.component.css'],
 })
 export class ArrivalDepartureDashboardComponent implements OnInit, OnDestroy {
   today: Date = new Date();
   roomDepartureMap: RoomDepartureMap | null = null;
   private subscription: Subscription = new Subscription();
 
-  constructor(private arrivalDepartureService: ArrivalDepartureService) {}
+  constructor(
+    private arrivalDepartureService: ArrivalDepartureService,
+    private reservationSharedService: ReservationSharedService // Inject the service properly
+  ) {}
 
   ngOnInit(): void {
+    // Subscribe to the Room Departure Map observable
     this.subscription.add(
-      this.arrivalDepartureService.roomDepartureMap$.subscribe(map => {
+      this.arrivalDepartureService.roomDepartureMap$.subscribe((map) => {
         this.roomDepartureMap = map;
         console.log('Dashboard received Room Departure Map:', this.roomDepartureMap);
       })
     );
+
+    // Subscribe to the optimized Room Departure Map
     this.subscription.add(
       this.arrivalDepartureService.getOptimizedRoomDepartureMap().subscribe(
         (optimizedMap: RoomDepartureMap | null) => {
@@ -32,6 +37,19 @@ export class ArrivalDepartureDashboardComponent implements OnInit, OnDestroy {
             console.log('Optimized Room Departure Map:', optimizedMap);
           } else {
             console.log('No optimized map available.');
+          }
+        }
+      )
+    );
+
+    // Subscribe to the shared reservation observable
+    this.subscription.add(
+      this.reservationSharedService.selectedReservation$.subscribe(
+        (reservation: SharedReservationDetails | null) => {
+          if (reservation) {
+            console.log('Received Reservation:', reservation); // Log the reservation object
+          } else {
+            console.log('No reservation selected yet.');
           }
         }
       )
