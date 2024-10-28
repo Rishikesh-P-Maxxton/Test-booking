@@ -22,5 +22,6 @@ export class ReservationSharedService {
   setSelectedReservation(details: SharedReservationDetails): void {
     console.log('Emitting Reservation:', details);
     this.selectedReservationSubject.next(details);
+    this.modalTriggerSubject.next(); // Trigger modal opening
   }
 }
