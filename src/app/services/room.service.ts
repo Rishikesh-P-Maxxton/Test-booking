@@ -7,7 +7,7 @@ import { map, Observable } from 'rxjs';
 })
 export class RoomService {
   
-  private roomsUrl = 'https://jadhavsudhit.github.io/Booking-module/rooms.json';
+  private roomsUrl = 'https://pheonix07.github.io/BookingPanel/rooms.json';
 
   constructor(private http: HttpClient) {}
 

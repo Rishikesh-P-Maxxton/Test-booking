@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class StayService {
-  private staysUrl = 'https://jadhavsudhit.github.io/Booking-module/stays.json';
+  private staysUrl = 'https://pheonix07.github.io/BookingPanel/stays.json';
 
   constructor(private http: HttpClient) {}
 

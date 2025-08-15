@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root'
 })
 export class GeolocsService {
-  private apiUrl = 'https://dummyjson.com/c/a4cd-6041-4225-935c'; //API URL
+  private apiUrl = 'https://pheonix07.github.io/BookingPanel/geoloc.json'; //API URL
 
   constructor(private http: HttpClient) {}
 
